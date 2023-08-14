@@ -53,7 +53,7 @@
         const base64Pdb = urlParams.get('load');
     
         // Create a LiteMol Viewer instance
-        const viewer = LiteMol.Viewer.createInstance(document.getElementById('app'), { isExpanded: false, viewportBackground: '#fff',  hideControls: true , showDisplayControls: false });
+        const viewer = LiteMol.Viewer.createInstance(document.getElementById('app'), { isExpanded: true, viewportBackground: '#fff',  hideControls: true , showDisplayControls: false });
     
         if (pdbUrl) {
             // Load the PDB file from the given URL
