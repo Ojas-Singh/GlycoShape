@@ -39,7 +39,7 @@ server {
     add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
     add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
     add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
-        alias /mnt/database/server_dir/;
+        alias /mnt/database/GlycoShape/glycoshape-website/build/;
         autoindex on; # Enable listing of directory
 	
     }
