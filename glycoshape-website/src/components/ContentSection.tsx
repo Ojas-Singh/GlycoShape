@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid } from "@chakra-ui/react";
+import { Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading } from "@chakra-ui/react";
 import bg from './assets/Glycans_bg_dark.jpg';
+import cell from './assets/cell_surface.jpg';
+import dem1 from './assets/dem1.jpg';
 import { Kbd } from '@chakra-ui/react'
 
 const ContentSection: React.FC = () => {
@@ -51,8 +53,10 @@ const ContentSection: React.FC = () => {
         justify="center" 
         flex="1" 
         padding="5em"
+        minHeight={{ base: "60vh" }}
         backgroundImage={`url(${bg})`} 
         backgroundSize="cover" 
+        // backgroundPosition="center"
         backgroundRepeat="no-repeat"  
       >
         <Text 
@@ -154,11 +158,76 @@ const ContentSection: React.FC = () => {
         align="center" 
         justify="center" 
         flex="1" 
-        backgroundColor="whitesmoke" 
+        backgroundColor="#F7F9E5" 
         padding="20px"
       >
-        <Text>Dummy text for the tutorial...</Text>
+        <Text
+        align={"center"}
+  bgGradient='linear(to-l, #44666C, #A7C4A3)'
+  bgClip='text'
+  fontSize='4xl'
+  fontWeight='bold'
+>
+GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder to accelerate scientific research. 
+</Text>
       </Flex>
+      <Flex direction="column">
+  {/* First Section - What are Glycans? */}
+  <Flex 
+    direction={["column", "row"]} 
+    align="center"
+    padding={"100px"}
+    paddingLeft={"250px"}
+    backgroundColor="#FFFFFF"
+  >
+    <Box flex="1">
+      <Text
+        align={"left"}
+        bgGradient='linear(to-l, #44666C, #4E6E6D)'
+        bgClip='text'
+        fontSize='5xl'
+        fontWeight='bold'
+      > 
+        What are Glycans?
+      </Text>
+      <Text mt={4}>
+        Description about Glycans goes here...
+      </Text>
+    </Box>
+    <Box flex="1">
+      <Image height={"25rem"} src={cell} alt="Description Image" />
+    </Box>
+  </Flex>
+
+  {/* Second Section - Why it's important? */}
+  <Flex 
+    direction={["column-reverse", "row-reverse"]} 
+    align="center"
+    padding={"100px"}
+    paddingRight={"250px"}
+    paddingLeft={"250px"}
+    backgroundColor="#FFFFFF"
+  >
+    <Box flex="1">
+      <Text
+        align={"left"}
+        bgGradient='linear(to-l, #44666C, #4E6E6D)'
+        bgClip='text'
+        fontSize='5xl'
+        fontWeight='bold'
+      > 
+        Why it's important?
+      </Text>
+      <Text mt={4}>
+        Description about why Glycans are important goes here...
+      </Text>
+    </Box>
+    <Box flex="1">
+      <Image height={"35rem"} src={dem1} alt="Importance Image" />
+    </Box>
+  </Flex>
+</Flex>
+
     </Flex>
   );
 }

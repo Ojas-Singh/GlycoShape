@@ -22,7 +22,7 @@ server {
 
 
     location / {
-
+        try_files $uri /index.html;
 	
 	if ($request_method = 'OPTIONS') {
         add_header 'Access-Control-Allow-Origin' '*';
