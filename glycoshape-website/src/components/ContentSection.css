@@ -1,0 +1,50 @@
+.full-screen-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.search-section {
+  flex: 1;
+  display: flex;            
+  align-items: center;   
+  vertical-align: baseline;   
+  justify-content: center;  
+  flex-direction: column;   
+  max-height: 25em;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.2) 40%, rgba(255, 255, 255, 1)) 100%, url('assets/Glycans_bg.jpg');
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  padding: 15em;
+}
+
+.search-section-text {
+  flex: 1;
+  display: flex;   
+  flex-direction: column;         
+  align-items: center;      
+  justify-content: center;  
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+  max-width: 800px;
+}
+
+
+
+.tutorial-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: whitesmoke;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.tutorial-section p {
+  max-width: 600px;
+  line-height: 1.6;
+}
