@@ -25,7 +25,8 @@ const Navbar: React.FC = () => {
     <Flex as="nav" bgColor="#4E6E6D" align="center" justify="space-between" wrap="wrap" padding="1rem" boxShadow="md">
       <Box>
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
-        <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text>
+        <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} paddingLeft={"1.5rem"} href="/" >GlycoShape.io</Link> 
+        {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
       </Box>
 
       {isMobile ? (
@@ -47,8 +48,8 @@ const Navbar: React.FC = () => {
         </Menu>
       ) : (
         <Flex align="center">
-          <Link fontWeight="bold" color={"#F7FFE6"} href="#search-link1" marginRight="20px">Re-Glyco</Link>
-          <Link fontWeight="bold" color={"#F7FFE6"} href="#search-link2" marginRight="20px">Downloads</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/downloads" marginRight="20px">Downloads</Link>
           <Box alignContent={"center"} height='40px'>
   <Divider orientation='vertical' />
           </Box>
@@ -57,7 +58,7 @@ const Navbar: React.FC = () => {
   <Divider orientation='vertical' />
           </Box> 
           <Link fontWeight="bold" color={"#F7FFE6"} href="/faq" marginRight="20px" marginLeft={"20px"}>FAQ</Link> 
-          <Link fontWeight="bold" color={"#F7FFE6"} href="#search-link3" marginRight="20px">Contact us</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/contact-us" marginRight="20px">Contact us</Link>
           
         </Flex>
       )}

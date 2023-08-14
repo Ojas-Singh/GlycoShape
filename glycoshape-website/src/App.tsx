@@ -9,6 +9,7 @@ import Navbar from './components/Navbar';
 import ContentSection from './components/ContentSection';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
+import Search from './components/Search';
 
 
 const App: React.FC = () => {
@@ -62,7 +63,11 @@ const App: React.FC = () => {
         {/* Your main content components, like the ContentSection */}
         <Routes>
           <Route path="/" element={<ContentSection />} />
-          <Route path="/faq" element={<FAQ />} />
+          <Route path="/faq" element={<div><Search /><FAQ /></div>} />
+          <Route path="/api-docs" element={<div><Search /></div>} />
+          <Route path="/downloads" element={<div><Search /></div>} />
+          <Route path="/reglyco" element={<div><Search /></div>} />
+          <Route path="/contact-us" element={<div><Search /></div>} />
         </Routes>
       </Flex>
 
