@@ -3,6 +3,7 @@ import {
   Flex,
   Box,
   Link,
+  Text,
   Select,
   Image,
   Menu,
@@ -11,7 +12,8 @@ import {
   MenuList,
   MenuItem,
   useBreakpointValue,
-  IconButton
+  IconButton,
+  Divider
 } from "@chakra-ui/react";
 import { HamburgerIcon } from '@chakra-ui/icons';
 import logo from './assets/logo.png';
@@ -20,9 +22,10 @@ const Navbar: React.FC = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex as="nav" align="center" justify="space-between" wrap="wrap" padding="1.5rem" boxShadow="md">
+    <Flex as="nav" bgColor="#4E6E6D" align="center" justify="space-between" wrap="wrap" padding="1rem" boxShadow="md">
       <Box>
-        <Image src={logo} alt="GlycoShape Logo" height="60px" />
+        {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
+        <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text>
       </Box>
 
       {isMobile ? (
@@ -34,17 +37,27 @@ const Navbar: React.FC = () => {
             variant="outline"
           />
           <MenuList>
-            <MenuItem as={Link} href="#search-link1">ReGlyco</MenuItem>
-            <MenuItem as={Link} href="#search-link2">GOTW</MenuItem>
+            <MenuItem as={Link} href="#search-link1">Re-Glyco</MenuItem>
+            <MenuItem as={Link} href="#search-link2">Downloads</MenuItem>
+            <MenuItem as={Link} href="/api-docs">API</MenuItem>
+            <MenuItem as={Link} href="/faq">FAQ</MenuItem>
             <MenuItem as={Link} href="#search-link3">Contact us</MenuItem>
             
           </MenuList>
         </Menu>
       ) : (
         <Flex align="center">
-          <Link href="#search-link1" marginRight="20px">ReGlyco</Link>
-          <Link href="#search-link2" marginRight="20px">GOTW</Link>
-          <Link href="#search-link3" marginRight="20px">Contact us</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="#search-link1" marginRight="20px">Re-Glyco</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="#search-link2" marginRight="20px">Downloads</Link>
+          <Box alignContent={"center"} height='40px'>
+  <Divider orientation='vertical' />
+          </Box>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/api-docs" marginRight="20px" marginLeft={"20px"}>API</Link>
+          <Box alignContent={"center"} height='40px'>
+  <Divider orientation='vertical' />
+          </Box> 
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/faq" marginRight="20px" marginLeft={"20px"}>FAQ</Link> 
+          <Link fontWeight="bold" color={"#F7FFE6"} href="#search-link3" marginRight="20px">Contact us</Link>
           
         </Flex>
       )}

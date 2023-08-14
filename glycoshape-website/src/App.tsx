@@ -2,11 +2,13 @@ import React, { useEffect } from 'react';
 import { ChakraProvider, Box, CSSReset, theme } from '@chakra-ui/react';
 import { Flex } from "@chakra-ui/react";
 import { Helmet } from 'react-helmet';
+import { BrowserRouter as Router, Route, Routes  } from 'react-router-dom';
 
 // Importing your components
 import Navbar from './components/Navbar';
 import ContentSection from './components/ContentSection';
 import Footer from './components/Footer';
+import FAQ from './components/FAQ';
 
 
 const App: React.FC = () => {
@@ -14,7 +16,7 @@ const App: React.FC = () => {
     document.title = "GlycoShape";
   }, []);
   return (
-    
+    <Router>
     <ChakraProvider theme={theme}>
       <CSSReset />
       <Helmet>
@@ -58,13 +60,17 @@ const App: React.FC = () => {
       {/* Main content area */}
       <Flex direction="column" flex="1">
         {/* Your main content components, like the ContentSection */}
-        <ContentSection />
+        <Routes>
+          <Route path="/" element={<ContentSection />} />
+          <Route path="/faq" element={<FAQ />} />
+        </Routes>
       </Flex>
 
       {/* Footer */}
       <Footer />
     </Flex>
     </ChakraProvider>
+    </Router>
   );
 }
 

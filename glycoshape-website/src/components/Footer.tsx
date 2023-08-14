@@ -1,6 +1,8 @@
 import React from 'react';
-import { Box, Flex, Text, Link, Image, VStack, HStack, Icon } from "@chakra-ui/react";
-import logo from './assets/logo.png';
+import { Box, Flex, Text, Link, Image, VStack, HStack, Icon, Divider} from "@chakra-ui/react";
+import logo from './assets/logo_big.png';
+import logo_sfi from './assets/logo_sfi.jpg';
+import logo_oracle from './assets/logo_oracle.png';
 
 // Placeholder for social media icons. Replace with actual icons.
 const FacebookIcon = () => <Icon viewBox="0 0 24 24">/* SVG content for Facebook */</Icon>;
@@ -9,16 +11,17 @@ const LinkedInIcon = () => <Icon viewBox="0 0 24 24">/* SVG content for LinkedIn
 
 const Footer: React.FC = () => {
   return (
-    <Box as="footer" padding="1.5rem" backgroundColor="#6F9C5A">
-      <Flex direction="row" justify="space-between" marginBottom="2em">
+    <Box as="footer" padding="1.5rem" backgroundColor="#4E6E6D">
+      <Flex direction="row" justify="space-between" wrap="wrap" marginBottom="0em">
         <Box>
-          <Image src={logo} alt="GlycoShape Logo" height="60px" marginBottom="1em" />
+          <Image src={logo} alt="GlycoShape Logo" height="150px" marginBottom="0.2em" paddingLeft={"1.5rem"}/>
           <Text color="lightblue">© GlycoShape</Text>
           <Link>Legal Disclaimer</Link>
           <Link>Privacy Notice</Link>
         </Box>
         <VStack align="start">
           <Text fontWeight="bold">Core Data</Text>
+          <Divider />
           <Link href="#">Proteins (UniProtKB)</Link>
           <Link href="#">Species (Proteomes)</Link>
           <Link href="#">Protein clusters (UniRef)</Link>
@@ -26,6 +29,7 @@ const Footer: React.FC = () => {
         </VStack>
         <VStack align="start">
           <Text fontWeight="bold">Supporting Data</Text>
+          <Divider />
           <Link href="#">Literature citations</Link>
           <Link href="#">Taxonomy</Link>
           <Link href="#">Keywords</Link>
@@ -35,6 +39,7 @@ const Footer: React.FC = () => {
         </VStack>
         <VStack align="start">
           <Text fontWeight="bold">Tools</Text>
+          <Divider />
           <Link href="#">BLAST</Link>
           <Link href="#">Align</Link>
           <Link href="#">Retrieve/ID mapping</Link>
@@ -43,6 +48,7 @@ const Footer: React.FC = () => {
         </VStack>
         <VStack align="start">
           <Text fontWeight="bold">Information</Text>
+          <Divider />
           <Link href="#">Cite UniProt</Link>
           <Link href="#">About & Help</Link>
           <Link href="#">UniProtKB manual</Link>
@@ -62,7 +68,13 @@ const Footer: React.FC = () => {
       </Flex>
       <Flex justify="space-between">
         <Text>Release and Statistics</Text>
-        <Text>Main Funding by: SFI, Oracle</Text>
+
+        <Text fontWeight="Medium" color={'white'}>Main Funding by:
+          <HStack direction='row'>
+          <Image src={logo_sfi} alt="SFI Logo" height="60px" marginBottom="1em" /><Image src={logo_oracle} alt="Oracle Logo" height="60px" marginBottom="1em" />
+          </HStack> 
+          </Text>
+
       </Flex>
     </Box>
   );

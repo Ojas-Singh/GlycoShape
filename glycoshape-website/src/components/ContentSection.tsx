@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid } from "@chakra-ui/react";
-import bg from './assets/Glycans_bg.jpg';
+import bg from './assets/Glycans_bg_dark.jpg';
 import { Kbd } from '@chakra-ui/react'
 
 const ContentSection: React.FC = () => {
@@ -56,13 +56,22 @@ const ContentSection: React.FC = () => {
         backgroundRepeat="no-repeat"  
       >
         <Text 
-          bgGradient='linear(to-l, #9E663F, #7CC9A9 )' 
+          bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' 
           bgClip='text'
           fontSize='6xl'
           fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          GlycoShape Database
+        </Text>
+        <Text 
+          bgGradient='linear(to-l, #F7FFE6, #F7FFE6)' 
+          bgClip='text'
+          fontSize='2xl'
+          fontWeight='bold'
           marginBottom="1em"
         >
-          Find Your Glycan
+          Developed By Elab
         </Text>
 
         <Flex 
@@ -78,7 +87,7 @@ const ContentSection: React.FC = () => {
         >
           <Input 
             ref={searchRef}
-            placeholder="Search GLYCAM IDs..." 
+            placeholder="Search GLYCAM ID, IUPAC, GlycoCT, WURCS..." 
             size="lg" 
             flex="1" 
             border="none"
