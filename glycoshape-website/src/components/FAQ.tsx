@@ -1,12 +1,31 @@
-// FAQ.tsx
 import React from 'react';
-import { Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from "@chakra-ui/react";
+import {
+  Box,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+  Heading,
+  Text,
+  Code
+} from "@chakra-ui/react";
 
 const FAQ: React.FC = () => {
   return (
-    <Box p={5}>
-      <h2>Frequently Asked Questions</h2>
-      <Accordion allowToggle>
+    <Box p={5} maxWidth="800px" margin="0 auto">
+      <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='6xl'
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          FAQs
+        </Text>
+
+      <Accordion defaultIndex={[0]} allowMultiple>
+        {/* Endpoint 1 */}
         <AccordionItem>
           <AccordionButton>
             <Box flex="1" textAlign="left">
@@ -15,21 +34,36 @@ const FAQ: React.FC = () => {
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            GlycoShape is a platform for...
+            <Text>Description of the GlycoShape...</Text>
+            <Code>
+              {/* Sample request or response */}
+              {`{
+  "key": "value"
+}`}
+            </Code>
           </AccordionPanel>
         </AccordionItem>
-        {/* ... Add more questions as needed */}
+
+        {/* Endpoint 2 */}
         <AccordionItem>
           <AccordionButton>
             <Box flex="1" textAlign="left">
-              How do I use GlycoShape?
+              How it is curated?
             </Box>
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            To use GlycoShape, you can...
+            <Text>Description of the MD...</Text>
+            <Code>
+              {/* Sample request or response */}
+              {`{
+  "key": "value"
+}`}
+            </Code>
           </AccordionPanel>
         </AccordionItem>
+
+        {/* Add more endpoints as needed */}
       </Accordion>
     </Box>
   );
