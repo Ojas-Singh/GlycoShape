@@ -35,21 +35,21 @@ const App: React.FC = () => {
         {/* Google / Search Engine Tags */}
         <meta itemProp="name" content="The Name or Title Here" />
         <meta itemProp="description" content="A concise and accurate description of your website's content." />
-        <meta itemProp="image" content="https://yourwebsite.com/path/to/image.jpg" />
+        <meta itemProp="image" content="https://glycoshape.io/path/to/image.jpg" />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://yourwebsite.com/" />
+        <meta property="og:url" content="https://glycoshape.io/" />
         <meta property="og:title" content="Your Website Title" />
         <meta property="og:description" content="A concise and accurate description of your website's content." />
-        <meta property="og:image" content="https://yourwebsite.com/path/to/image.jpg" />
+        <meta property="og:image" content="https://glycoshape.io/path/to/image.jpg" />
 
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content="https://yourwebsite.com/" />
+        <meta property="twitter:url" content="https://glycoshape.io/" />
         <meta property="twitter:title" content="Your Website Title" />
         <meta property="twitter:description" content="A concise and accurate description of your website's content." />
-        <meta property="twitter:image" content="https://yourwebsite.com/path/to/image.jpg" />
+        <meta property="twitter:image" content="https://glycoshape.io/path/to/image.jpg" />
 
         {/* Additional Metadata for SEO */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
