@@ -1,15 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container } from "@chakra-ui/react";
+import {
+  Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
+} from "@chakra-ui/react";
+import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import bg from './assets/Glycans_bg_dark.jpg';
+import draw from './assets/draw.png';
+import un from './assets/un.png';
 import cell from './assets/cell_surface.jpg';
 import dem1 from './assets/dem1.jpg';
 import { Kbd } from '@chakra-ui/react'
 
 const ContentSection: React.FC = () => {
   const [results, setResults] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const searchRef = useRef(null);
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
+
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
@@ -37,13 +44,9 @@ const ContentSection: React.FC = () => {
     }
   };
 
-
-// const ContentSection: React.FC = () => {
-//   const searchRef = useRef(null);
-//   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-//   const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Ctrl+K ' });
-
-  
+  const handleImageClick = () => {
+    setIsModalOpen(true);
+  }
 
   return (
     <Flex direction="column" width="100%">
@@ -56,9 +59,17 @@ const ContentSection: React.FC = () => {
         minHeight={{ base: "60vh" }}
         backgroundImage={`url(${bg})`} 
         backgroundSize="cover" 
-        // backgroundPosition="center"
-        backgroundRepeat="no-repeat"  
+        backgroundRepeat="no-repeat"
       >
+        <Text 
+          bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' 
+          bgClip='text'
+          fontSize='6xl'
+          fontWeight='extrabold'
+          marginBottom="0.0rem"
+        >
+          {/* GlycoShape */}
+        </Text>
         <Text 
           bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' 
           bgClip='text'
@@ -66,8 +77,8 @@ const ContentSection: React.FC = () => {
           fontWeight='extrabold'
           marginBottom="0.2em"
         >
-          GlycoShape Database
-        </Text>
+          Glycan Structure Database
+        </Text> 
         <Text 
           bgGradient='linear(to-l, #F7FFE6, #F7FFE6)' 
           bgClip='text'
@@ -75,7 +86,7 @@ const ContentSection: React.FC = () => {
           fontWeight='bold'
           marginBottom="1em"
         >
-          Developed By Elab
+          Developed By  <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">eLab</Link>
         </Text>
 
         <Flex 
@@ -89,6 +100,9 @@ const ContentSection: React.FC = () => {
           p="0.5em"
           bg="white"
         >
+          <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
+            <Image src={draw} alt="Icon Description" w="24px" h="24px" />
+          </Button>
           <Input 
             ref={searchRef}
             placeholder="Search GLYCAM ID, IUPAC, GlycoCT, WURCS..." 
@@ -125,6 +139,21 @@ const ContentSection: React.FC = () => {
             Search
           </Button>
         </Flex>
+
+        <Flex direction="row" justify="space-between" width="80%" mt={2}>
+          <Flex align="center">
+            <Text color="white" marginRight={2}>Examples:</Text>
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+            >
+              LFucpa1-2DGalpa1-OH
+            </Button>
+          </Flex>
+          <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text>
+        </Flex>
+
       </Flex>
 
       {results.length > 0 && (
@@ -171,6 +200,31 @@ const ContentSection: React.FC = () => {
 GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder to accelerate scientific research. 
 </Text>
       </Flex>
+
+      {/* Here's the Modal part that displays the content when the image is clicked */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Freehand Glycan Drawer</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {/* Place your modal content here */}
+            <Box>
+              <Image src={un} alt="Description" />
+              <Text></Text>
+            </Box>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* More of your code... */}
+
+ 
+
+
       <Flex direction="column">
   {/* First Section - What are Glycans? */}
   <Flex 

@@ -14,6 +14,7 @@ import API from './components/API';
 import Download from './components/Download';
 import Contact from './components/Contact';
 import ReGlyco from './components/ReGlyco';
+import Elab from './components/eLab/Elab';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -71,6 +72,7 @@ const App: React.FC = () => {
           <Route path="/downloads" element={<div><Search /> <Download /></div>} />
           <Route path="/reglyco" element={<div><Search /><ReGlyco /></div>} />
           <Route path="/contact-us" element={<div><Search /></div>} />
+          <Route path="/elab" element={<div><Search /> <Elab /></div>} />
         </Routes>
       </Flex>
 

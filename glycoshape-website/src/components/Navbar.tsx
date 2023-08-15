@@ -38,11 +38,11 @@ const Navbar: React.FC = () => {
             variant="outline"
           />
           <MenuList>
-            <MenuItem as={Link} href="#search-link1">Re-Glyco</MenuItem>
-            <MenuItem as={Link} href="#search-link2">Downloads</MenuItem>
+            <MenuItem as={Link} href="/reglyco">Re-Glyco</MenuItem>
+            <MenuItem as={Link} href="/downloads">Downloads</MenuItem>
             <MenuItem as={Link} href="/api-docs">API</MenuItem>
             <MenuItem as={Link} href="/faq">FAQ</MenuItem>
-            <MenuItem as={Link} href="#search-link3">Contact us</MenuItem>
+            <MenuItem as={Link} href="/contact-us">Contact us</MenuItem>
             
           </MenuList>
         </Menu>
