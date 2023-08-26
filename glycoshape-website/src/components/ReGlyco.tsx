@@ -1,73 +1,299 @@
-import React, { useState } from 'react';
-import { Input, Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, Button, Box, Text } from "@chakra-ui/react";
-import axios from 'axios';
+import React, { useState, ChangeEvent, useEffect, useRef } from 'react';
+import { Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon, Step,
+  StepDescription,
+  StepIcon,
+  StepIndicator,
+  StepNumber,
+  StepSeparator,
+  StepStatus,
+  StepTitle,
+  Stepper,
+  useSteps,} from '@chakra-ui/react';
+import { Kbd } from '@chakra-ui/react'
 
-function ReGlyco() {
-  const [isOpen, setIsOpen] = useState(true);
-  const [uniprotID, setUniprotID] = useState("");
-  const [glycosylationLocations, setGlycosylationLocations] = useState(null);
-  const [requestURL, setRequestURL] = useState("/litemol/index.html?pdbUrl=https://healoor.me/downloads/out.pdb");
+import bg from './assets/Glycans_bg_dark.jpg';
 
-  const onOpen = () => setIsOpen(true);
-  const onClose = () => setIsOpen(false);
-
-  const fetchProtein = async () => {
-      try {
-          const response = await axios.post('https://glycoshape.io/api/uniprot', { uniprot: uniprotID });
-          setGlycosylationLocations(response.data.glycosylation_locations);
-          setRequestURL(`/litemol/index.html?pdbUrl=${response.data.requestURL}`);
-      } catch (error) {
-          console.error("Error fetching protein:", error);
-      }
-  };
-
-  return (
-      <>
-          <Button onClick={onOpen}>Open Drawer</Button>
-
-          <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
-              <DrawerOverlay>
-                  <DrawerContent>
-                      <DrawerHeader>Enter UniProt ID or Upload PDB</DrawerHeader>
-
-                      <DrawerBody>
-                          <Input placeholder="UniProt ID" value={uniprotID} onChange={(e) => setUniprotID(e.target.value)} />
-                          {/* You can add the file uploader here */}
-                      </DrawerBody>
-
-                      <DrawerFooter>
-                          <Button variant="outline" mr={3} onClick={onClose}>
-                              Cancel
-                          </Button>
-                          <Button colorScheme="blue" onClick={fetchProtein}>
-                              Submit
-                          </Button>
-                      </DrawerFooter>
-                  </DrawerContent>
-              </DrawerOverlay>
-          </Drawer>
-
-          {/* Main content */}
-          <Box p={5}>
-              <iframe 
-                  width="100%" 
-                  height="500" 
-                  src={requestURL} 
-                  frameBorder="0" 
-                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                  title="Protein Viewer"
-              ></iframe>
-
-              {glycosylationLocations && (
-                  <Box mt={4}>
-                      <Text fontWeight="bold">Glycosylation Locations:</Text>
-                      <pre>{JSON.stringify(glycosylationLocations, null, 2)}</pre>
-                  </Box>
-              )}
-          </Box>
-      </>
-  );
+interface Glycosylation {
+  glycosylations: {
+    begin: string;
+    category: string;
+    description: string;
+    end: string;
+    evidences: { code: string }[];
+    ftId: string;
+    molecule: string;
+    type: string;
+  }[];
+  sequence: string;
+  sequenceLength: number;
 }
 
-export default ReGlyco;
+interface UniprotData {
+  glycosylation_locations: Glycosylation;
+  uniprot: string;
+  requestURL: string;
+}
+const steps = [
+  { title: 'Select Residues', description: 'ResId of Glycosylation Location' },
+  { title: 'Select Glycans', description: 'N-Glycan, O-Glycans, etc ...' },
+  { title: 'Download', description: 'Cluster Information or Structure Correction' },
+]
+
+  const ReGlyco = () => {
+      const [uniprotID, setUniprotID] = useState<string>("");
+      const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
+      const toast = useToast();
+      const searchRef = useRef(null);
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      useEffect(() => {
+        const handleKeyPress = (event: KeyboardEvent) => {
+          if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+            event.preventDefault();
+            if (searchRef.current) {
+              (searchRef.current as any).focus();
+            }
+          }
+        };
+    
+        window.addEventListener('keydown', handleKeyPress);
+    
+        return () => {
+          window.removeEventListener('keydown', handleKeyPress);
+        };
+      }, []);
+    
+      
+      const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();  // Prevents the default form submission behavior
+        fetchProteinData();
+    };
+      const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files;
+        if (file) {
+          // Logic to upload the file and get its URL
+          // For demonstration purposes, I'll set a mock URL. You'll need to replace this with real logic.
+          // setPdbUrl(`https://healoor.me/downloads/${file.name}`);
+        }
+      };
+
+      const fetchProteinData = async () => {
+          try {
+              const response = await fetch("https://glycoshape.io/api/uniprot", {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ uniprot: uniprotID })
+              });
+
+              const data: UniprotData = await response.json();
+              setUniprotData(data);
+          } catch (error) {
+              if (error instanceof Error) {
+                  toast({
+                      title: "Error fetching data.",
+                      description: error.message,
+                      status: "error",
+                      duration: 500,
+                      isClosable: true,
+                  });
+              }
+          }
+      }
+      const { activeStep } = useSteps({
+        index: 1,
+        count: steps.length,
+      })
+
+      return (
+
+          
+    
+              <>
+                  <Flex w="100%" justifyContent="center" alignItems="center" p={8}
+                  direction="row" 
+                  align="center" 
+                  justify="center" 
+                  flex="1" 
+                  padding="2em"
+                  minHeight={{ base: "15vh" }}
+                  backgroundImage={`url(${bg})`} 
+                  backgroundSize="cover" 
+                  // backgroundPosition="center"
+                  backgroundRepeat="no-repeat"  >
+                      <Text
+                          bgGradient='linear(to-l,  #FDFDA1, #E2FCC5)'
+                          bgClip='text'
+                          fontSize='5xl'
+                          fontWeight='extrabold'
+                          marginBottom="0.2em"
+                      >
+                          <Link fontWeight="bold" href="/reglyco" marginRight="20px">Re-Glyco</Link>
+                      </Text>
+      
+                      {/* Search Bar Section */}
+                      <Flex width="30%" align="center" position="relative" gap="1em" boxShadow="xl" borderRadius="full" overflow="hidden" p="0.5em" bg="white">
+                          <form onSubmit={handleSearch}>
+                              <Input
+                                  onChange={(e) => setUniprotID(e.target.value)}
+                                  ref={searchRef}
+                                  placeholder="Enter Uniprot Id"
+                                  size="lg"
+                                  flex="1"
+                                  border="none"
+                                  _hover={{
+                                      boxShadow: "none"
+                                  }}
+                                  _focus={{
+                                      boxShadow: "none",
+                                      outline: "none"
+                                  }}
+                              />
+                          </form>
+                          <Text
+                              position="absolute"
+                              right="8rem"
+                              top="50%"
+                              transform="translateY(-50%)"
+                              color="gray.500"
+                              fontSize="sm"
+                              userSelect="none"
+                          >
+                              <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
+                          </Text>
+                          <Button
+                              position={"absolute"}
+                              right="5%"
+                              borderRadius="full"
+                              backgroundColor="#7CC9A9"
+                              _hover={{
+                                  backgroundColor: "#51BF9D"
+                              }}
+                              onClick={handleSearch}
+                          >
+                              Search
+                          </Button>
+                      </Flex>
+                              
+                      <Text 
+                          marginLeft={"2rem"}
+                          bgGradient='linear(to-l, #44666C, #44666C)'
+                          bgClip='text'
+                          fontSize='3xl'
+                          alignItems="center"
+                          fontWeight='extrabold'
+                          marginBottom="0.2em"
+                      >
+                          or
+                      </Text>
+                      <Box position="relative" display="inline-block" marginLeft={"2rem"} alignItems="center">
+                          <Button
+                              as="label"
+                              colorScheme="teal"
+                              size="md"
+                              cursor="pointer"
+                              w="full"
+                          >
+                              Upload custom PDB File
+                          </Button>
+                          <Input
+                              type="file"
+                              position="absolute"
+                              top="0"
+                              left="0"
+                              opacity="0"
+                              width="100%"
+                              height="100%"
+                              cursor="pointer"
+                              onChange={handleFileUpload}
+                          />
+                      </Box>
+                  </Flex>
+      
+                  {/* Rest of the content */}
+                  <VStack spacing={4} w="100%" p={8}>
+                      {UniprotData && (
+                          <Flex w="100%" justifyContent="left" alignItems="center" p={8} direction="column"  >  
+                              
+                              <Accordion w="80%" defaultIndex={[0]} allowMultiple>
+                              <AccordionItem> <Heading margin={"2rem"} as='h4'size='xl'> Uniprot ID : {UniprotData.uniprot}</Heading>
+                              
+                              </AccordionItem>
+                                <AccordionItem>
+                                  <h2>
+                                    <AccordionButton>
+                                      <Box as="span" flex='1' textAlign='left'>
+                                      <Heading margin='1rem' as='h4' size='md'>Glycosylation Information</Heading> 
+                                      </Box>
+                                      <AccordionIcon />
+                                    </AccordionButton>
+                                  </h2>
+                                  <AccordionPanel pb={4}>
+                                  <Box mt={4}>
+                                  <Text fontWeight="bold">Sequence:</Text>
+                                  <Code width={"80rem"}>{JSON.stringify(UniprotData.glycosylation_locations.sequence, null, 2)}</Code>
+                                  <Text fontWeight="bold">Glycosylations</Text>
+                                  <Code width={"80rem"}>{JSON.stringify(UniprotData.glycosylation_locations.glycosylations, null, 2)}</Code>
+                                  
+                              </Box>
+                                  </AccordionPanel>
+                                </AccordionItem>
+                                <AccordionItem> 
+                                  <iframe
+                                  width="90%"
+                                  height="400px"
+                                  src={`/pdbe/index.html?Url=${UniprotData.requestURL}&format=cif`}
+                                  frameBorder="0"
+                                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  title="Protein Structure"
+                              /></AccordionItem>
+                                <AccordionItem>
+                                  <h2>
+                                    <AccordionButton>
+                                      <Box as="span" flex='1' textAlign='left'>
+                                      <Stepper margin="2rem" size='lg' colorScheme='green' index={activeStep}>
+                                        {steps.map((step, index) => (
+                                          <Step key={index}>
+                                            <StepIndicator>
+                                              <StepStatus
+                                                complete={<StepIcon />}
+                                                incomplete={<StepNumber />}
+                                                active={<StepNumber />}
+                                              />
+                                            </StepIndicator>
+
+                                            <Box flexShrink='0'>
+                                              <StepTitle>{step.title}</StepTitle>
+                                              <StepDescription>{step.description}</StepDescription>
+                                            </Box>
+
+                                            <StepSeparator />
+                                          </Step>
+                                        ))}
+                                </Stepper>  
+                                      </Box>
+                                      <AccordionIcon />
+                                    </AccordionButton>
+                                  </h2>
+                                  <AccordionPanel pb={4}>
+                                  
+                                  </AccordionPanel>
+                                </AccordionItem>
+                              </Accordion>
+                              
+                              
+                          </Flex>
+                      )}
+                  </VStack>
+              </>
+          );
+      }
+      
+      
+
+  export default ReGlyco;

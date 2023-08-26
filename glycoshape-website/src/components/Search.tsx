@@ -1,15 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container } from "@chakra-ui/react";
+import { useNavigate  } from 'react-router-dom';
+import {
+  Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
+} from "@chakra-ui/react";
+import draw from './assets/draw.png';
+import un from './assets/un.png';
 import bg from './assets/Glycans_bg_dark.jpg';
 import cell from './assets/cell_surface.jpg';
 import dem1 from './assets/dem1.jpg';
 import { Kbd } from '@chakra-ui/react'
 
+
 const ContentSection: React.FC = () => {
+  const navigate  = useNavigate();
   const [results, setResults] = useState<string[]>([]);
-  const searchRef = useRef(null);
+  const [searchString, setSearchString] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
+
+
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
@@ -27,23 +38,49 @@ const ContentSection: React.FC = () => {
     };
   }, []);
 
+    
+  const handleImageClick = () => {
+    setIsModalOpen(true);
+  }
+
   const handleSearch = async () => {
     try {
-      const response = await fetch('https://glycoshape.io/api/available_glycans');
+      // Ensure that searchRef and its current property is not null
+      if (!searchRef || !searchRef.current) {
+        console.warn("Search reference is not available.");
+        return;
+      }
+      
+      const requestBody = {
+        search_string: searchRef.current.value,
+      };
+      navigate(`/search?query=${searchRef.current.value}`);
+      const response = await fetch('https://glycoshape.io/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
       const data = await response.json();
-      setResults(data.glycan_list); // Update this line to correctly handle the data structure
+  
+      if (data.results) {
+        setResults(data.results); 
+        setSearchString(data.search_string);
+      }
+       else {
+        console.warn("Received unexpected data format");
+      }
+  
     } catch (error) {
       console.error("There was an error fetching the data", error);
     }
   };
-
-
-// const ContentSection: React.FC = () => {
-//   const searchRef = useRef(null);
-//   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-//   const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Ctrl+K ' });
-
-  
 
   return (
     <Flex direction="column" width="100%">
@@ -72,6 +109,27 @@ const ContentSection: React.FC = () => {
           p="0.5em"
           bg="white"
         >
+          <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
+        <Image src={draw} alt="Icon Description" w="24px" h="24px" />
+      </Button>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+    <ModalOverlay />
+    <ModalContent>
+      <ModalHeader>Freehand Glycan Drawer</ModalHeader>
+      <ModalCloseButton />
+      <ModalBody>
+        {/* Place your modal content here */}
+        <Box>
+          <Image src={un} alt="Description" />
+          <Text></Text>
+        </Box>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
+      </ModalFooter>
+    </ModalContent>
+  </Modal>
+  <form onSubmit={handleSearch}>
           <Input 
             ref={searchRef}
             placeholder="Search GLYCAM ID, IUPAC, GlycoCT, WURCS..." 
@@ -97,7 +155,7 @@ const ContentSection: React.FC = () => {
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
           </Text>
-          <Button 
+          <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"1rem"} type="submit"
             borderRadius="full" 
             backgroundColor="#7CC9A9"
             _hover={{
@@ -106,7 +164,7 @@ const ContentSection: React.FC = () => {
             onClick={handleSearch}
           >
             Search
-          </Button>
+          </Button></form>
         </Flex>
       </Flex>
 

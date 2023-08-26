@@ -1,0 +1,25 @@
+.drawer {
+    height: 100%;
+    background-color: #ddd;
+    overflow-x: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  
+  .drawer-content {
+    height: 100%;
+    padding: 20px;
+  }
+  
+  .drawer-resizer {
+    cursor: ew-resize;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px;
+    height: 100%;
+    background-color: #aaa;
+    z-index: 1;
+  }
+  

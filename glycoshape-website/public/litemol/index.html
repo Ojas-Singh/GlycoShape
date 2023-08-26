@@ -50,6 +50,7 @@
         // Retrieve the URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const pdbUrl = urlParams.get('pdbUrl');
+        const format = urlParams.get('format');
         const base64Pdb = urlParams.get('load');
     
         // Create a LiteMol Viewer instance
@@ -60,7 +61,7 @@
             viewer.loadMolecule({
                 id: 'molecule',
                 url: pdbUrl,
-                format: 'pdb', // specify the format as 'pdb'
+                format: format, // specify the format as 'pdb'
                 modelRef: 'model'
             });
         } else if (base64Pdb) {
@@ -71,7 +72,7 @@
             viewer.loadMolecule({
                 id: 'molecule',
                 data: pdbData,
-                format: 'pdb', // specify the format as 'pdb'
+                format: format, // specify the format as 'pdb'
                 modelRef: 'model'
             });
         } else {
