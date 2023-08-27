@@ -22,7 +22,7 @@ const Navbar: React.FC = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex as="nav" bgColor="#4E6E6D" align="center" justify="space-between" wrap="wrap" padding="1rem" boxShadow="md">
+    <Flex as="nav" bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="1rem" boxShadow="md">
       <Box>
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
         <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} paddingLeft={"1.5rem"} href="/" >GlycoShape.io</Link> 

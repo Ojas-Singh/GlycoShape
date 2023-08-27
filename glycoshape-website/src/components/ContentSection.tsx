@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import {
-  Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
+  Highlight, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
 } from "@chakra-ui/react";
 import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import bg from './assets/Glycans_bg_dark.jpg';
@@ -109,15 +109,20 @@ const ContentSection: React.FC = () => {
         >
           {/* GlycoShape */}
         </Text>
-        <Text 
+        {/* <Text 
+          lineHeight='tall'
           bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' 
           bgClip='text'
           fontSize='6xl'
           fontWeight='extrabold'
           marginBottom="0.2em"
-        >
-          Glycan Structure Database
-        </Text> 
+        > */}
+        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize='6xl' fontWeight='extrabold' marginBottom="0.2em">
+        <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+         Glycan Structure Database 
+        </Highlight>
+        </Heading> 
+        
         <Text 
           bgGradient='linear(to-l, #F7FFE6, #F7FFE6)' 
           bgClip='text'

@@ -4,7 +4,7 @@ import { FaArrowUp } from 'react-icons/fa';
 
 const ScrollToTopButton: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const bgColor = useColorModeValue('gray.700', 'gray.200');
+  const bgColor = useColorModeValue('#4E6E6D', 'gray.200');
   const color = useColorModeValue('white', 'gray.700');
 
   const checkVisibility = () => {

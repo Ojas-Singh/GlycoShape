@@ -11,55 +11,55 @@ const LinkedInIcon = () => <Icon viewBox="0 0 24 24">/* SVG content for LinkedIn
 
 const Footer: React.FC = () => {
   return (
-    <Box as="footer" padding="1.5rem" backgroundColor="#4E6E6D">
+    <Box as="footer" padding="1.5rem" backgroundColor="#28363F">
       <Flex direction="row" justify="space-between" wrap="wrap" marginBottom="0em">
         <Box>
           <Image src={logo} alt="GlycoShape Logo" height="150px" marginBottom="0.2em" paddingLeft={"1.5rem"}/>
           <Text color="lightblue">© GlycoShape</Text>
-          <Link>Legal Disclaimer</Link>
-          <Link>Privacy Notice</Link>
+          <Link color="white" >Legal Disclaimer</Link>
+          <Link color="white" >Privacy Notice</Link>
         </Box>
         <VStack align="start">
-          <Text fontWeight="bold">Core Data</Text>
+          <Text color="white" fontWeight="bold">Core Data</Text>
           <Divider />
-          <Link href="#">N linked Glycans</Link>
-          <Link href="#">O linked Glycans</Link>
-          <Link href="#">Glycosaminoglycans </Link>
+          <Link color="white" href="#">N linked Glycans</Link>
+          <Link color="white" href="#">O linked Glycans</Link>
+          <Link color="white" href="#">Glycosaminoglycans </Link>
         </VStack>
         <VStack align="start">
-          <Text fontWeight="bold">Supporting Data</Text>
+          <Text color="white" fontWeight="bold">Supporting Data</Text>
           <Divider />
-          <Link href="#">Literature citations</Link>
-          <Link href="#">Keywords</Link>
-          <Link href="#">Subcellular locations</Link>
-          <Link href="#">Cross-referenced databases</Link>
-          <Link href="#">Diseases</Link>
+          <Link color="white" href="#">Literature citations</Link>
+          <Link color="white" href="#">Keywords</Link>
+          <Link color="white" href="#">Subcellular locations</Link>
+          <Link color="white" href="#">Cross-referenced databases</Link>
+          <Link color="white" href="#">Diseases</Link>
         </VStack>
         <VStack align="start">
-          <Text fontWeight="bold">Tools</Text>
+          <Text color="white" fontWeight="bold">Tools</Text>
           <Divider />
-          <Link href="#">Re-Glyco</Link>
-          <Link href="#">Pridiction</Link>
-          <Link href="#">Glyco Blocks</Link>
-          <Link href="#">Sequence search</Link>
-          <Link href="#">Tool results</Link>
+          <Link color="white" href="#">Re-Glyco</Link>
+          <Link color="white" href="#">Pridiction</Link>
+          <Link color="white" href="#">Glyco Blocks</Link>
+          <Link color="white" href="#">Sequence search</Link>
+          <Link color="white" href="#">Tool results</Link>
         </VStack>
         <VStack align="start">
-          <Text fontWeight="bold">Information</Text>
+          <Text color="white"  fontWeight="bold">Information</Text>
           <Divider />
-          <Link href="#">Cite GlycoShape</Link>
-          <Link href="#">About & Help</Link>
-          <Link href="#">Glycam manual</Link>
-          <Link href="#">Technical corner</Link>
-          <Link href="#">Statistics</Link>
+          <Link color="white" href="#">Cite GlycoShape</Link>
+          <Link color="white" href="#">About & Help</Link>
+          <Link color="white" href="#">Glycam manual</Link>
+          <Link color="white" href="#">Technical corner</Link>
+          <Link color="white" href="#">Statistics</Link>
         </VStack>
         <Box >
-          <Text fontWeight="bold">Social</Text>
+          <Text color="white" fontWeight="bold">Social</Text>
           <HStack spacing="24px" paddingBottom={"4rem"}>
             {/* <Link href="#"><FacebookIcon /></Link>
             <Link href="#"><TwitterIcon /></Link> */}
-            <Link href="#"><LinkedInIcon /></Link>
-            <Link href="#">Contact Us</Link>
+            <Link color="white" href="#"><LinkedInIcon /></Link>
+            <Link color="white" href="#">Contact Us</Link>
           </HStack>
           <Text fontWeight="Medium" color={'white'}>Main Funding by:
           <HStack direction='row'>
@@ -69,7 +69,7 @@ const Footer: React.FC = () => {
         </Box>
       </Flex>
       <Flex justify="space-between">
-        <Text>Release and Statistics</Text>
+        <Text color="white" >Release and Statistics</Text>
 
         
 
