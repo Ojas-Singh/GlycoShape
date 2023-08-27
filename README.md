@@ -10,3 +10,8 @@ sudo nginx -t
 sudo systemctl reload nginx
 sudo systemctl restart nginx
 ```
+
+
+## api
+
+gunicorn -w 4 api:app --timeout 900

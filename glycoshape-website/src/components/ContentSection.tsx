@@ -75,28 +75,7 @@ const ContentSection: React.FC = () => {
         search_string: searchRef.current.value,
       };
       navigate(`/search?query=${searchRef.current.value}`);
-      const response = await fetch('https://glycoshape.io/api/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-  
-      if (data.results) {
-        setResults(data.results); 
-        setSearchString(data.search_string);
-      }
-       else {
-        console.warn("Received unexpected data format");
-      }
-  
+      
     } catch (error) {
       console.error("There was an error fetching the data", error);
     }

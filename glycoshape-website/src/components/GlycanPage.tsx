@@ -129,7 +129,6 @@ const SearchPage: React.FC = () => {
   </Modal>
 
           <Input 
-            value={searchString}
             onChange={(e) => setSearchString(e.target.value)}
             ref={searchRef}
             placeholder="Search GLYCAM ID, IUPAC, GlycoCT, WURCS..." 
@@ -199,9 +198,9 @@ const SearchPage: React.FC = () => {
               alignItems="center"
             >
               <Image
-                src="/glycan.jpg" // Replace with the path to your dummy image
+                src="path_to_dummy_image.jpg" // Replace with the path to your dummy image
                 alt="Glycan Image"
-                width="150px"
+                width="60px"
                 marginRight="1em"
               />
               <Text width={'100%'}>{glycan}</Text>

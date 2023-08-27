@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes  } from 'react-router-dom';
 
 // Importing your components
 import Navbar from './components/Navbar';
+import ScrollToTopButton from './components/Scroll';
 import ContentSection from './components/ContentSection';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
@@ -15,6 +16,7 @@ import Contact from './components/Contact';
 import ReGlyco from './components/ReGlyco';
 import Elab from './components/eLab/Elab';
 import SearchPage from './components/SearchPage';
+import GlycanPage from './components/GlycanPage';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -27,7 +29,7 @@ const App: React.FC = () => {
       <Flex direction="column" minHeight="100vh">
       {/* Navbar, if you have one */}
       <Navbar />
-
+      <ScrollToTopButton />
       {/* Main content area */}
       <Flex direction="column" flex="1">
         {/* Your main content components, like the ContentSection */}
@@ -40,6 +42,7 @@ const App: React.FC = () => {
           <Route path="/contact-us" element={<div><Search /></div>} />
           <Route path="/elab" element={<div><Search /> <Elab /></div>} />
           <Route path="/search" element={<SearchPage/>} />
+          <Route path="/glycan" element={<GlycanPage/>} />
         </Routes>
       </Flex>
 

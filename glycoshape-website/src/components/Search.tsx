@@ -6,12 +6,10 @@ import {
 import draw from './assets/draw.png';
 import un from './assets/un.png';
 import bg from './assets/Glycans_bg_dark.jpg';
-import cell from './assets/cell_surface.jpg';
-import dem1 from './assets/dem1.jpg';
 import { Kbd } from '@chakra-ui/react'
 
 
-const ContentSection: React.FC = () => {
+const Search: React.FC = () => {
   const navigate  = useNavigate();
   const [results, setResults] = useState<string[]>([]);
   const [searchString, setSearchString] = useState<string>('');
@@ -55,28 +53,6 @@ const ContentSection: React.FC = () => {
         search_string: searchRef.current.value,
       };
       navigate(`/search?query=${searchRef.current.value}`);
-      const response = await fetch('https://glycoshape.io/api/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-  
-      if (data.results) {
-        setResults(data.results); 
-        setSearchString(data.search_string);
-      }
-       else {
-        console.warn("Received unexpected data format");
-      }
-  
     } catch (error) {
       console.error("There was an error fetching the data", error);
     }
@@ -200,4 +176,4 @@ const ContentSection: React.FC = () => {
   );
 }
 
-export default ContentSection;
+export default Search;

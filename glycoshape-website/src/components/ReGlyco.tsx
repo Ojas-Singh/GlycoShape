@@ -12,7 +12,7 @@ import { Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, H
   StepStatus,
   StepTitle,
   Stepper,
-  useSteps,} from '@chakra-ui/react';
+  useSteps, Badge} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react'
 
 import bg from './assets/Glycans_bg_dark.jpg';
@@ -38,9 +38,9 @@ interface UniprotData {
   requestURL: string;
 }
 const steps = [
-  { title: 'Select Residues', description: 'ResId of Glycosylation Location' },
+  { title: 'Select Residues', description: 'ResID of Glycosylated residue' },
   { title: 'Select Glycans', description: 'N-Glycan, O-Glycans, etc ...' },
-  { title: 'Download', description: 'Cluster Information or Structure Correction' },
+  { title: 'Download', description: 'Re-Glycosylated structure' },
 ]
 
   const ReGlyco = () => {
@@ -114,17 +114,18 @@ const steps = [
           
     
               <>
-                  <Flex w="100%" justifyContent="center" alignItems="center" p={8}
-                  direction="row" 
+                  <Flex w="100%" 
                   align="center" 
                   justify="center" 
                   flex="1" 
-                  padding="2em"
+                  padding="0em"
                   minHeight={{ base: "15vh" }}
                   backgroundImage={`url(${bg})`} 
                   backgroundSize="cover" 
                   // backgroundPosition="center"
-                  backgroundRepeat="no-repeat"  >
+                  backgroundRepeat="no-repeat"  justifyContent="center" alignItems="center" p={1}
+                  direction="row" 
+                   >
                       <Text
                           bgGradient='linear(to-l,  #FDFDA1, #E2FCC5)'
                           bgClip='text'
@@ -136,6 +137,7 @@ const steps = [
                       </Text>
       
                       {/* Search Bar Section */}
+                     
                       <Flex width="30%" align="center" position="relative" gap="1em" boxShadow="xl" borderRadius="full" overflow="hidden" p="0.5em" bg="white">
                           <form onSubmit={handleSearch}>
                               <Input
@@ -178,6 +180,8 @@ const steps = [
                               Search
                           </Button>
                       </Flex>
+                      
+                        
                               
                       <Text 
                           marginLeft={"2rem"}
@@ -212,22 +216,25 @@ const steps = [
                               onChange={handleFileUpload}
                           />
                       </Box>
+                      
                   </Flex>
-      
+                  
+                      
+    
                   {/* Rest of the content */}
                   <VStack spacing={4} w="100%" p={8}>
                       {UniprotData && (
-                          <Flex w="100%" justifyContent="left" alignItems="center" p={8} direction="column"  >  
+                          <Flex w="100%" justifyContent="left" alignItems="center" p={8} marginTop={"0"} direction="column"  >  
                               
-                              <Accordion w="80%" defaultIndex={[0]} allowMultiple>
-                              <AccordionItem> <Heading margin={"2rem"} as='h4'size='xl'> Uniprot ID : {UniprotData.uniprot}</Heading>
+                              <Accordion marginTop={"-2rem"} w="90%" defaultIndex={[1]} allowMultiple>
+                              <AccordionItem> <Heading margin={"2rem"} marginLeft={"0"} as='h4'size='xl'> Uniprot ID : {UniprotData.uniprot}</Heading>
                               
                               </AccordionItem>
                                 <AccordionItem>
                                   <h2>
-                                    <AccordionButton>
+                                    <AccordionButton  margin={"1rem"} marginLeft={"0"} >
                                       <Box as="span" flex='1' textAlign='left'>
-                                      <Heading margin='1rem' as='h4' size='md'>Glycosylation Information</Heading> 
+                                      <Heading   as='h4' size='md'>Glycosylation Information</Heading> 
                                       </Box>
                                       <AccordionIcon />
                                     </AccordionButton>
@@ -235,23 +242,52 @@ const steps = [
                                   <AccordionPanel pb={4}>
                                   <Box mt={4}>
                                   <Text fontWeight="bold">Sequence:</Text>
-                                  <Code width={"80rem"}>{JSON.stringify(UniprotData.glycosylation_locations.sequence, null, 2)}</Code>
+                                  <Code width={"70rem"}>{JSON.stringify(UniprotData.glycosylation_locations.sequence, null, 2)}</Code>
                                   <Text fontWeight="bold">Glycosylations</Text>
-                                  <Code width={"80rem"}>{JSON.stringify(UniprotData.glycosylation_locations.glycosylations, null, 2)}</Code>
+                                  <Code width={"70rem"}>{JSON.stringify(UniprotData.glycosylation_locations.glycosylations, null, 2)}</Code>
                                   
                               </Box>
                                   </AccordionPanel>
                                 </AccordionItem>
                                 <AccordionItem> 
+                                  <HStack>
+                                <Box borderWidth="1px" borderRadius="md" padding={4} width="300px">
+                                    <Text fontSize="lg" fontWeight="bold" mb={3}>
+                                      3D Viewer
+                                    </Text>
+
+                                    <Text fontWeight="semibold" mb={2}>Model Confidence:</Text>
+
+                                    <Text mb={1}>
+                                      <Badge bg="#0053D6" borderRadius="full" px={2}>Very high (pLDDT {'>'} 90)</Badge>
+                                    </Text>
+
+                                    <Text mb={1}>
+                                      <Badge bg="#65CBF3" borderRadius="full" px={2}>Confident (90 {'>'} pLDDT {'>'} 70)</Badge>
+                                    </Text>
+
+                                    <Text mb={1}>
+                                      <Badge bg="#FFDB13" borderRadius="full" px={2}>Low (70 {'>'} pLDDT {'>'} 50)</Badge>
+                                    </Text>
+
+                                    <Text mb={3}>
+                                      <Badge bg="#FF7D45" borderRadius="full" px={2}>Very low (pLDDT {'<'} 50)</Badge>
+                                    </Text>
+
+                                    <Text fontSize="sm">
+                                      AlphaFold produces a per-residue confidence score (pLDDT) between 0 and 100. Some regions below 50 pLDDT may be unstructured in isolation.
+                                    </Text>
+                                  </Box>
                                   <iframe
+                                  key={UniprotData.requestURL}
                                   width="90%"
                                   height="400px"
-                                  src={`/pdbe/index.html?Url=${UniprotData.requestURL}&format=cif`}
-                                  frameBorder="0"
+                                  src={`/pdbe/index.html?Url=${UniprotData.requestURL}&format=cif&timestamp=${Date.now()}`}                                  frameBorder="0"
                                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                   allowFullScreen
                                   title="Protein Structure"
-                              /></AccordionItem>
+                              /> </HStack>
+                              </AccordionItem>
                                 <AccordionItem>
                                   <h2>
                                     <AccordionButton>
