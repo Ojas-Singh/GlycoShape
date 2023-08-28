@@ -76,6 +76,7 @@ const Search: React.FC = () => {
 
         <Flex 
           width="80%" 
+          minWidth={{ base: "120%" , md: "80%"}}
           align="center" 
           position="relative"
           gap="1em" 
@@ -108,6 +109,7 @@ const Search: React.FC = () => {
   <form onSubmit={handleSearch}>
           <Input 
             ref={searchRef}
+            fontFamily={'texts'}
             placeholder="Search GLYCAM ID, IUPAC, GlycoCT, WURCS..." 
             size="lg" 
             flex="1" 

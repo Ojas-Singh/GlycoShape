@@ -99,6 +99,7 @@ const SearchPage: React.FC = () => {
 
         <Flex 
           width="80%" 
+          minWidth={{ base: "120%" , md: "80%"}}
           align="center" 
           position="relative"
           gap="1em" 
@@ -130,6 +131,7 @@ const SearchPage: React.FC = () => {
 
           <Input 
             value={searchString}
+            fontFamily={'texts'}
             onChange={(e) => setSearchString(e.target.value)}
             ref={searchRef}
             placeholder="Search GLYCAM ID, IUPAC, GlycoCT, WURCS..." 
@@ -171,14 +173,14 @@ const SearchPage: React.FC = () => {
 
       {results.length > 0 && (
         <Flex direction="column" align="center" width="100%">
-        <Box width="100%" padding="4em">
+        <Box width="100%" padding="4em" paddingTop={'2rem'}>
           <Text fontSize="2xl" marginBottom="1em">
             Showing all search results for "{searchString}"
           </Text>
-          <Text marginBottom="1em">1 - 20 of {results.length} results</Text>
+          <Text marginBottom="1rem">1 - 20 of {results.length} results</Text>
         </Box>
     
-        <Flex direction="row" width="100%" padding="2em">
+        <Flex direction="row" width="100%" padding="2em" paddingTop={'0.5em'}>
           {/* Filters on the left */}
           <Box width="30%" padding="1em">
             {/* Example filter */}
@@ -189,9 +191,9 @@ const SearchPage: React.FC = () => {
           {results.map((glycan, index) => (
             <Box
               key={index}
-              width="80%"
+              width="100%"
               padding="1em"
-              boxShadow="sm"
+              boxShadow="md"
               marginBottom="1em"
               backgroundColor="white"
               borderRadius="md"
@@ -204,7 +206,7 @@ const SearchPage: React.FC = () => {
                 width="150px"
                 marginRight="1em"
               />
-              <Text width={'100%'}>{glycan}</Text>
+              <Text fontFamily={'mono'} width={'80%'}>{glycan}</Text>
             </Box>
           ))}</Box></Flex>
         </Flex>

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ChakraProvider, Box, CSSReset, theme } from '@chakra-ui/react';
+import { ChakraProvider, Box, CSSReset } from '@chakra-ui/react';
 import { Flex } from "@chakra-ui/react";
 import { BrowserRouter as Router, Route, Routes  } from 'react-router-dom';
 
@@ -17,6 +17,7 @@ import ReGlyco from './components/ReGlyco';
 import Elab from './components/eLab/Elab';
 import SearchPage from './components/SearchPage';
 import GlycanPage from './components/GlycanPage';
+import theme from './components/Theme';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -51,6 +52,7 @@ const App: React.FC = () => {
     </Flex>
     </ChakraProvider>
     </Router>
+
   );
 }
 

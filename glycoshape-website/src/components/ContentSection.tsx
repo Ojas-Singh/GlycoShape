@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import {
-  AspectRatio, Wrap, Highlight, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem
+  ChakraProvider ,AspectRatio, Wrap, Highlight, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem
 } from "@chakra-ui/react";
 import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import bg from './assets/Glycans_bg_dark.jpg';
@@ -11,6 +11,7 @@ import cell from './assets/cell_surface.jpg';
 import dem1 from './assets/dem1.jpg';
 import { Kbd } from '@chakra-ui/react'
 import { url } from 'inspector';
+import theme from './Theme';
 
 const ContentSection: React.FC = () => {
   const navigate  = useNavigate();
@@ -88,6 +89,7 @@ const ContentSection: React.FC = () => {
 
 
   return (
+      
     <Flex direction="column" width="100%">
       
       <Flex 
@@ -100,25 +102,8 @@ const ContentSection: React.FC = () => {
         backgroundImage={`url(${bg})`} 
         backgroundSize="cover" 
         backgroundRepeat="no-repeat"
-      >
-        <Text 
-          bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' 
-          bgClip='text'
-          fontSize='6xl'
-          fontWeight='extrabold'
-          marginBottom="0.0rem"
-        >
-          {/* GlycoShape */}
-        </Text>
-        {/* <Text 
-          lineHeight='tall'
-          bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' 
-          bgClip='text'
-          fontSize='6xl'
-          fontWeight='extrabold'
-          marginBottom="0.2em"
-        > */}
-        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "4xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "6xl"}} fontWeight='extrabold' marginBottom="0.2em">
+      >        
+        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "3xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "6xl"}} fontWeight='bold' marginBottom="0.2em">
         <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
          Glycan Structure Database 
         </Highlight>
@@ -136,13 +121,14 @@ const ContentSection: React.FC = () => {
         
         <Flex 
           width="80%" 
+          minWidth={{ base: "120%", md: "80%" }}
           align="center" 
           position="relative"
           gap="1em" 
           boxShadow="xl" 
           borderRadius="full" 
           overflow="hidden" 
-          p="0.5em"
+          p="0.5rem"
           bg="white"
         >
           <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
@@ -168,6 +154,7 @@ const ContentSection: React.FC = () => {
       <form onSubmit={handleSearch}>
           <Input 
             width={"100%"}
+            fontFamily={'texts'}
             ref={searchRef}
             placeholder={placeholderText}
             size="lg"   
@@ -187,7 +174,7 @@ const ContentSection: React.FC = () => {
             top="50%" 
             transform="translateY(-50%)"
             color="gray.500"
-            fontSize="sm"
+            fontSize={{base: "xs",sm: "xs", md: "sm", lg: "sm",xl: "sm"}}
             userSelect="none"
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
@@ -236,6 +223,7 @@ const ContentSection: React.FC = () => {
                 bgClip='text'
                 fontSize={{base: "2xl",sm: "3xl", md: "3xl", lg: "4xl",xl: "4xl"}}
                 fontWeight='bold'
+                fontFamily={'texts'}
               >
               GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder to accelerate scientific research. 
               </Text>
@@ -245,9 +233,8 @@ const ContentSection: React.FC = () => {
           <Flex 
             direction={["column", "row"]} 
             align="center"
-            padding={"2rem"}
-            // marginTop={"-10rem"}
-            paddingLeft={"2rem"}
+            padding={"4rem"}
+            // paddingLeft={"2rem"}
             backgroundColor="#FFFFFF"
           >
             <Wrap align='center'>
@@ -262,7 +249,7 @@ const ContentSection: React.FC = () => {
               > 
                 What are Glycans?
               </Text>
-              <Container textAlign={'center'} padding={'2rem'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "2xl",xl: "2xl"}}>
+              <Container textAlign={'left'} padding={'2rem'} fontFamily={'texts'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "lg",xl: "lg"}}>
               Glycans, often referred to as complex carbohydrates or polysaccharides, play a crucial role in various biological processes. They are essentially chains or branches of sugar molecules that can be found on the surface of all cells in every living organism. Functioning as the "face" of cells, glycans facilitate communication between cells and their environment, influencing a vast range of processes from cell signaling to immunity. Their intricate structures and patterns determine the roles they play, making them essential for understanding health and disease states.
 
               </Container>
@@ -303,7 +290,7 @@ const ContentSection: React.FC = () => {
               > 
                 Why it's important?
               </Text>
-              <Container textAlign={'center'} padding={'2rem'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "2xl",xl: "2xl"}}>
+              <Container textAlign={'left'} padding={'2rem'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "lg",xl: "lg"}}>
               Glycans, often referred to as complex carbohydrates or polysaccharides, play a crucial role in various biological processes. They are essentially chains or branches of sugar molecules that can be found on the surface of all cells in every living organism. Functioning as the "face" of cells, glycans facilitate communication between cells and their environment, influencing a vast range of processes from cell signaling to immunity. Their intricate structures and patterns determine the roles they play, making them essential for understanding health and disease states.
 
               </Container>
@@ -318,6 +305,7 @@ const ContentSection: React.FC = () => {
 </Flex>
 
     </Flex>
+
   );
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, useEffect, useRef } from 'react';
-import { Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
+import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
@@ -12,7 +12,7 @@ import { Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, H
   StepStatus,
   StepTitle,
   Stepper,
-  useSteps, Badge} from '@chakra-ui/react';
+  useSteps, Badge, WrapItem} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react'
 
 import bg from './assets/Glycans_bg_dark.jpg';
@@ -129,16 +129,16 @@ const steps = [
                       <Text
                           bgGradient='linear(to-l,  #FDFDA1, #E2FCC5)'
                           bgClip='text'
-                          fontSize='5xl'
+                          fontSize={{base: "3xl",sm: "3xl", md: "5xl", lg: "5xl",xl: "5xl"}}
                           fontWeight='extrabold'
                           marginBottom="0.2em"
                       >
-                          <Link fontWeight="bold" href="/reglyco" marginRight="20px">Re-Glyco</Link>
+                          <Link fontWeight="extrabold" fontFamily={'texts'} href="/reglyco" marginRight="20px">Re-Glyco</Link>
                       </Text>
-      
                       {/* Search Bar Section */}
                      
-                      <Flex width="30%" align="center" position="relative" gap="1em" boxShadow="xl" borderRadius="full" overflow="hidden" p="0.5em" bg="white">
+                      <Flex width="30%" minWidth={{ base: "50%" , md: "30%"}} align="center" position="relative" gap="1em" boxShadow="xl" borderRadius="full" overflow="hidden" p="0.5em" bg="white">
+                      
                           <form onSubmit={handleSearch}>
                               <Input
                                   onChange={(e) => setUniprotID(e.target.value)}
@@ -158,14 +158,14 @@ const steps = [
                           </form>
                           <Text
                               position="absolute"
-                              right="8rem"
+                              right="7rem"
                               top="50%"
                               transform="translateY(-50%)"
                               color="gray.500"
-                              fontSize="sm"
+                              fontSize="xs"
                               userSelect="none"
                           >
-                              <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
+                              <Kbd>ctrl</Kbd>+<Kbd>K</Kbd>
                           </Text>
                           <Button
                               position={"absolute"}
@@ -181,13 +181,11 @@ const steps = [
                           </Button>
                       </Flex>
                       
-                        
-                              
                       <Text 
                           marginLeft={"2rem"}
                           bgGradient='linear(to-l, #44666C, #44666C)'
                           bgClip='text'
-                          fontSize='3xl'
+                          fontSize={{base: "2xl",sm: "2xl", md: "2xl", lg: "2xl",xl: "2xl"}}
                           alignItems="center"
                           fontWeight='extrabold'
                           marginBottom="0.2em"
@@ -198,7 +196,7 @@ const steps = [
                           <Button
                               as="label"
                               colorScheme="teal"
-                              size="md"
+                              size={{base: "sm",sm: "sm", md: "sm", lg: "md",xl: "md"}}
                               cursor="pointer"
                               w="full"
                           >
