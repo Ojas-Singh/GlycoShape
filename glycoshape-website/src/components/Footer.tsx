@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
           <Image src={logo} alt="GlycoShape Logo" height="150px" marginBottom="0.2em" paddingLeft={"1.5rem"}/>
           <Text color="lightblue">© GlycoShape</Text>
           <Link color="white" >Legal Disclaimer</Link>
-          <Link color="white" >Privacy Notice</Link>
+          <Link color="white" > Privacy Notice</Link>
         </Box>
         <VStack align="start">
           <Text color="white" fontWeight="bold">Core Data</Text>

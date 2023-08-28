@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import {
-  Highlight, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
+  AspectRatio, Wrap, Highlight, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem
 } from "@chakra-ui/react";
 import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import bg from './assets/Glycans_bg_dark.jpg';
@@ -89,6 +89,7 @@ const ContentSection: React.FC = () => {
 
   return (
     <Flex direction="column" width="100%">
+      
       <Flex 
         direction="column" 
         align="center" 
@@ -117,7 +118,7 @@ const ContentSection: React.FC = () => {
           fontWeight='extrabold'
           marginBottom="0.2em"
         > */}
-        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize='6xl' fontWeight='extrabold' marginBottom="0.2em">
+        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "4xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "6xl"}} fontWeight='extrabold' marginBottom="0.2em">
         <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
          Glycan Structure Database 
         </Highlight>
@@ -169,7 +170,7 @@ const ContentSection: React.FC = () => {
             width={"100%"}
             ref={searchRef}
             placeholder={placeholderText}
-            size="lg" 
+            size="lg"   
             flex="1" 
             border="none"
             _hover={{
@@ -233,69 +234,87 @@ const ContentSection: React.FC = () => {
                       align={"center"}
                 bgGradient='linear(to-l, #44666C, #A7C4A3)'
                 bgClip='text'
-                fontSize='4xl'
+                fontSize={{base: "2xl",sm: "3xl", md: "3xl", lg: "4xl",xl: "4xl"}}
                 fontWeight='bold'
               >
               GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder to accelerate scientific research. 
               </Text>
               </Flex>
               <Flex direction="column">
+              <Wrap>
           <Flex 
             direction={["column", "row"]} 
             align="center"
-            padding={"10rem"}
-            paddingLeft={"250px"}
+            padding={"2rem"}
+            // marginTop={"-10rem"}
+            paddingLeft={"2rem"}
             backgroundColor="#FFFFFF"
           >
+            <Wrap align='center'>
+              <WrapItem>
             <Box flex="1">
               <Text
                 align={"center"}
                 bgGradient='linear(to-l, #44666C, #4E6E6D)'
                 bgClip='text'
-                fontSize='5xl'
+                fontSize={{base: "3xl",sm: "3xl", md: "3xl", lg: "5xl",xl: "5xl"}}
                 fontWeight='bold'
               > 
                 What are Glycans?
               </Text>
-              <Container textAlign={'center'} fontSize={'2xl'}>
+              <Container textAlign={'center'} padding={'2rem'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "2xl",xl: "2xl"}}>
               Glycans, often referred to as complex carbohydrates or polysaccharides, play a crucial role in various biological processes. They are essentially chains or branches of sugar molecules that can be found on the surface of all cells in every living organism. Functioning as the "face" of cells, glycans facilitate communication between cells and their environment, influencing a vast range of processes from cell signaling to immunity. Their intricate structures and patterns determine the roles they play, making them essential for understanding health and disease states.
 
               </Container>
               <Text fontSize={'2xl'}>
               </Text>
             </Box>
+            </WrapItem>
+            <WrapItem>
             <Box flex="1">
               <Image maxHeight={"25rem"} width={'auto'} paddingLeft={'2rem'} src={cell} alt="Description Image" />
             </Box>
+            </WrapItem>
+            </Wrap>
           </Flex>
 
           {/* Second Section - Why it's important? */}
           <Flex 
-            direction={["column-reverse", "row-reverse"]} 
+            direction={["column", "row"]} 
             align="center"
-            padding={"100px"}
-            paddingRight={"250px"}
-            paddingLeft={"250px"}
+            padding={"2rem"}
+            paddingLeft={"2rem"}
             backgroundColor="#FFFFFF"
           >
+            <Wrap align='center'>
+            <WrapItem>
+            <Box flex="1" >
+              <Image padding={'2rem'} maxHeight={"45rem"} src={dem1} alt="Importance Image" />
+            </Box>
+            </WrapItem>
+              <WrapItem>
             <Box flex="1">
               <Text
-                align={"left"}
+                align={"center"}
                 bgGradient='linear(to-l, #44666C, #4E6E6D)'
                 bgClip='text'
-                fontSize='5xl'
+                fontSize={{base: "3xl",sm: "3xl", md: "3xl", lg: "5xl",xl: "5xl"}}
                 fontWeight='bold'
               > 
                 Why it's important?
               </Text>
-              <Text mt={4}>
-                Description about why Glycans are important goes here...
-              </Text>
+              <Container textAlign={'center'} padding={'2rem'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "2xl",xl: "2xl"}}>
+              Glycans, often referred to as complex carbohydrates or polysaccharides, play a crucial role in various biological processes. They are essentially chains or branches of sugar molecules that can be found on the surface of all cells in every living organism. Functioning as the "face" of cells, glycans facilitate communication between cells and their environment, influencing a vast range of processes from cell signaling to immunity. Their intricate structures and patterns determine the roles they play, making them essential for understanding health and disease states.
+
+              </Container>
+            
             </Box>
-            <Box flex="1">
-              <Image maxHeight={"35rem"} src={dem1} alt="Importance Image" />
-            </Box>
+            </WrapItem>
+            
+            </Wrap>
+            
           </Flex>
+          </Wrap>
 </Flex>
 
     </Flex>
