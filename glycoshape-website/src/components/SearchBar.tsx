@@ -1,16 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import {
-  Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
+  FormControl, ChakraProvider ,AspectRatio, Wrap, Highlight, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem
 } from "@chakra-ui/react";
+import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import draw from './assets/draw.png';
 import un from './assets/un.png';
-import bg from './assets/Glycans_bg_dark.jpg';
+
 import { Kbd } from '@chakra-ui/react'
 
 
-const Search: React.FC = () => {
+const Bar: React.FC = () => {
   const navigate  = useNavigate();
+  const [placeholderText, setPlaceholderText] = useState('Search GLYCAM ID, IUPAC, GlycoCT, WURCS...');
+  const placeholders = [
+    'Search by GLYCAM ID...',
+    'Look up by IUPAC...',
+    'Find by GlycoCT...',
+    'Query with WURCS...',
+    'Enter your search query...'
+];
   const [results, setResults] = useState<string[]>([]);
   const [searchString, setSearchString] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -18,6 +27,19 @@ const Search: React.FC = () => {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
 
+  useEffect(() => {
+    let index = 0;
+
+    const interval = setInterval(() => {
+        index = (index + 1) % placeholders.length;
+        setPlaceholderText(placeholders[index]);
+    }, 1500);
+
+    // Cleanup on component unmount
+    return () => {
+        clearInterval(interval);
+    };
+}, []);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -36,10 +58,8 @@ const Search: React.FC = () => {
     };
   }, []);
 
-    
-  const handleImageClick = () => {
-    setIsModalOpen(true);
-  }
+
+
 
   const handleSearch = async () => {
     try {
@@ -53,65 +73,68 @@ const Search: React.FC = () => {
         search_string: searchRef.current.value,
       };
       navigate(`/search?query=${searchRef.current.value}`);
+      
     } catch (error) {
       console.error("There was an error fetching the data", error);
     }
   };
+  
+  const handleImageClick = () => {
+    setIsModalOpen(true);
+  }
+
+
 
   return (
-    <Flex direction="column" width="100%">
+    <Flex 
+    width={'100%'}
+    direction="column" 
+    align="center" 
+    justify="center" 
+    flex="1" 
+    // padding="1em"
+    
+  >    
+      
       <Flex 
-        direction="column" 
-        align="center" 
-        justify="center" 
-        flex="1" 
-        padding="4em"
-        minHeight={{ base: "15vh" }}
-        backgroundImage={`url(${bg})`} 
-        backgroundSize="cover" 
-        // backgroundPosition="center"
-        backgroundRepeat="no-repeat"  
-      >
-        
-
-        <Flex 
           width="80%" 
-          minWidth={{ base: "120%" , md: "80%"}}
+          minWidth={{ base: "120%", md: "80%" }}
           align="center" 
           position="relative"
           gap="1em" 
           boxShadow="xl" 
           borderRadius="full" 
           overflow="hidden" 
-          p="0.5em"
+          p="0.5rem"
           bg="white"
         >
           <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
-        <Image src={draw} alt="Icon Description" w="24px" h="24px" />
-      </Button>
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-    <ModalOverlay />
-    <ModalContent>
-      <ModalHeader>Freehand Glycan Drawer</ModalHeader>
-      <ModalCloseButton />
-      <ModalBody>
-        {/* Place your modal content here */}
-        <Box>
-          <Image src={un} alt="Description" />
-          <Text></Text>
-        </Box>
-      </ModalBody>
-      <ModalFooter>
-        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
-      </ModalFooter>
-    </ModalContent>
-  </Modal>
-  <form onSubmit={handleSearch}>
+            <Image src={draw} alt="Icon Description" w="24px" h="24px" />
+          </Button>
+          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Freehand Glycan Drawer</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {/* Place your modal content here */}
+            <Box>
+              <Image src={un} alt="Description" />
+              <Text></Text>
+            </Box>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <form style={{ width: '100%', flex:"1" }} onSubmit={handleSearch} >
           <Input 
-            ref={searchRef}
+            width={{base: "60%",sm: "80%", md: "80%", lg: "80%",xl: "80%"}}
             fontFamily={'texts'}
-            placeholder="Search GLYCAM ID, IUPAC, GlycoCT, WURCS..." 
-            size="lg" 
+            ref={searchRef}
+            placeholder={placeholderText}
+            size="lg"   
             flex="1" 
             border="none"
             _hover={{
@@ -128,7 +151,7 @@ const Search: React.FC = () => {
             top="50%" 
             transform="translateY(-50%)"
             color="gray.500"
-            fontSize="sm"
+            fontSize={{base: "xs",sm: "xs", md: "sm", lg: "sm",xl: "sm"}}
             userSelect="none"
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
@@ -143,39 +166,26 @@ const Search: React.FC = () => {
           >
             Search
           </Button></form>
+          
         </Flex>
-      </Flex>
-
-      {results.length > 0 && (
-        <Flex direction="column" align="center" width="100%" padding="2em">
-          {results.map((glycan, index) => (
-            <Box
-              key={index}
-              width="100%"
-              padding="1em"
-              boxShadow="sm"
-              marginBottom="1em"
-              backgroundColor="white"
-              borderRadius="md"
-              display="flex"
-              alignItems="center"
+        
+        <Flex direction="row" justify="space-between" width="80%" mt={2}>
+          <Flex align="center">
+            <Text color="white" marginRight={2}>Examples:</Text>
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=LFucpa1-2DGalpa1-OH')}
             >
-              <Image
-                src="path_to_dummy_image.jpg" // Replace with the path to your dummy image
-                alt="Glycan Image"
-                width="60px"
-                marginRight="1em"
-              />
-              <Text>{glycan}</Text>
-            </Box>
-          ))}
+              LFucpa1-2DGalpa1-OH
+            </Button>
+          </Flex>
+          <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text>
         </Flex>
-      )}
+        </Flex>
 
-      
-
-    </Flex>
   );
 }
 
-export default Search;
+export default Bar;

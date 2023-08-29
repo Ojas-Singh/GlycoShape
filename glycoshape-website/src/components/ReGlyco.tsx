@@ -130,10 +130,10 @@ const steps = [
                           bgGradient='linear(to-l,  #FDFDA1, #E2FCC5)'
                           bgClip='text'
                           fontSize={{base: "3xl",sm: "3xl", md: "5xl", lg: "5xl",xl: "5xl"}}
-                          fontWeight='extrabold'
+                          
                           marginBottom="0.2em"
                       >
-                          <Link fontWeight="extrabold" fontFamily={'texts'} href="/reglyco" marginRight="20px">Re-Glyco</Link>
+                          <Link fontWeight="bold" fontFamily={'heading'} href="/reglyco" marginRight="20px">Re-Glyco</Link>
                       </Text>
                       {/* Search Bar Section */}
                      
@@ -143,6 +143,7 @@ const steps = [
                               <Input
                                   onChange={(e) => setUniprotID(e.target.value)}
                                   ref={searchRef}
+                                  fontFamily={'texts'}
                                   placeholder="Enter Uniprot Id"
                                   size="lg"
                                   flex="1"
@@ -200,7 +201,7 @@ const steps = [
                               cursor="pointer"
                               w="full"
                           >
-                              Upload custom PDB File
+                              Upload your .pdb
                           </Button>
                           <Input
                               type="file"

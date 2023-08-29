@@ -9,7 +9,7 @@ import ScrollToTopButton from './components/Scroll';
 import ContentSection from './components/ContentSection';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
-import Search from './components/Search';
+import Search from './components/SearchTop';
 import API from './components/API';
 import Download from './components/Download';
 import Contact from './components/Contact';

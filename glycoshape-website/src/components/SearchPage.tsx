@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef,  } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import {
     Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
   } from "@chakra-ui/react";
@@ -7,6 +8,7 @@ import draw from './assets/draw.png';
 import un from './assets/un.png';
 import bg from './assets/Glycans_bg_dark.jpg';
 import { Kbd } from '@chakra-ui/react'
+
 
 const SearchPage: React.FC = () => {
     const navigate  = useNavigate();
@@ -88,7 +90,8 @@ const SearchPage: React.FC = () => {
         align="center" 
         justify="center" 
         flex="1" 
-        padding="4em"
+        padding="1em"
+        paddingTop="2em"
         minHeight={{ base: "15vh" }}
         backgroundImage={`url(${bg})`} 
         backgroundSize="cover" 
@@ -99,43 +102,43 @@ const SearchPage: React.FC = () => {
 
         <Flex 
           width="80%" 
-          minWidth={{ base: "120%" , md: "80%"}}
+          minWidth={{ base: "120%", md: "80%" }}
           align="center" 
           position="relative"
-          gap="1em" 
+          // gap="1em" 
           boxShadow="xl" 
           borderRadius="full" 
           overflow="hidden" 
-          p="0.5em"
+          p="0.5rem"
           bg="white"
-        ><Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
-        <Image src={draw} alt="Icon Description" w="24px" h="24px" />
-      </Button>
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-    <ModalOverlay />
-    <ModalContent>
-      <ModalHeader>Freehand Glycan Drawer</ModalHeader>
-      <ModalCloseButton />
-      <ModalBody>
-        {/* Place your modal content here */}
-        <Box>
-          <Image src={un} alt="Description" />
-          <Text></Text>
-        </Box>
-      </ModalBody>
-      <ModalFooter>
-        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
-      </ModalFooter>
-    </ModalContent>
-  </Modal>
-
+        >
+          <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
+            <Image src={draw} alt="Icon Description" w="24px" h="24px" />
+          </Button>
+          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Freehand Glycan Drawer</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {/* Place your modal content here */}
+            <Box>
+              <Image src={un} alt="Description" />
+              <Text></Text>
+            </Box>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <form style={{ width: '100%', flex:"1" }} onSubmit={handleSearch} >
           <Input 
-            value={searchString}
+            width={{base: "60%",sm: "80%", md: "80%", lg: "80%",xl: "80%"}}
             fontFamily={'texts'}
-            onChange={(e) => setSearchString(e.target.value)}
             ref={searchRef}
-            placeholder="Search GLYCAM ID, IUPAC, GlycoCT, WURCS..." 
-            size="lg" 
+            placeholder='Search GLYCAM ID, IUPAC, GlycoCT, WURCS...'
+            size="lg"   
             flex="1" 
             border="none"
             _hover={{
@@ -152,7 +155,7 @@ const SearchPage: React.FC = () => {
             top="50%" 
             transform="translateY(-50%)"
             color="gray.500"
-            fontSize="sm"
+            fontSize={{base: "xs",sm: "xs", md: "sm", lg: "sm",xl: "sm"}}
             userSelect="none"
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
@@ -163,11 +166,27 @@ const SearchPage: React.FC = () => {
             _hover={{
               backgroundColor: "#51BF9D"
             }}
-            // onClick={handleSearch}
-            
+            onClick={handleSearch}
           >
             Search
-          </Button>
+          </Button></form>
+          
+        </Flex>
+        
+
+        <Flex direction="row" justify="space-between" width="80%" mt={2}>
+          <Flex align="center">
+            <Text color="white" marginRight={2}>Examples:</Text>
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=LFucpa1-2DGalpa1-OH')}
+            >
+              LFucpa1-2DGalpa1-OH
+            </Button>
+          </Flex>
+          <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text>
         </Flex>
       </Flex>
 
