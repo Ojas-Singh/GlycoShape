@@ -153,7 +153,7 @@ const SearchPage: React.FC = () => {
           />
           <Text 
             position="absolute" 
-            right="8em" 
+            right={{base: "2rem",sm: "2rem", md: "2rem", lg: "2rem",xl: "2rem"}}
             top="50%" 
             transform="translateY(-50%)"
             color="gray.500"
@@ -162,7 +162,7 @@ const SearchPage: React.FC = () => {
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
           </Text>
-          <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"1rem"} type="submit"
+          {/* <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"1rem"} type="submit"
             borderRadius="full" 
             backgroundColor="#7CC9A9"
             _hover={{
@@ -171,7 +171,7 @@ const SearchPage: React.FC = () => {
             // onClick={handleSearch}
           >
             Search
-          </Button>
+          </Button> */}
           
         </Flex>
         

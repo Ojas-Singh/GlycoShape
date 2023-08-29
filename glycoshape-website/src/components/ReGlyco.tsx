@@ -124,7 +124,7 @@ const steps = [
                   backgroundSize="cover" 
                   // backgroundPosition="center"
                   backgroundRepeat="no-repeat"  justifyContent="center" alignItems="center" p={1}
-                  direction="row" 
+                  direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}
                    >
                       <Text
                           bgGradient='linear(to-l,  #FDFDA1, #E2FCC5)'
@@ -137,7 +137,7 @@ const steps = [
                       </Text>
                       {/* Search Bar Section */}
                      
-                      <Flex width="30%" minWidth={{ base: "50%" , md: "30%"}} align="center" position="relative" gap="1em" boxShadow="xl" borderRadius="full" overflow="hidden" p="0.5em" bg="white">
+                      <Flex width="40%" minWidth={{ base: "50%" , md: "40%"}} align="center" position="relative" gap="1em" boxShadow="xl" borderRadius="full" overflow="hidden" p="0.5em" bg="white">
                       
                           <form onSubmit={handleSearch}>
                               <Input
@@ -159,7 +159,7 @@ const steps = [
                           </form>
                           <Text
                               position="absolute"
-                              right="7rem"
+                              right={{base: "1rem",sm: "1rem", md: "5rem", lg: "7rem",xl: "7rem"}}
                               top="50%"
                               transform="translateY(-50%)"
                               color="gray.500"
@@ -170,15 +170,16 @@ const steps = [
                           </Text>
                           <Button
                               position={"absolute"}
-                              right="5%"
+                              right="3%"
                               borderRadius="full"
                               backgroundColor="#7CC9A9"
                               _hover={{
                                   backgroundColor: "#51BF9D"
                               }}
+                              size = {{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
                               onClick={handleSearch}
                           >
-                              Search
+                              Fetch
                           </Button>
                       </Flex>
                       

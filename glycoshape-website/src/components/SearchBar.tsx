@@ -147,7 +147,7 @@ const Bar: React.FC = () => {
           />
           <Text 
             position="absolute" 
-            right="8em" 
+            right={{base: "1rem",sm: "1rem", md: "7rem", lg: "8rem",xl: "8rem"}}
             top="50%" 
             transform="translateY(-50%)"
             color="gray.500"
