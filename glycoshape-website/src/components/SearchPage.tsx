@@ -132,8 +132,10 @@ const SearchPage: React.FC = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-      <form style={{ width: '100%', flex:"1" }} onSubmit={handleSearch} >
+      
           <Input 
+            value={searchString}
+            onChange={(e) => setSearchString(e.target.value)}
             width={{base: "60%",sm: "80%", md: "80%", lg: "80%",xl: "80%"}}
             fontFamily={'texts'}
             ref={searchRef}
@@ -166,10 +168,10 @@ const SearchPage: React.FC = () => {
             _hover={{
               backgroundColor: "#51BF9D"
             }}
-            onClick={handleSearch}
+            // onClick={handleSearch}
           >
             Search
-          </Button></form>
+          </Button>
           
         </Flex>
         

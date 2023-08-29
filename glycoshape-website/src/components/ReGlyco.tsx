@@ -324,6 +324,29 @@ const steps = [
                               
                           </Flex>
                       )}
+                      {!UniprotData && (
+                        <Flex w="100%" justifyContent="center" alignItems="center" p={8} marginTop={"0"} direction="column"  >
+                        <Text 
+                        bgGradient='linear(to-l, #44666C, #A7C4A3)'
+                        bgClip='text'
+                        fontSize={{base: "3xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "6xl"}}
+                        fontWeight='bold'
+                        marginBottom="0.2em"
+                      >
+                        Welcome to Re-Glyco!
+                      </Text>
+                      <Text padding={'10rem'} paddingTop={'2rem'} paddingBottom={'2rem'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
+
+                        To get started, upload your protein structure file or choose a pre-existing AlphaFold structure, and let re-glyco do the rest!
+
+                        here are some example UniProt IDs to get you started:
+                        </Text>
+                        <Text fontFamily={'texts'}>
+                        O15552, P29016, Q9BXJ4, P27918, B0YJ81</Text>
+                      </Flex>
+
+
+                      )}
                   </VStack>
               </>
           );
