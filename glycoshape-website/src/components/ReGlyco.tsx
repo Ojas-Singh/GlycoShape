@@ -133,7 +133,7 @@ const steps = [
                           
                           marginBottom="0.2em"
                       >
-                          <Link fontWeight="bold" fontFamily={'heading'} href="/reglyco" marginRight="20px">Re-Glyco</Link>
+                          <Link fontWeight="extrabold" fontFamily={'heading'} href="/reglyco" marginRight="20px">Re-Glyco</Link>
                       </Text>
                       {/* Search Bar Section */}
                      
@@ -343,7 +343,7 @@ const steps = [
                         here are some example UniProt IDs to get you started:
                         </Text>
                         <Text fontFamily={'texts'}>
-                        O15552, P29016, Q9BXJ4, P27918, B0YJ81</Text>
+                        <Link href='/reglyco?fetch=O15552'>O15552</Link>, P29016, Q9BXJ4, P27918, B0YJ81</Text>
                       </Flex>
 
 

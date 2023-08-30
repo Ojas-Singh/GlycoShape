@@ -22,7 +22,9 @@ const Navbar: React.FC = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex as="nav" bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
+    // <Flex as="nav" position="sticky" top="0" zIndex="1000" bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
+
+    <Flex as="nav"  bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
       <Box>
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
         <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} paddingLeft={"1.5rem"} href="/" >GlycoShape.io</Link> 
@@ -42,7 +44,7 @@ const Navbar: React.FC = () => {
             <MenuItem as={Link} href="/downloads">Downloads</MenuItem>
             <MenuItem as={Link} href="/api-docs">API</MenuItem>
             <MenuItem as={Link} href="/faq">FAQ</MenuItem>
-            <MenuItem as={Link} href="/contact-us">Contact us</MenuItem>
+            <MenuItem as={Link} href="/contact">Contact us</MenuItem>
             
           </MenuList>
         </Menu>
@@ -58,7 +60,7 @@ const Navbar: React.FC = () => {
   <Divider orientation='vertical' />
           </Box> 
           <Link fontWeight="bold" color={"#F7FFE6"} href="/faq" marginRight="20px" marginLeft={"20px"}>FAQ</Link> 
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/contact-us" marginRight="20px">Contact us</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/contact" marginRight="20px">Contact us</Link>
           
         </Flex>
       )}

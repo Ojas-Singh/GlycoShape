@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef,  } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { FiCopy } from 'react-icons/fi';
 import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import {
-    Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
+  useClipboard ,Code, Center, Wrap, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
   } from "@chakra-ui/react";
 import draw from './assets/draw.png';
 import un from './assets/un.png';
@@ -10,7 +11,7 @@ import bg from './assets/Glycans_bg_dark.jpg';
 import { Kbd } from '@chakra-ui/react'
 
 
-const SearchPage: React.FC = () => {
+const SearchPage = () =>{
     const navigate  = useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
@@ -21,8 +22,8 @@ const SearchPage: React.FC = () => {
     const searchRef = useRef<HTMLInputElement>(null);
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
-  
-
+    const [copiedGlycan, setCopiedGlycan] = useState<string | null>(null);  // Track the copied glycan
+    const { hasCopied, onCopy } = useClipboard(copiedGlycan || '');  // Provide a fallback empty string
     useEffect(() => {
         handleSearch();
       }, [searchString]);
@@ -102,7 +103,7 @@ const SearchPage: React.FC = () => {
 
         <Flex 
           width="80%" 
-          minWidth={{ base: "120%", md: "80%" }}
+          minWidth={{ base: "100%", md: "80%" }}
           align="center" 
           position="relative"
           // gap="1em" 
@@ -219,15 +220,56 @@ const SearchPage: React.FC = () => {
               backgroundColor="white"
               borderRadius="md"
               display="flex"
-              alignItems="center"
-            >
+              flex='1'
+              
+            ><VStack align={'left'}>
+              <Heading padding={'1rem'} fontSize="xl" marginRight="1em"> Glycan Name  </Heading>
+              <Wrap >
+
+                
+                <WrapItem>
+
+                  <Link href={`/glycan?query=${glycan}`}>
               <Image
                 src="/glycan.jpg" // Replace with the path to your dummy image
                 alt="Glycan Image"
                 width="150px"
                 marginRight="1em"
-              />
-              <Text fontFamily={'mono'} width={'80%'}>{glycan}</Text>
+              /></Link>
+              </WrapItem>
+              <WrapItem>
+                <Text>Type : Free</Text>
+                
+                </WrapItem>
+              <WrapItem   alignContent={'center'}>
+                <Text transform="translateY(50%)"  fontSize="md" >
+                  Sequence :   </Text>
+                  <Box padding={'0.5rem'}>
+              <Code 
+                    p={2} 
+                    display="block" 
+                    whiteSpace="pre" 
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "40rem",xl: "50rem"}}
+                    overflowX="auto"
+                    fontFamily={'mono'}
+                    
+                  >
+                    {glycan}
+                  </Code></Box>
+                  <Button marginRight={'0rem'} transform="translateY(10%)" alignContent={"center"}  type="submit"
+                    borderRadius="full" 
+                    backgroundColor="#7CC9A9"
+                    _hover={{
+                      backgroundColor: "#51BF9D"
+                    }} onClick={() => {
+                        setCopiedGlycan(glycan);  // Set the glycan to be copied
+                        onCopy();  // Copy the glycan to clipboard
+                      }}>
+                        {hasCopied && copiedGlycan === glycan ? "Copied!" : "Copy"}
+                      </Button>
+              </WrapItem>
+              </Wrap>
+              </VStack>
             </Box>
           ))}</Box></Flex>
         </Flex>

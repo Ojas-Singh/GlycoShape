@@ -1,45 +1,64 @@
-import React, { useState, useRef } from 'react';
-import './Drawer.css';
+import * as React from 'react';
 
-const Drawer: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(true);
-  const [width, setWidth] = useState(300); // initial width of the drawer
-  const isResizing = useRef(false);
+import {
+  Box,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  Flex,
+  Spacer,
+} from '@chakra-ui/react';
 
-  const handleMouseDown = () => {
-    isResizing.current = true;
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
+const MyComponent: React.FC = () => {
+  const [scrollY, setScrollY] = React.useState(0);
 
-  const handleMouseMove = (event: MouseEvent) => {
-    if (isResizing.current) {
-      setWidth(event.clientX);
-    }
-  };
+  
 
-  const handleMouseUp = () => {
-    isResizing.current = false;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
+
+  const isScrolled = scrollY < -100;
 
   return (
-    <div>
-      {isOpen && (
-        <div className="drawer" style={{ width }}>
-          <div className="drawer-content">
-            Content here
-          </div>
-          <div 
-            className="drawer-resizer"
-            onMouseDown={handleMouseDown}
-          />
-        </div>
-      )}
-      <button onClick={() => setIsOpen(!isOpen)}>Toggle Drawer</button>
-    </div>
-  );
-};
+    <Flex>
+      {/* Sidebar */}
+      <Box width="250px" position="fixed" height="100vh" bg="gray.700" color="white">
+        Sidebar Content
+      </Box>
 
-export default Drawer;
+      {/* Main Content */}
+      <Box flex="1" ml="250px">
+        <Tabs
+          
+        >
+          <TabList position="sticky" top="0" bg="white" zIndex="10000">
+            <Tab>Tab 1</Tab>
+            <Tab>Tab 2</Tab>
+            <Tab>Tab 3</Tab>
+          </TabList>
+
+          <Spacer />
+
+          <TabPanels mt="50px">
+            <TabPanel>
+            <Box height="2000px" bg="blue.50">
+          Scrollable Area
+        </Box>
+            </TabPanel>
+            <TabPanel>
+              Content 2
+            </TabPanel>
+            <TabPanel>
+              Content 3
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+
+        
+       
+      </Box>
+    </Flex>
+  );
+}
+
+export default MyComponent;
