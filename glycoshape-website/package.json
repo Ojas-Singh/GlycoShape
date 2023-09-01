@@ -10,6 +10,8 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",
+    "@types/d3": "^7.4.0",
+    "@types/d3-contour": "^3.0.3",
     "@types/jest": "^28.1.8",
     "@types/node": "^12.20.55",
     "@types/react": "^18.2.20",
@@ -18,13 +20,17 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.4.0",
     "cors": "^2.8.5",
+    "d3": "^7.8.5",
+    "d3-contour": "^4.0.2",
     "express": "^4.18.2",
     "framer-motion": "^6.5.1",
     "nodemon": "^3.0.1",
+    "plotly.js": "^2.26.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet": "^6.1.0",
     "react-icons": "^3.11.0",
+    "react-plotly.js": "^2.6.0",
     "react-router-dom": "^6.15.0",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5",
@@ -50,5 +56,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/react-plotly.js": "^2.6.0"
   }
 }

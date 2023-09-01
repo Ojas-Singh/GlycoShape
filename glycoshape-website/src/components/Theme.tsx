@@ -6,6 +6,7 @@ const theme = extendTheme({
     heading: "Roboto, sans-serif",
     mono: "Menlo, monospace",
     texts: "Roboto Slab, sans-serif",
+    thin : "Roboto Thin, sans-serif",
   }
 });
 

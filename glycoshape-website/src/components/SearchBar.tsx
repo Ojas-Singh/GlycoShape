@@ -98,7 +98,7 @@ const Bar: React.FC = () => {
       
       <Flex 
           width="80%" 
-          minWidth={{ base: "120%", md: "80%" }}
+          minWidth={{ base: "100%", md: "80%" }}
           align="center" 
           position="relative"
           gap="1em" 
@@ -130,7 +130,7 @@ const Bar: React.FC = () => {
       </Modal>
       <form style={{ width: '100%', flex:"1" }} onSubmit={handleSearch} >
           <Input 
-            width={{base: "60%",sm: "80%", md: "80%", lg: "80%",xl: "80%"}}
+            width={{base: "50%",sm: "50%", md: "80%", lg: "80%",xl: "80%"}}
             fontFamily={'texts'}
             ref={searchRef}
             placeholder={placeholderText}

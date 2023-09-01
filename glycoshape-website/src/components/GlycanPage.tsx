@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef,  } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import {
- Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
+ Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
   } from "@chakra-ui/react";
 import Searchbar from './SearchBar';
 import draw from './assets/draw.png';
 import un from './assets/un.png';
 import bg from './assets/Glycans_bg_dark.jpg';
 import { Kbd } from '@chakra-ui/react'
+import ContourPlot from './ContourPlot';
+import Scatter3D from './Scatter3D';
 
 const GlycanPage: React.FC = () => {
     const navigate  = useNavigate();
@@ -22,52 +24,31 @@ const GlycanPage: React.FC = () => {
     const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
     const { hasCopied, onCopy } = useClipboard(sequence || '');  // Provide a fallback empty string
 
-    const sidebarLinksForFirstTab = [
-      { id: 'sequence', name: 'GLYCAM Sequence' },
-      { id: 'structure', name: 'Structure' },
-      { id: 'structure2', name: 'Structure' },
-      { id: 'structure3', name: 'Structure' },
-      { id: 'structure4', name: 'Structure' },
-      { id: 'structure5', name: 'Structure' },
-      { id: 'structure6', name: 'Structure' },
-      { id: 'structure7', name: 'Structure' },
-      { id: 'structure8', name: 'Structure' },
-      // Add other links here
-    ];
-    const sequenceRef = useRef<HTMLDivElement>(null);
-    const structureRef = useRef<HTMLDivElement>(null);
-
-    const scrollToComponent = (ref: React.RefObject<HTMLDivElement>) => {
-      ref.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-
-    // const contentRef1 = useRef<HTMLDivElement | null>(null);
-    // const contentRef2 = useRef<HTMLDivElement | null>(null);
-    // const contentRef3 = useRef<HTMLDivElement | null>(null);
-
-    // const scrollToContent = (ref: React.RefObject<HTMLDivElement>) => {
-    //   const offsetY = -5; // Adjust this value to control how much above the heading you want to scroll
-    //   const y = ref.current?.getBoundingClientRect().top || 0 + window.pageYOffset + offsetY;
-    //   window.scrollTo({ top: y, behavior: 'smooth' });
-    // };
-    
     const [activeSection, setActiveSection] = useState<string | null>(null);
 
     const contentRef1 = useRef<HTMLDivElement>(null);
     const contentRef2 = useRef<HTMLDivElement>(null);
     const contentRef3 = useRef<HTMLDivElement>(null);
+    const contentRef4 = useRef<HTMLDivElement>(null);
+    const contentRef5 = useRef<HTMLDivElement>(null);
+    const contentRef6 = useRef<HTMLDivElement>(null);
 
     type SectionRefs = {
         section1: React.MutableRefObject<HTMLDivElement | null>;
         section2: React.MutableRefObject<HTMLDivElement | null>;
         section3: React.MutableRefObject<HTMLDivElement | null>;
+        sequence: React.MutableRefObject<HTMLDivElement | null>;
+        section4: React.MutableRefObject<HTMLDivElement | null>;
+        section5: React.MutableRefObject<HTMLDivElement | null>;
     };
 
     const refs: SectionRefs = {
+        sequence: contentRef6,
         section1: contentRef1,
         section2: contentRef2,
         section3: contentRef3,
+        section4: contentRef4,
+        section5: contentRef5,
     };
 
     useEffect(() => {
@@ -79,7 +60,7 @@ const GlycanPage: React.FC = () => {
                   }
               });
           },
-          { threshold: 0.2 } // Adjust this value as needed
+          { threshold: 0.4 } // Adjust this value as needed
       );
   
       (Object.keys(refs) as Array<keyof SectionRefs>).forEach(key => {
@@ -113,8 +94,8 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
         align="center" 
         justify="center" 
         flex="1" 
-        padding="1em"
-        paddingTop="2em"
+        padding="1rem"
+        paddingTop="2rem"
         minHeight={{ base: "15vh" }}
         backgroundImage={`url(${bg})`} 
         backgroundSize="cover" 
@@ -125,21 +106,19 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
 
       {sequence && (
         <Flex>
-          {/* <Box width="20rem" position="sticky" bg="gray.700" color="white">
-        Sidebar Content
-      </Box> */}
-
+        
       <Box flex="1" >
-        <Tabs align={"end"} padding={'10rem'} paddingTop={"1rem"}  colorScheme='green'>
+        <Tabs align={"end"} padding={'1rem'} paddingTop={"1rem"}  colorScheme='green'>
           <TabList  display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" marginRight={'2rem'} >
             <HStack >
             <Image
               src="/glycan.jpg" 
               alt="Glycan Image"
               width="150px"
-              marginRight="1em"
+              // marginRight="1rem"
             />
-            <Text fontSize="3xl" >
+             
+            <Text fontSize={{base: "0",sm: "1xl", md: "3xl", lg: "3xl",xl: "3xl"}} >
               Glycan Name
             </Text></HStack>
             <Spacer />
@@ -149,12 +128,59 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
         </TabList>
         <TabPanels>
               <TabPanel >
-                  <Flex>
-                     
+              <Box display="flex" >
+            {/* Sidebar */}
+            <Box position={'sticky'} top="0" zIndex={5}
+            visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}}
+            width={{base: "0",sm: "0", md: "10%", lg: "10%",xl: "10%"}}  height={'50vh'}  paddingTop={'5rem'} paddingLeft={'0rem'}>
+            <VStack align="start" spacing={1} justify="start"> {/* Added justify="start" */}
+                    <Button 
+                        onClick={() => scrollToContent(contentRef6)}
+                        bg={activeSection === 'sequence' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'sequence' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'sequence' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
 
-                      {/* Main content */}
-                      <Box flex="1" overflowY="auto" padding={8}>
-                      <div ref={sequenceRef}>
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                        Section 1
+                    </Button>
+                    <Button 
+                        onClick={() => scrollToContent(contentRef4)}
+                        bg={activeSection === 'section4' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'section4' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'section4' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                        Section 2
+                    </Button>
+                    <Button 
+                        onClick={() => scrollToContent(contentRef5)}
+                        bg={activeSection === 'section5' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'section5' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'section5' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
+
+                        // fontFamily={'thin'}
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                        Section 3
+                    </Button>
+                </VStack>
+
+            </Box>
+            {/* Main Content */}
+            <Box flex="1" p={'2rem'} >
+            
+                <Box ref={contentRef6}  id="sequence" pb={'4rem'}
+                    boxShadow="md"
+                    marginBottom="1em"
+                    backgroundColor="white"
+                    borderRadius="md">
+                      <VStack align={'left'} padding={'1rem'}>
+                    <Text fontSize="2xl" mb={2}>Section 1</Text>
+                    <Divider />
                     <Wrap>
                       <WrapItem alignContent={'center'}>
                       <Text transform="translateY(50%)"  fontSize="md" >
@@ -164,7 +190,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
                     p={2} 
                     display="block" 
                     whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "40rem",xl: "50rem"}}
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "40rem",xl: "40rem"}}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
@@ -181,84 +207,81 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
                     {hasCopied ? "Copied!" : "Copy"}
             
                       </Button>
+                      
                       </WrapItem>
                     </Wrap>
-                  </div>
-                  <div ref={structureRef}>
-                  <iframe
-                      key={sequence}
-                      width="90%"
+                    <Text>
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, </Text>
+                      </VStack>
+                      <Scatter3D dataUrl="/pca.csv" />
+                    
+                </Box>
+                <Box ref={contentRef4}   id="section4"
+                    mb={2}
+                    boxShadow="md"
+                    marginBottom="1em"
+                    backgroundColor="white"
+                    borderRadius="md">
+                       <VStack align={'left'} padding={'1rem'}>
+                    <Text fontSize="2xl" mb={2}>Section 2</Text>
+                    <Divider />
+                    <Text>
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        
+                    </Text>
+                    
+                    </VStack>
+                    <ContourPlot dataUrl="/torsions.csv" /> 
+                </Box>
+          <Box ref={contentRef5}  id="section5" 
+                    mb={2}
+                    boxShadow="md"
+                    marginBottom="1em"
+                    backgroundColor="white"
+                    borderRadius="md">
+                      <VStack align={'left'} padding={'1rem'}>
+                    <Text fontSize="2xl" mb={2}>Section 3</Text>
+                    <Divider />
+                    <iframe
+                      // key={sequence}
+                      width="100%"
                       height="400px"
                       src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/output/structure.pdb&format=pdb`}                                  frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
-                              /> 
-                  </div>
-                  
-                
+                              />
+                              </VStack>
+                </Box>
+            </Box></Box>
                  
-                  
-
-                      </Box>
-                  </Flex>
               </TabPanel>
 
 
           <TabPanel>
-              <Flex align={'left'} marginLeft={'1rem'}>
-                <VStack align="start" spacing={4} marginRight={4}>
-                  {sidebarLinksForFirstTab.map((link) => (
-                    <Button key={link.id} onClick={() => scrollToComponent(link.id === 'sequence' ? sequenceRef : structureRef)}>
-                      {link.name}
-                    </Button>
-                  ))}
-                </VStack>
-                <Box flex="1">
-                  <div ref={sequenceRef}>
-                    <Wrap>
-                      <WrapItem alignContent={'center'}>
-                      <Text transform="translateY(50%)"  fontSize="md" >
-                  GLYCAM Sequence :   </Text>
-                  <Box padding={'0.5rem'}>
-              <Code 
-                    p={2} 
-                    display="block" 
-                    whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "40rem",xl: "50rem"}}
-                    overflowX="auto"
-                    fontFamily={'mono'}
-                  >
-                    {sequence}
-                  </Code></Box>
-                  <Button marginRight={'0rem'} transform="translateY(30%)" alignContent={"center"}  type="submit"
-                    borderRadius="full" 
-                    size={"sm"}
-                    backgroundColor="#7CC9A9"
-                    _hover={{
-                      backgroundColor: "#51BF9D"
-                    }}  onClick={onCopy}>
 
-                    {hasCopied ? "Copied!" : "Copy"}
-            
-                      </Button>
-                      </WrapItem>
-                    </Wrap>
-                  </div>
-                  <div ref={structureRef}>
-                  <iframe
-                      key={sequence}
-                      width="90%"
-                      height="400px"
-                      src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/output/structure.pdb&format=pdb`}                                  frameBorder="0"
-                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      title="Protein Structure"
-                              /> 
-                  </div>
-                  {/* Other components to scroll to, ensure you have a ref for each... */}
-                </Box>
-              </Flex>
+          {/* <ContourPlot dataUrl="/torsions.csv" /> */}
+          
+          <Scatter3D dataUrl="/pca.csv" />
+          {/* </Box> */}
+              
             </TabPanel>
 
 
@@ -266,7 +289,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
           <TabPanel>
           <Box display="flex" >
             {/* Sidebar */}
-            <Box position={'sticky'} top="0" zIndex="5"  width="15rem"  height={'50vh'} padding={'2rem'} paddingTop={'5rem'} paddingLeft={'0rem'}>
+            <Box position={'sticky'} top="0" zIndex="5"  width="10%"  height={'50vh'} padding={'2rem'} paddingTop={'5rem'} paddingLeft={'0rem'}>
             <VStack align="start" spacing={1} justify="start"> {/* Added justify="start" */}
                     <Button 
                         onClick={() => scrollToContent(contentRef1)}
@@ -306,8 +329,8 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
 
             </Box>
             {/* Main Content */}
-            <Box flex="1" p={4} >
-                <Box ref={contentRef1}  id="section1" pb={4}>
+            <Box flex="1" p={'4rem'} >
+                <Box ref={contentRef1}  id="section1" pb={'4rem'}>
                     <Text fontSize="2xl" mb={2}>Section 1</Text>
                     <Text>
                         Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
@@ -361,7 +384,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
                         Adipisci, eveniet!
                     </Text>
                 </Box>
-                <Box ref={contentRef2}   id="section2" pb={4}>
+                <Box ref={contentRef2}   id="section2" pb={'4rem'}>
                     <Text fontSize="2xl" mb={2}>Section 2</Text>
                     <Text>
                         Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
@@ -435,7 +458,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
                         Adipisci, eveniet!
                     </Text>
                 </Box>
-          <Box ref={contentRef3}  id="section3" pb={4}>
+          <Box ref={contentRef3}  id="section3" pb={'4rem'}>
                     <Text fontSize="2xl" mb={2}>Section 3</Text>
                     <Text>
                         Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
