@@ -15,6 +15,11 @@ sudo systemctl restart nginx
 
 ## api
 
+pip install Flask-SocketIO
+pip install eventlet
+
+
+gunicorn -k eventlet -w 4 api:app --timeout 900
 gunicorn -w 4 api:app --timeout 900
 
 

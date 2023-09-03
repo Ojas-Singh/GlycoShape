@@ -60,7 +60,7 @@ const GlycanPage: React.FC = () => {
                   }
               });
           },
-          { threshold: 0.4 } // Adjust this value as needed
+          { threshold: 0.3 } // Adjust this value as needed
       );
   
       (Object.keys(refs) as Array<keyof SectionRefs>).forEach(key => {
