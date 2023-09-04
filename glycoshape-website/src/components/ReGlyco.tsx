@@ -498,7 +498,10 @@ interface UniprotData {
                       )}
                       {!UniprotData && (
 
-                        <Flex w="100%" justifyContent="left" alignItems="center" p={2 } marginTop={"0"} direction="column"  >  
+                        <Flex w="100%" minHeight={'90vh'} justifyContent="left" alignItems="center" p={2 } marginTop={"0"} direction="column"  background={`url('https://glycam.org/static/img/Supplemental%20Simulation1.Abundant.Rotation.mp4')`} 
+                        backgroundSize="cover" 
+                        backgroundPosition="center"
+                        backgroundRepeat="no-repeat" >  
                         <HStack margin={'1rem'} marginTop={'-1rem'} display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" > 
                         <Text 
                         bgGradient='linear(to-l, #44666C, #A7C4A3)'
@@ -506,8 +509,9 @@ interface UniprotData {
                         fontSize={{base: "3xl",sm: "3xl", md: "4xl", lg: "5xl",xl: "5xl"}}
                         fontWeight='bold'
                         marginBottom="0.2em"
+                        marginLeft={'2rem'}
                       >
-                        Welcome to Re-Glyco!
+                        A GlycoProtein Builder
                       </Text>
 
                             <Spacer />
@@ -552,6 +556,10 @@ interface UniprotData {
                         <Button margin='-1rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
                         
                         </Text>
+                        <video autoPlay loop muted id="bgVideo">
+        <source  src="" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
                       </Flex>
 
 
