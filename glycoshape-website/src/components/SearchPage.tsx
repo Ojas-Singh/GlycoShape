@@ -231,7 +231,7 @@ const SearchPage = () =>{
 
                   <Link href={`/glycan?query=${glycan}`}>
               <Image
-                src="/glycan.jpg" // Replace with the path to your dummy image
+                src={`/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image
                 alt="Glycan Image"
                 width="150px"
                 marginRight="1em"

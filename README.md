@@ -5,6 +5,9 @@ Website for GlycoShape Database and Tools.
 
 
 ```
+chown www-data:www-data target_folder
+
+
 sudo nano /etc/nginx/cors.conf
 sudo nano /etc/nginx/sites-available/glycoshape.io
 sudo nginx -t

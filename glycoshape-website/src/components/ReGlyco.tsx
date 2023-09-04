@@ -233,7 +233,7 @@ interface UniprotData {
                       
                           <form onSubmit={handleSearch}>
                               <Input
-                                  onChange={(e) => setUniprotID(e.target.value)}
+                                  onChange={(e) => (setUniprotID(e.target.value),setIsUpload(false))}
                                   ref={searchRef}
                                   fontFamily={'texts'}
                                   placeholder="Enter Uniprot Id"

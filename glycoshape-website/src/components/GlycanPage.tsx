@@ -112,7 +112,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
           <TabList  display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" marginRight={'2rem'} >
             <HStack >
             <Image
-              src="/glycan.jpg" 
+              src={`/database/${sequence}/${sequence}.svg`} 
               alt="Glycan Image"
               width="150px"
               // marginRight="1rem"
