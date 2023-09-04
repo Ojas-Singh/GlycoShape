@@ -261,7 +261,7 @@ interface GlycanData {
               src={`/database/${sequence}/${sequence}.svg`} 
               alt="Glycan Image"
               height={{base: "10rem",sm: "10rem", md: "20rem", lg: "25rem",xl: "25rem"}}
-              // width={'20rem'}
+              width={'25rem'}
               // marginRight="1rem"
             />       
              <iframe
