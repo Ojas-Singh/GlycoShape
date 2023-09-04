@@ -86,6 +86,67 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
 };
 
 
+interface GlycanData {
+  glycam: string;
+  iupac: string;
+  wurcs: string;
+  glycoct: string | null;
+  smiles: string;
+  components: Record<string, number>;
+  composition: string | null;
+  mass: string;
+  motifs: string[];
+  termini: string[];
+  tpsa: number;
+  rot_bonds: number;
+  hbond_donor: number;
+  hbond_acceptor: number;
+  glycan_type: string | null;
+  glytoucan_id: string;
+  disease: string | null;
+  tissue: string | null;
+  species: string | null;
+  genus: string | null;
+  family: string | null;
+  order: string | null;
+  class: string | null;
+  phylum: string | null;
+  kingdom: string | null;
+  domain: string | null;
+  clusters: Record<string, number>;
+  length: string;
+  package: string;
+  forcefield: string;
+  temperature: string;
+  pressure: string;
+  salt: string;
+  contributor: string;
+}
+
+
+  const [data, setData] = useState<GlycanData | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`https://glycoshape.io/database/${sequence}/${sequence}.json`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        const result: GlycanData = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
+
+
+
 
   return (
     <Box >
@@ -114,17 +175,26 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
             <Image
               src={`/database/${sequence}/${sequence}.svg`} 
               alt="Glycan Image"
-              width="150px"
+              height="5rem"
               // marginRight="1rem"
             />
              
             <Text fontSize={{base: "0",sm: "1xl", md: "3xl", lg: "3xl",xl: "3xl"}} >
-              Glycan Name
+            {sequence.length > 30 ? sequence.substring(0, 60) + '...' : sequence}
             </Text></HStack>
             <Spacer />
           <Tab>Information</Tab>
           <Tab>Structure</Tab>
-          <Tab>Publications</Tab>
+                            <Button  
+                            marginLeft={'1rem'}
+                             transform="translateY(50%)"
+                              borderRadius="full"
+                              backgroundColor="#7CC9A9"
+                              _hover={{
+                                  backgroundColor: "#51BF9D"
+                              }}
+                              size = {{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
+                              >Download</Button>
         </TabList>
         <TabPanels>
               <TabPanel >
@@ -143,7 +213,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
 
                         borderRadius="0" // Sharp rectangular edges
                     >
-                        Section 1
+                        Sequences
                     </Button>
                     <Button 
                         onClick={() => scrollToContent(contentRef4)}
@@ -171,7 +241,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
 
             </Box>
             {/* Main Content */}
-            <Box flex="1" p={'2rem'} >
+            <Box flex="1"  p={'2rem'} >
             
                 <Box ref={contentRef6}  id="sequence" pb={'4rem'}
                     boxShadow="md"
@@ -179,22 +249,45 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
                     backgroundColor="white"
                     borderRadius="md">
                       <VStack align={'left'} padding={'1rem'}>
-                    <Text fontSize="2xl" mb={2}>Section 1</Text>
+                    <Text fontSize="2xl" mb={2}>Sequences</Text>
                     <Divider />
-                    <Wrap>
+
+                    <Wrap >
+                      
+                      <VStack align={'left'} padding={'1rem'}>
                       <WrapItem alignContent={'center'}>
-                      <Text transform="translateY(50%)"  fontSize="md" >
-                  GLYCAM Sequence :   </Text>
-                  <Box padding={'0.5rem'}>
+                      <Text fontFamily={'texts'}>SNFG</Text>
+                    <Image
+              src={`/database/${sequence}/${sequence}.svg`} 
+              alt="Glycan Image"
+              height={{base: "10rem",sm: "10rem", md: "20rem", lg: "25rem",xl: "25rem"}}
+              // width={'20rem'}
+              // marginRight="1rem"
+            />       
+             <iframe
+                      // key={sequence}
+                      width="100%"
+                      height="400px"
+                      
+                      src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Protein Structure"
+                              /> </WrapItem>
+            <Box alignItems={'center'} alignContent={'center'} justifyContent={'center'} justifyItems={'center'}>
+                      <WrapItem alignContent={'center'}>
+                      <Text fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
+                  GLYCAM :   </Text>
+                  <Box padding={'0.5rem'} >
               <Code 
                     p={2} 
                     display="block" 
                     whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "40rem",xl: "40rem"}}
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
-                    {sequence}
+                    {data?.glycam}
                   </Code></Box>
                   <Button marginRight={'0rem'} transform="translateY(30%)" alignContent={"center"}  type="submit"
                     borderRadius="full" 
@@ -209,21 +302,91 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
                       </Button>
                       
                       </WrapItem>
-                    </Wrap>
-                    <Text>
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, </Text>
+                      <WrapItem alignContent={'center'}>
+                      <Text  fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
+                  IUPAC  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:   </Text>
+                  <Box padding={'0.5rem'}>
+              <Code 
+                    p={2} 
+                    display="block" 
+                    whiteSpace="pre" 
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    overflowX="auto"
+                    fontFamily={'mono'}
+                  >
+                    {data?.iupac}
+                  </Code></Box>
+                  <Button marginRight={'0rem'} transform="translateY(30%)" alignContent={"center"}  type="submit"
+                    borderRadius="full" 
+                    size={"sm"}
+                    backgroundColor="#7CC9A9"
+                    _hover={{
+                      backgroundColor: "#51BF9D"
+                    }}  onClick={onCopy}>
+
+                    {hasCopied ? "Copied!" : "Copy"}
+            
+                      </Button>
+                      </WrapItem>
+                      <WrapItem alignContent={'center'}>
+                      <Text fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
+                      WURCS  &nbsp;&nbsp;:   </Text>
+                  <Box padding={'0.5rem'}>
+              <Code 
+                    p={2} 
+                    display="block" 
+                    whiteSpace="pre" 
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    overflowX="auto"
+                    fontFamily={'mono'}
+                  >
+                    {data?.wurcs}
+                  </Code></Box>
+                  <Button marginRight={'0rem'} transform="translateY(30%)" alignContent={"center"}  type="submit"
+                    borderRadius="full" 
+                    size={"sm"}
+                    backgroundColor="#7CC9A9"
+                    _hover={{
+                      backgroundColor: "#51BF9D"
+                    }}  onClick={onCopy}>
+
+                    {hasCopied ? "Copied!" : "Copy"}
+            
+                      </Button>
+                      </WrapItem>
+                      <WrapItem alignContent={'center'}>
+                      <Text fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
+                      SMILES  &nbsp;&nbsp;:   </Text>
+                  <Box padding={'0.5rem'}>
+              <Code 
+                    p={2} 
+                    display="block" 
+                    whiteSpace="pre" 
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    overflowX="auto"
+                    fontFamily={'mono'}
+                  >
+                    {data?.smiles}
+                  </Code></Box>
+                  <Button marginRight={'0rem'} transform="translateY(30%)" alignContent={"center"}  type="submit"
+                    borderRadius="full" 
+                    size={"sm"}
+                    backgroundColor="#7CC9A9"
+                    _hover={{
+                      backgroundColor: "#51BF9D"
+                    }}  onClick={onCopy}>
+
+                    {hasCopied ? "Copied!" : "Copy"}
+            
+                      </Button>
+                      </WrapItem>
+                      </Box>
                       </VStack>
-                      <Scatter3D dataUrl="/pca.csv" />
+                    </Wrap>
+                    {/* <Code>{JSON.stringify(data, null, 2)}</Code> */}
+                    
+                      </VStack>
+                      {/* <Scatter3D dataUrl="/pca.csv" /> */}
                     
                 </Box>
                 <Box ref={contentRef4}   id="section4"
@@ -236,19 +399,13 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
                     <Text fontSize="2xl" mb={2}>Section 2</Text>
                     <Divider />
                     <Text>
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
+                        
                         Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
                         
                     </Text>
                     
                     </VStack>
-                    <ContourPlot dataUrl="/torsions.csv" /> 
+                    {/* <ContourPlot dataUrl="/torsions.csv" />  */}
                 </Box>
           <Box ref={contentRef5}  id="section5" 
                     mb={2}
@@ -259,15 +416,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
                       <VStack align={'left'} padding={'1rem'}>
                     <Text fontSize="2xl" mb={2}>Section 3</Text>
                     <Divider />
-                    <iframe
-                      // key={sequence}
-                      width="100%"
-                      height="400px"
-                      src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/output/structure.pdb&format=pdb`}                                  frameBorder="0"
-                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      title="Protein Structure"
-                              />
+                   
                               </VStack>
                 </Box>
             </Box></Box>
@@ -275,14 +424,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
               </TabPanel>
 
 
-          <TabPanel>
-
-          {/* <ContourPlot dataUrl="/torsions.csv" /> */}
           
-          <Scatter3D dataUrl="/pca.csv" />
-          {/* </Box> */}
-              
-            </TabPanel>
 
 
 
@@ -332,180 +474,26 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
             <Box flex="1" p={'4rem'} >
                 <Box ref={contentRef1}  id="section1" pb={'4rem'}>
                     <Text fontSize="2xl" mb={2}>Section 1</Text>
-                    <Text>
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!
-                    </Text>
+                    
                 </Box>
                 <Box ref={contentRef2}   id="section2" pb={'4rem'}>
                     <Text fontSize="2xl" mb={2}>Section 2</Text>
-                    <Text>
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!
-                    </Text>
+                    
                 </Box>
           <Box ref={contentRef3}  id="section3" pb={'4rem'}>
                     <Text fontSize="2xl" mb={2}>Section 3</Text>
-                    <Text>
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        eveniet! Lorem ipsum dolor sit, amet consectetur adipisicing elit. 
-                        Adipisci, eveniet!
-                    </Text>
+                    
                 </Box>
             </Box></Box>
           </TabPanel>
+          <TabPanel>
+
+          {/* <ContourPlot dataUrl="/torsions.csv" /> */}
+          
+          {/* <Scatter3D dataUrl="/pca.csv" /> */}
+          {/* </Box> */}
+              
+            </TabPanel>
         </TabPanels>
         </Tabs>
 

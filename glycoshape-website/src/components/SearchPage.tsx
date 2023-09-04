@@ -223,7 +223,7 @@ const SearchPage = () =>{
               flex='1'
               
             ><VStack align={'left'}>
-              <Heading padding={'1rem'} fontSize="xl" marginRight="1em"> Glycan Name  </Heading>
+              <Heading padding={'1rem'} fontSize="xl" marginRight="1em"> {glycan.length > 60 ? glycan.substring(0, 60) + '...' : glycan}  </Heading>
               <Wrap >
 
                 
@@ -242,31 +242,7 @@ const SearchPage = () =>{
                 
                 </WrapItem>
               <WrapItem   alignContent={'center'}>
-                <Text transform="translateY(50%)"  fontSize="md" >
-                  Sequence :   </Text>
-                  <Box padding={'0.5rem'}>
-              <Code 
-                    p={2} 
-                    display="block" 
-                    whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "40rem",xl: "50rem"}}
-                    overflowX="auto"
-                    fontFamily={'mono'}
-                    
-                  >
-                    {glycan}
-                  </Code></Box>
-                  <Button marginRight={'0rem'} transform="translateY(10%)" alignContent={"center"}  type="submit"
-                    borderRadius="full" 
-                    backgroundColor="#7CC9A9"
-                    _hover={{
-                      backgroundColor: "#51BF9D"
-                    }} onClick={() => {
-                        setCopiedGlycan(glycan);  // Set the glycan to be copied
-                        onCopy();  // Copy the glycan to clipboard
-                      }}>
-                        {hasCopied && copiedGlycan === glycan ? "Copied!" : "Copy"}
-                      </Button>
+                
               </WrapItem>
               </Wrap>
               </VStack>
