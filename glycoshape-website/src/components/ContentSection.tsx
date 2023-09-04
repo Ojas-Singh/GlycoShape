@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import { Wrap, Highlight, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link,  WrapItem} from "@chakra-ui/react";
 import Searchbar from './SearchBar';
-import bg from './assets/Glycans_bg_dark.jpg';
+import bg from './assets/Glycans_bg_dark3.png';
 import cell from './assets/cell_surface.jpg';
 import dem1 from './assets/dem1.jpg';
 
@@ -37,7 +37,7 @@ const ContentSection: React.FC = () => {
           fontWeight='bold'
           marginBottom="1em"
         >
-          Developed By  <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">eLab</Link>
+          Developed by  <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">elab</Link>
         </Text>
         
         <Searchbar />

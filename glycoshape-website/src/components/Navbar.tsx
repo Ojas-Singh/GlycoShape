@@ -44,7 +44,7 @@ const Navbar: React.FC = () => {
             <MenuItem as={Link} href="/downloads">Downloads</MenuItem>
             <MenuItem as={Link} href="/api-docs">API</MenuItem>
             <MenuItem as={Link} href="/faq">FAQ</MenuItem>
-            <MenuItem as={Link} href="/contact">Contact us</MenuItem>
+            <MenuItem as={Link} href="/elab">Contact us</MenuItem>
             
           </MenuList>
         </Menu>
@@ -60,7 +60,7 @@ const Navbar: React.FC = () => {
   <Divider orientation='vertical' />
           </Box> 
           <Link fontWeight="bold" color={"#F7FFE6"} href="/faq" marginRight="20px" marginLeft={"20px"}>FAQ</Link> 
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/contact" marginRight="20px">Contact us</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">Contact us</Link>
           
         </Flex>
       )}

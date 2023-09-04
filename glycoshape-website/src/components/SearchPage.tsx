@@ -7,7 +7,7 @@ import {
   } from "@chakra-ui/react";
 import draw from './assets/draw.png';
 import un from './assets/un.png';
-import bg from './assets/Glycans_bg_dark.jpg';
+import bg from './assets/Glycans_bg_dark3.png';
 import { Kbd } from '@chakra-ui/react'
 
 
@@ -184,9 +184,17 @@ const SearchPage = () =>{
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=LFucpa1-2DGalpa1-OH')}
+              onClick={url => window.location.replace('/glycan?query=GlcNAc(b1-4)Man')}
             >
-              LFucpa1-2DGalpa1-OH
+              GlcNAc(b1-4)Man
+            </Button>&nbsp;
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=N-Glycan')}
+            >
+             N-Glycan
             </Button>
           </Flex>
           <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text>

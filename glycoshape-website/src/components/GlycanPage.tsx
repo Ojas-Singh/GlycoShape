@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef,  } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import {
- Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
+ Grid,Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
   } from "@chakra-ui/react";
 import Searchbar from './SearchBar';
 import draw from './assets/draw.png';
@@ -31,24 +31,22 @@ const GlycanPage: React.FC = () => {
     const contentRef3 = useRef<HTMLDivElement>(null);
     const contentRef4 = useRef<HTMLDivElement>(null);
     const contentRef5 = useRef<HTMLDivElement>(null);
-    const contentRef6 = useRef<HTMLDivElement>(null);
+
 
     type SectionRefs = {
-        section1: React.MutableRefObject<HTMLDivElement | null>;
-        section2: React.MutableRefObject<HTMLDivElement | null>;
-        section3: React.MutableRefObject<HTMLDivElement | null>;
-        sequence: React.MutableRefObject<HTMLDivElement | null>;
-        section4: React.MutableRefObject<HTMLDivElement | null>;
-        section5: React.MutableRefObject<HTMLDivElement | null>;
+        Biological_information : React.MutableRefObject<HTMLDivElement | null>;
+        Chemical_information: React.MutableRefObject<HTMLDivElement | null>;
+        Glycan_information: React.MutableRefObject<HTMLDivElement | null>;
+        Nomenclature : React.MutableRefObject<HTMLDivElement | null>;
+        Simulation_information: React.MutableRefObject<HTMLDivElement | null>;
     };
 
     const refs: SectionRefs = {
-        sequence: contentRef6,
-        section1: contentRef1,
-        section2: contentRef2,
-        section3: contentRef3,
-        section4: contentRef4,
-        section5: contentRef5,
+      Nomenclature: contentRef1,
+      Glycan_information: contentRef2,
+      Chemical_information: contentRef3,
+      Biological_information: contentRef4,
+      Simulation_information: contentRef5,
     };
 
     useEffect(() => {
@@ -92,7 +90,7 @@ interface GlycanData {
   wurcs: string;
   glycoct: string | null;
   smiles: string;
-  components: Record<string, number>;
+  components: string[];
   composition: string | null;
   mass: string;
   motifs: string[];
@@ -202,40 +200,74 @@ interface GlycanData {
             {/* Sidebar */}
             <Box position={'sticky'} top="0" zIndex={5}
             visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}}
-            width={{base: "0",sm: "0", md: "10%", lg: "10%",xl: "10%"}}  height={'50vh'}  paddingTop={'5rem'} paddingLeft={'0rem'}>
-            <VStack align="start" spacing={1} justify="start"> {/* Added justify="start" */}
+            width={{base: "0",sm: "0", md: "10%", lg: "15%",xl: "15%"}}  height={'50vh'}  paddingTop={'5rem'} paddingLeft={'0rem'}>
+            <VStack align="right" spacing={1} justify="start"> {/* Added justify="start" */}
                     <Button 
-                        onClick={() => scrollToContent(contentRef6)}
-                        bg={activeSection === 'sequence' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'sequence' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'sequence' ? 'white' : '#1A202C'}
+                        onClick={() => scrollToContent(contentRef1)}
+                        bg={activeSection === 'Nomenclature' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'Nomenclature' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'Nomenclature' ? 'white' : '#1A202C'}
                         fontStyle={'medium'}
-
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
                         borderRadius="0" // Sharp rectangular edges
                     >
-                        Sequences
+                        Nomenclature
                     </Button>
                     <Button 
-                        onClick={() => scrollToContent(contentRef4)}
-                        bg={activeSection === 'section4' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'section4' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'section4' ? 'white' : '#1A202C'}
+                        onClick={() => scrollToContent(contentRef2)}
+                        bg={activeSection === 'Glycan_information' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'Glycan_information' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'Glycan_information' ? 'white' : '#1A202C'}
                         fontStyle={'medium'}
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
                         borderRadius="0" // Sharp rectangular edges
                     >
-                        Section 2
+                        Glycan information 
                     </Button>
                     <Button 
-                        onClick={() => scrollToContent(contentRef5)}
-                        bg={activeSection === 'section5' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'section5' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'section5' ? 'white' : '#1A202C'}
+                        onClick={() => scrollToContent(contentRef3)}
+                        bg={activeSection === 'Chemical_information' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'Chemical_information' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'Chemical_information' ? 'white' : '#1A202C'}
                         fontStyle={'medium'}
-
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
                         // fontFamily={'thin'}
                         borderRadius="0" // Sharp rectangular edges
                     >
-                        Section 3
+                        Chemical information
+                    </Button>
+                    <Button 
+                        onClick={() => scrollToContent(contentRef4)}
+                        bg={activeSection === 'Biological_information' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'Biological_information' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'Biological_information' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
+                        // fontFamily={'thin'}
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                              Biological information                    </Button>
+                    <Button 
+                        onClick={() => scrollToContent(contentRef5)}
+                        bg={activeSection === 'Simulation_information' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'Simulation_information' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'Simulation_information' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
+                        // fontFamily={'thin'}
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                        Simulation information
                     </Button>
                 </VStack>
 
@@ -243,13 +275,13 @@ interface GlycanData {
             {/* Main Content */}
             <Box flex="1"  p={'2rem'} >
             
-                <Box ref={contentRef6}  id="sequence" pb={'4rem'}
+                <Box ref={contentRef1}  id="Nomenclature" pb={'4rem'}
                     boxShadow="md"
                     marginBottom="1em"
                     backgroundColor="white"
                     borderRadius="md">
                       <VStack align={'left'} padding={'1rem'}>
-                    <Text fontSize="2xl" mb={2}>Sequences</Text>
+                    <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Nomenclature</Text>
                     <Divider />
 
                     <Wrap >
@@ -275,6 +307,32 @@ interface GlycanData {
                       title="Protein Structure"
                               /> </WrapItem>
             <Box alignItems={'center'} alignContent={'center'} justifyContent={'center'} justifyItems={'center'}>
+            <WrapItem alignContent={'center'}>
+                      <Text  fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
+                  IUPAC  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:   </Text>
+                  <Box padding={'0.5rem'}>
+              <Code 
+                    p={2} 
+                    display="block" 
+                    whiteSpace="pre" 
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    overflowX="auto"
+                    fontFamily={'mono'}
+                  >
+                    {data?.iupac}
+                  </Code></Box>
+                  <Button marginRight={'0rem'} transform="translateY(30%)" alignContent={"center"}  type="submit"
+                    borderRadius="full" 
+                    size={"sm"}
+                    backgroundColor="#7CC9A9"
+                    _hover={{
+                      backgroundColor: "#51BF9D"
+                    }}  onClick={onCopy}>
+
+                    {hasCopied ? "Copied!" : "Copy"}
+            
+                      </Button>
+                      </WrapItem>
                       <WrapItem alignContent={'center'}>
                       <Text fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
                   GLYCAM :   </Text>
@@ -304,17 +362,17 @@ interface GlycanData {
                       </WrapItem>
                       <WrapItem alignContent={'center'}>
                       <Text  fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
-                  IUPAC  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:   </Text>
+                  GlyTouCan ID:   </Text>
                   <Box padding={'0.5rem'}>
               <Code 
                     p={2} 
                     display="block" 
                     whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "58rem",xl: "58rem"}}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
-                    {data?.iupac}
+                    {data?.glytoucan_id} <Spacer />
                   </Code></Box>
                   <Button marginRight={'0rem'} transform="translateY(30%)" alignContent={"center"}  type="submit"
                     borderRadius="full" 
@@ -328,6 +386,7 @@ interface GlycanData {
             
                       </Button>
                       </WrapItem>
+                     
                       <WrapItem alignContent={'center'}>
                       <Text fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
                       WURCS  &nbsp;&nbsp;:   </Text>
@@ -389,36 +448,104 @@ interface GlycanData {
                       {/* <Scatter3D dataUrl="/pca.csv" /> */}
                     
                 </Box>
-                <Box ref={contentRef4}   id="section4"
-                    mb={2}
-                    boxShadow="md"
-                    marginBottom="1em"
-                    backgroundColor="white"
-                    borderRadius="md">
-                       <VStack align={'left'} padding={'1rem'}>
-                    <Text fontSize="2xl" mb={2}>Section 2</Text>
-                    <Divider />
-                    <Text>
-                        
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Adipisci, 
-                        
-                    </Text>
-                    
-                    </VStack>
-                    {/* <ContourPlot dataUrl="/torsions.csv" />  */}
-                </Box>
-          <Box ref={contentRef5}  id="section5" 
-                    mb={2}
-                    boxShadow="md"
-                    marginBottom="1em"
-                    backgroundColor="white"
-                    borderRadius="md">
-                      <VStack align={'left'} padding={'1rem'}>
-                    <Text fontSize="2xl" mb={2}>Section 3</Text>
-                    <Divider />
-                   
-                              </VStack>
-                </Box>
+                <Box ref={contentRef2} id="Glycan_information" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
+       <VStack align={'left'} padding={'1rem'}>
+          <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Glycan information</Text>
+          <Divider />
+          <Grid templateColumns="repeat(2, 5fr)" gap={3} padding={'1rem'} >
+             {[
+                { label: "Glycan Type", value: data?.glycan_type || "Not Available" },
+                { label: "Components", value: 'JSON.stringify(data?.components)' },
+                { label: "Composition", value: 'data?.composition' || "Not Available" },
+                { label: "Motifs", value: data?.motifs.join(', ') },
+                { label: "Termini", value: data?.termini.join(', ') }
+             ].map(item => (
+                <Flex key={item.label} align="center" justify="space-between">
+                   <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="right">{item.label}</Text>
+                   <Divider orientation="vertical" height="30px" colorScheme="teal" />
+                   <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="left">{item.value}</Text>
+                </Flex>
+             ))}
+          </Grid>
+       </VStack>
+    </Box>
+
+    <Box ref={contentRef3} id="Chemical_information" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
+   <VStack align={'left'} padding={'1rem'}>
+      <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Chemical Information</Text>
+      <Divider />
+      <Grid templateColumns="repeat(2, 1fr)" gap={6} padding={'1rem'}>
+         {[
+            { label: "Mass", value: data?.mass || "Not Available" },
+            { label: "Topological Polar Surface Area", value: data?.tpsa || "Not Available" },
+            { label: "Number of Rotatable Bonds", value: data?.rot_bonds || "Not Available" },
+            { label: "Number of Hydrogen Bond Acceptors", value: data?.hbond_acceptor || "Not Available" },
+            { label: "Number of Hydrogen Bond Donors", value: data?.hbond_donor || "Not Available" }
+         ].map(item => (
+            <Flex key={item.label} align="center" justify="space-between">
+               <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="right">{item.label}</Text>
+               <Divider orientation="vertical" height="20px" />
+               <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="left">{item.value}</Text>
+            </Flex>
+         ))}
+      </Grid>
+   </VStack>
+</Box>
+
+
+
+<Box ref={contentRef4} id="Biological_information" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
+   <VStack align={'left'} padding={'1rem'}>
+      <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Biological Information</Text>
+      <Divider />
+      <Grid templateColumns="repeat(2, 1fr)" gap={6} padding={'1rem'}>
+         {[
+            { label: "Species", value: data?.species || "Not Available" },
+            { label: "Genus", value: data?.genus || "Not Available" },
+            { label: "Family", value: data?.family || "Not Available" },
+            { label: "Order", value: data?.order || "Not Available" },
+            { label: "Class", value: data?.class || "Not Available" },
+            { label: "Phylum", value: data?.phylum || "Not Available" },
+            { label: "Kingdom", value: data?.kingdom || "Not Available" },
+            { label: "Domain", value: data?.domain || "Not Available" },
+            { label: "Tissue", value: data?.tissue || "Not Available" },
+            { label: "Diseases", value: data?.disease || "Not Available" }
+         ].map(item => (
+            <Flex key={item.label} align="center" justify="space-between">
+               <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="right">{item.label}</Text>
+               <Divider orientation="vertical" height="20px" />
+               <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="left">{item.value}</Text>
+            </Flex>
+         ))}
+      </Grid>
+   </VStack>
+</Box>
+
+
+
+<Box ref={contentRef5} id="Simulation_information" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
+   <VStack align={'left'} padding={'1rem'}>
+      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Simulation Information</Text>
+      <Divider />
+      <Grid templateColumns="repeat(2, 1fr)" gap={6} padding={'1rem'}>
+         {[
+            { label: "Simulation Length (μs)", value: data?.length || "Not Available" },
+            { label: "MD Engine", value: data?.package || "Not Available" },
+            { label: "Force Field", value: data?.forcefield || "Not Available" },
+            { label: "Temperature (K)", value: data?.temperature || "Not Available" },
+            { label: "Pressure (bar)", value: data?.pressure || "Not Available" },
+            { label: "Salt (mM)", value: data?.salt || "Not Available" }
+         ].map(item => (
+            <Flex key={item.label} align="center" justify="space-between">
+               <Text fontFamily={'texts'} fontSize="md"  width="45%" textAlign="right">{item.label}</Text>
+               <Divider orientation="vertical" height="20px" />
+               <Text fontFamily={'texts'} fontSize="md"  width="45%" textAlign="left">{item.value}</Text>
+            </Flex>
+         ))}
+      </Grid>
+   </VStack>
+</Box>
+
             </Box></Box>
                  
               </TabPanel>
@@ -429,62 +556,8 @@ interface GlycanData {
 
 
           <TabPanel>
-          <Box display="flex" >
-            {/* Sidebar */}
-            <Box position={'sticky'} top="0" zIndex="5"  width="10%"  height={'50vh'} padding={'2rem'} paddingTop={'5rem'} paddingLeft={'0rem'}>
-            <VStack align="start" spacing={1} justify="start"> {/* Added justify="start" */}
-                    <Button 
-                        onClick={() => scrollToContent(contentRef1)}
-                        bg={activeSection === 'section1' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'section1' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'section1' ? 'white' : '#1A202C'}
-                        fontStyle={'medium'}
-
-                        borderRadius="0" // Sharp rectangular edges
-                    >
-                        Section 1
-                    </Button>
-                    <Button 
-                        onClick={() => scrollToContent(contentRef2)}
-                        bg={activeSection === 'section2' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'section2' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'section2' ? 'white' : '#1A202C'}
-                        fontStyle={'medium'}
-
-                        borderRadius="0" // Sharp rectangular edges
-                    >
-                        Section 2
-                    </Button>
-                    <Button 
-                        onClick={() => scrollToContent(contentRef3)}
-                        bg={activeSection === 'section3' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'section3' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'section3' ? 'white' : '#1A202C'}
-                        fontStyle={'medium'}
-
-                        // fontFamily={'thin'}
-                        borderRadius="0" // Sharp rectangular edges
-                    >
-                        Section 3
-                    </Button>
-                </VStack>
-
-            </Box>
-            {/* Main Content */}
-            <Box flex="1" p={'4rem'} >
-                <Box ref={contentRef1}  id="section1" pb={'4rem'}>
-                    <Text fontSize="2xl" mb={2}>Section 1</Text>
-                    
-                </Box>
-                <Box ref={contentRef2}   id="section2" pb={'4rem'}>
-                    <Text fontSize="2xl" mb={2}>Section 2</Text>
-                    
-                </Box>
-          <Box ref={contentRef3}  id="section3" pb={'4rem'}>
-                    <Text fontSize="2xl" mb={2}>Section 3</Text>
-                    
-                </Box>
-            </Box></Box>
+          
+            
           </TabPanel>
           <TabPanel>
 

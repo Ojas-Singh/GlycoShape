@@ -176,9 +176,17 @@ const Bar: React.FC = () => {
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=LFucpa1-2DGalpa1-OH')}
+              onClick={url => window.location.replace('/glycan?query=GlcNAc(b1-4)Man')}
             >
-              LFucpa1-2DGalpa1-OH
+              GlcNAc(b1-4)Man
+            </Button>&nbsp;
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=N-Glycan')}
+            >
+             N-Glycan
             </Button>
           </Flex>
           <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text>

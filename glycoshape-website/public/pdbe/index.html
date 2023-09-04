@@ -61,16 +61,10 @@
     hideControls: true,  //only protein view set it to true
     expanded: true,
     sequencePanel: true,
-    showDisplayControls: false ,
-    onLoad: function(pluginInstance) {
-      // Select residues 4 and 97 and add label representation
-      pluginInstance.visual.select({ 
-        data: [
-          { struct_asym_id: 'A', start_residue_number: 4, end_residue_number: 4, label: 'Residue 4', color: {r:255, g:0, b:0} }, 
-          { struct_asym_id: 'A', start_residue_number: 97, end_residue_number: 97, label: 'Residue 97', color: {r:0, g:0, b:255} }
-        ]
-      });
-    }
+    showDisplayControls: false ,  
+    ignoreLight: true, 
+    outline: true,
+    
     // hideCanvasControls: ['selection', 'animation', 'controlToggle', 'controlInfo', 'controlSettings']
   }
   

@@ -15,7 +15,7 @@ import {Wrap,Select, Box, Input, Text, Button, VStack, HStack, useToast, Link, F
   Stepper,
   useSteps, Badge, WrapItem, Image} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
-import bg from './assets/Glycans_bg_dark.jpg';
+import bg from './assets/Glycans_bg_dark3.png';
 import { Config } from '@testing-library/user-event/dist/types/setup/setup';
 
 interface Glycosylation {
@@ -442,7 +442,8 @@ interface UniprotData {
     onChange={(e) => handleSelectChange(e, glycoConf.residueID)}
 >
     {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
-        <option key={glycanIndex} value={glycanID}>{glycanID}</option>
+     
+        <option key={glycanIndex} value={glycanID}>{glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}</option>
     ))}
 </Select>
 <Image
