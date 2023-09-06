@@ -1,6 +1,9 @@
 import React, { useState, ChangeEvent, useEffect, useRef,  } from 'react';
-import {Wrap,Select, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
+
+import { Select as ChakraSelect } from '@chakra-ui/react';
+import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
   Spacer,
+  Checkbox,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
@@ -17,6 +20,15 @@ import {Wrap,Select, Box, Input, Text, Button, VStack, HStack, useToast, Link, F
 import { Kbd } from '@chakra-ui/react';
 import bg from './assets/Glycans_bg_dark3.png';
 import { Config } from '@testing-library/user-event/dist/types/setup/setup';
+
+import Select, { ActionMeta, OnChangeValue } from 'react-select';
+
+
+interface ResidueOption {
+  label: string;
+  value: number;
+}
+
 
 interface Glycosylation {
   glycosylations: {
@@ -47,6 +59,11 @@ interface UniprotData {
 }
 
 
+interface OptionType {
+  label: string;
+  value: number;
+}
+
   const ReGlyco = () => {
       const [uniprotID, setUniprotID] = useState<string>("");
       const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
@@ -72,6 +89,17 @@ interface UniprotData {
       }, []);
     
       
+
+
+      const [value, setValue] = useState<readonly ResidueOption[]>([]);
+
+  const onChange = (
+    newValue: OnChangeValue<ResidueOption, true>,
+    actionMeta: ActionMeta<ResidueOption>
+  ) => {
+    setValue(newValue ? newValue : []);
+  };
+
       const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();  // Prevents the default form submission behavior
         fetchProteinData();
@@ -135,6 +163,7 @@ interface UniprotData {
       const [selectedGlycans, setSelectedGlycans] = useState({});
       const [outputPath, setOutputPath] = useState("");
       const [clashValue, setClashValue] = useState(false);
+      
 
 
       const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>, residueID: number) => {
@@ -144,6 +173,14 @@ interface UniprotData {
             [residueID]: value
         }));
     }
+
+
+
+    const options = UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
+      value: glycoConf.residueID,
+      label: `${glycoConf.residueName}${glycoConf.residueID}`,
+    }));
+   
     
     const [isLoading, setIsLoading] = useState(false);
 
@@ -188,6 +225,40 @@ interface UniprotData {
     }
   }
   
+  const handleProcessCustom = async () => {
+    setIsLoading(true);  // Start loading
+    setActiveStep(2); 
+    const payload = {
+        selectedGlycans: selectedGlycans,
+        uniprotID : UniprotData?.uniprot
+    };
+
+    try {
+        const response = await fetch('https://glycoshape.io/api/process_pdb', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            const responseData = await response.json();
+              setOutputPath(responseData.output);
+              setClashValue(responseData.clash);
+              setActiveStep(3);  // Move to the 'Download' step after processing
+
+            console.log(responseData);
+            // Handle the response data as needed
+        } else {
+            console.error("Failed to post data.");
+        }
+    } catch (error) {
+        console.error("Error occurred:", error);
+    }finally {
+      setIsLoading(false);  // End loading regardless of success or failure
+  }
+}
 
   const steps = [
     {  title: 'Choose Structure', description: 'from AlphaFold or upload your own'},
@@ -428,13 +499,27 @@ interface UniprotData {
                               </Box>
                                   </AccordionPanel>
                                 </AccordionItem>
+                               
+                                <Select
+      value={value}
+      isMulti
+      name="residues"
+      className="basic-multi-select"
+      classNamePrefix="select"
+      onChange={onChange}
+      options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
+        value: glycoConf.residueID,
+        label: `${glycoConf.residueName}${glycoConf.residueID}`
+      }))}
+    />
+
                                 {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => (
                                 <div key={index}>
                 <Heading margin={'1rem'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "2xl",xl: "2xl"}} id={`glycan-${index}`} fontFamily={'texts'}>
                     {`Residue: ${glycoConf.residueName}${glycoConf.residueID}`}
                 </Heading>  
                 <HStack>
-                <Select 
+                <ChakraSelect 
     colorScheme='messenger' 
     width='80%'   
     defaultValue="none" 
@@ -445,7 +530,7 @@ interface UniprotData {
      
         <option key={glycanIndex} value={glycanID}>{glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}</option>
     ))}
-</Select>
+</ChakraSelect>
 <Image
               src="/glycan.jpg" 
               alt="Glycan Image"
@@ -453,20 +538,20 @@ interface UniprotData {
             /></HStack>
                           
             </div>))}
-                                      <Button
-                              position={"relative"}
-                              margin={'1rem'}
-                              borderRadius="full"
-                              backgroundColor="#7CC9A9"
-                              _hover={{
-                                  backgroundColor: "#51BF9D"
-                              }}
-                              size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}
-                              onClick={handleProcess}
-                              isDisabled={isLoading}  // Disable the button while processing to prevent multiple requests
-                          >
-                              {isLoading ? "Processing..." : "Process"}
-                          </Button>  
+            <Button
+    position={"relative"}
+    margin={'1rem'}
+    borderRadius="full"
+    backgroundColor="#7CC9A9"
+    _hover={{
+        backgroundColor: "#51BF9D"
+    }}
+    size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}
+    onClick={isUpload ? handleProcessCustom : handleProcess}
+    isDisabled={isLoading}  // Disable the button while processing to prevent multiple requests
+>
+    {isLoading ? "Processing..." : "Process"}
+</Button>
                           {outputPath &&  (
                             <Box>
                           <iframe

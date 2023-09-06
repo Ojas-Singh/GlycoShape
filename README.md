@@ -3,6 +3,10 @@ Website for GlycoShape Database and Tools.
 #28363F
 #4E6E6D
 
+npm install react-select
+npm install @types/react-select --save-dev
+
+
 
 ```
 chown www-data:www-data target_folder
