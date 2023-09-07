@@ -1,85 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Mol* Viewer - Helper functions</title>
 
-
-    <title>PDBe Molstar - Helper functions</title>
-
-    <!-- Molstar CSS & JS -->
-    <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.2.css">
-    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.2.js"></script>
+    <!-- Mol* Viewer CSS & JS -->
+    <link rel="stylesheet" type="text/css" href="https://webchem.ncbr.muni.cz/molstar/molstar.css">
+    <script type="text/javascript" src="https://webchem.ncbr.muni.cz/molstar/molstar.js"></script>
+    
     <style>
-      * {
+        * {
             margin-top: 0px;
             margin-bottom: 0px;
-      }
-      .msp-plugin ::-webkit-scrollbar-thumb {
-          background-color: #eeeef8 !important;
-      }
-      .viewerSection {
-        width: 800px;
-        height: 600px;
-        position: relative;
-      }
-      #myViewer{
-        float:left;
-        width: 780px;
-        height: 580px;
-        position:relative;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="viewerSection">
-      <!-- Molstar container -->
-      
-      <div id="myViewer"></div>
-      
-    </div>
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const Url = urlParams.get('Url');
-        const format = urlParams.get('format');
-
-        
-        if (Url && format) {
-            // Load the PDB file from the given URL
-            //Create plugin instance
-      var viewerInstance = new PDBeMolstarPlugin();
-  
-  //Set options (Checkout available options list in the documentation)
-  var options = {
-    customData: {
-      url: Url,
-      format: format
-    },
-    alphafoldView: true,
-    bgColor: {r:255, g:255, b:255},
-    hideControls: false,  //only protein view set it to true
-    expanded: true,
-    sequencePanel: true,
-    showDisplayControls: false ,  
-    ignoreLight: true, 
-    outline: true,
-    
-    // hideCanvasControls: ['selection', 'animation', 'controlToggle', 'controlInfo', 'controlSettings']
-  }
-  
-  //Get element from HTML/Template to place the viewer 
-  var viewerContainer = document.getElementById('myViewer');
-
-  //Call render method to display the 3D view
-  viewerInstance.render(viewerContainer, options);
-        }else {
-            alert('Please provide a URL using the query parameter "Url" and "format".');
-            // Optionally, you can redirect to a default page or provide a default URL.
         }
-      
-      
-    </script>
-  </body>
+        .viewerSection {
+            width: 800px;
+            height: 600px;
+            position: relative;
+        }
+        #myViewer {
+            float: left;
+            width: 780px;
+            height: 580px;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+<div class="viewerSection">
+    <!-- Mol* Viewer container -->
+    <div id="myViewer"></div>
+</div>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const Url = urlParams.get('Url');
+    const format = urlParams.get('format');
 
+    if (Url && format) {
+        // Create Mol* Viewer instance and load the PDB file from the given URL
+        Molstar.Bootstrap.init(document.getElementById('myViewer'), {
+            layoutShowRemoteState: false,
+            layoutIsExpanded: false,
+            layoutShowExpand: false
+        }).then( viewer => {
+            viewer.loadEntity(Url, { format: format, assemblyId: undefined, modelId: undefined });
+        });
+    } else {
+        alert('Please provide a URL using the query parameter "Url" and "format".');
+        // Optionally, you can redirect to a default page or provide a default URL.
+    }
+</script>
+</body>
 </html>

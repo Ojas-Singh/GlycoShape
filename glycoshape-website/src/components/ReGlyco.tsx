@@ -468,8 +468,8 @@ interface OptionType {
                                   height="400px"
 
                                   src={isUpload ? 
-                                    `/pdbe/index.html?Url=${UniprotData.requestURL}&format=pdb&timestamp=${Date.now()}` : 
-                                    `/pdbe/index.html?Url=${UniprotData.requestURL}&format=cif&timestamp=${Date.now()}`
+                                    `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` : 
+                                    `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=mmcif`
                                 }                                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                   allowFullScreen
                                   title="Protein Structure"
@@ -558,7 +558,7 @@ interface OptionType {
                       // key={sequence}
                       width="100%"
                       height="400px"
-                      src={`/litemol/index.html?pdbUrl=https://glycoshape.io/output/${outputPath}&format=pdb`}                                  frameBorder="0"
+                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/output/${outputPath}&format=pdb`}                                  frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"

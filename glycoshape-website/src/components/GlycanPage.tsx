@@ -300,8 +300,8 @@ interface GlycanData {
                       // key={sequence}
                       width="100%"
                       height="400px"
-                      
-                      src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
+                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
+                      // src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
