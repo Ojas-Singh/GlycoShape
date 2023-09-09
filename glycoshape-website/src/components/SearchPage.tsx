@@ -7,7 +7,7 @@ import {
   } from "@chakra-ui/react";
 import draw from './assets/draw.png';
 import un from './assets/un.png';
-import bg from './assets/Glycans_bg_dark3.png';
+import bg from './assets/Glycans_bg_dark.jpg';
 import { Kbd } from '@chakra-ui/react'
 
 
@@ -241,7 +241,8 @@ const SearchPage = () =>{
               <Image
                 src={`/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image
                 alt="Glycan Image"
-                width="150px"
+                height="150px"
+                maxWidth={"200px"}
                 marginRight="1em"
               /></Link>
               </WrapItem>

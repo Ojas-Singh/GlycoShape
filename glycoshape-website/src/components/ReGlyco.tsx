@@ -18,7 +18,7 @@ import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Co
   Stepper,
   useSteps, Badge, WrapItem, Image} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
-import bg from './assets/Glycans_bg_dark3.png';
+import bg from './assets/Glycans_bg_dark.jpg';
 import { Config } from '@testing-library/user-event/dist/types/setup/setup';
 
 import Select, { ActionMeta, OnChangeValue } from 'react-select';
@@ -292,15 +292,15 @@ interface OptionType {
                       <Text
                           bgGradient='linear(to-l,  #FDFDA1, #E2FCC5)'
                           bgClip='text'
-                          fontSize={{base: "3xl",sm: "3xl", md: "5xl", lg: "5xl",xl: "5xl"}}
+                          fontSize={{base: "4xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "5xl"}}
                           
                           marginBottom="0.2em"
                       >
-                          <Link fontWeight="extrabold" fontFamily={'heading'} href="/reglyco" marginRight="20px">Re-Glyco</Link>
+                          <Link fontWeight="bold" fontFamily={'heading'} href="/reglyco" marginRight="20px">Re-Glyco</Link>
                       </Text>
                       {/* Search Bar Section */}
                      
-                      <Flex width="40%" minWidth={{ base: "50%" , md: "40%"}} align="center" position="relative" gap="1em" boxShadow="xl" borderRadius="full" overflow="hidden" p="0.5em" bg="white">
+                      <Flex width="40%" minWidth={{ base: "70%" , md: "40%"}} align="center" position="relative" gap="1em" boxShadow="xl" borderRadius="full" overflow="hidden" p="0.5em" bg="white">
                       
                           <form onSubmit={handleSearch}>
                               <Input
@@ -362,7 +362,7 @@ interface OptionType {
    <Button
        as="label"
        colorScheme="teal"
-       size={{base: "sm",sm: "sm", md: "sm", lg: "md",xl: "md"}}
+       size={{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
        cursor="pointer"
        w="full"
    >
@@ -390,13 +390,17 @@ interface OptionType {
                   <VStack spacing={4} w="100%" p={2} justify={'left'}>
                       {UniprotData && (
                           <Flex w="100%" justifyContent="left" alignItems="center" p={2 } marginTop={"0"} direction="column"  >  
-                              <HStack margin={'1rem'} marginTop={'-1rem'} display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" > 
+                              {/* <HStack margin={'1rem'} marginTop={'-1rem'} display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" >  */}
+                              <Flex w="100%" 
+                  align="center" 
+                  justify="center" 
+                  flex="1" 
+                  padding="2rem" paddingTop={'0rem'} direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}>
                                <Heading  margin={"0rem"} marginLeft={"0"} marginBottom={'0rem'} as='h4'size='xl'>  {isUpload ? "File:" : `Uniprot ID: `} {UniprotData.uniprot}</Heading>
                       
                                   <Spacer />
                                     <Box >
-                                      <Box as="span" flex='1' textAlign='left' >
-                                      <Stepper width={'auto'} margin="1rem" size='lg' colorScheme='green' index={activeStep}>
+                                      <Stepper width={{base: "0%",sm: "0%", md: "auto", lg: "auto",xl: "auto"}} visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}} margin="1rem" size={{base: "sm",sm: "sm", md: "sm", lg: "md",xl: "md"}} colorScheme='green' index={activeStep}>
                                         {steps.map((step, index) => (
                                           <Step key={index}>
                                             <StepIndicator>
@@ -416,9 +420,9 @@ interface OptionType {
                                           </Step>
                                         ))}
                                 </Stepper>  
-                                      </Box>
                                     </Box>
-                                    </HStack>
+                                    {/* </HStack> */}
+                                    </Flex>
                                   
                                  <Accordion marginTop={"-2rem"} w="90%" defaultIndex={[0]} allowMultiple>
 
@@ -433,8 +437,12 @@ interface OptionType {
                                     </AccordionButton>
                                   </h2>
                                   <AccordionPanel>
-                                  <HStack>
-                                   
+                                  
+                                  <Flex w="100%" 
+                  align="center" 
+                  justify="center" 
+                  flex="1" 
+                  padding="2rem" paddingTop={'0rem'} direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}>
                                 <Box borderWidth="1px" borderRadius="md" padding={4} width="300px">
                                     <Text fontSize="lg" fontWeight="bold" mb={3}>
                                       3D Viewer
@@ -473,7 +481,7 @@ interface OptionType {
                                 }                                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                   allowFullScreen
                                   title="Protein Structure"
-                              /> </HStack>
+                              /></Flex> 
                               </AccordionPanel>
                               </AccordionItem>
                               
@@ -499,8 +507,11 @@ interface OptionType {
                               </Box>
                                   </AccordionPanel>
                                 </AccordionItem>
-                               
-                                <Select
+
+      <Heading margin={'3rem'} marginLeft={'0rem'} marginBottom={'1rem'} fontSize={{base: "1xl",sm: "1xl", md: "1xl", lg: "2xl",xl: "2xl"}} fontFamily={'texts'}>
+        Select residues to glycosylate
+      </Heading>  
+        <Select
       value={value}
       isMulti
       name="residues"
@@ -513,31 +524,36 @@ interface OptionType {
       }))}
     />
 
-                                {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => (
-                                <div key={index}>
-                <Heading margin={'1rem'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "2xl",xl: "2xl"}} id={`glycan-${index}`} fontFamily={'texts'}>
-                    {`Residue: ${glycoConf.residueName}${glycoConf.residueID}`}
-                </Heading>  
-                <HStack>
-                <ChakraSelect 
-    colorScheme='messenger' 
-    width='80%'   
-    defaultValue="none" 
-    placeholder='Select glycan...'  
-    onChange={(e) => handleSelectChange(e, glycoConf.residueID)}
->
-    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
-     
-        <option key={glycanIndex} value={glycanID}>{glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}</option>
-    ))}
-</ChakraSelect>
-<Image
-              src="/glycan.jpg" 
-              alt="Glycan Image"
-              width="150px"
-            /></HStack>
-                          
-            </div>))}
+{UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
+  const isSelected = value.find(option => option.value === glycoConf.residueID);
+  return isSelected ? (
+    <div key={index}>
+      <HStack>
+      <Heading margin={'1rem'} fontSize={{base: "1xl",sm: "1xl", md: "1xl", lg: "2xl",xl: "2xl"}} id={`glycan-${index}`} fontFamily={'texts'}>
+        {`Residue: ${glycoConf.residueName}${glycoConf.residueID}`}
+      </Heading>  
+      
+        <ChakraSelect 
+          colorScheme='messenger' 
+          width='70%'   
+          defaultValue="none" 
+          placeholder='Select glycan...'  
+          onChange={(e) => handleSelectChange(e, glycoConf.residueID)}
+        >
+          {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
+            <option key={glycanIndex} value={glycanID}>{glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}</option>
+          ))}
+        </ChakraSelect>
+        <Image
+          src="/glycan.jpg" 
+          alt="Glycan Image"
+          width="150px"
+        />
+      </HStack>
+    </div>
+  ) : null;
+})}
+
             <Button
     position={"relative"}
     margin={'1rem'}
@@ -568,6 +584,7 @@ interface OptionType {
      margin={'1rem'}
      borderRadius="full"
      backgroundColor="#7CC9A9"
+     isDisabled={isLoading}
      _hover={{
          backgroundColor: "#51BF9D"
      }}
@@ -576,7 +593,7 @@ interface OptionType {
         Download PDB File
     </Button></a>
 </Box>
-                              )}
+                              )} 
                               </Accordion>
                               
                               
@@ -588,7 +605,12 @@ interface OptionType {
                         backgroundSize="cover" 
                         backgroundPosition="center"
                         backgroundRepeat="no-repeat" >  
-                        <HStack margin={'1rem'} marginTop={'-1rem'} display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" > 
+                        {/* <HStack margin={'1rem'} marginTop={'-1rem'} display="flex" width={'100%'} top="0" bg="white" zIndex="10" >  */}
+                        <Flex w="100%" 
+                   
+                  justify="center" 
+                  flex="1" 
+                  padding="0rem" paddingTop={'0rem'} direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}>
                         <Text 
                         bgGradient='linear(to-l, #44666C, #A7C4A3)'
                         bgClip='text'
@@ -602,8 +624,7 @@ interface OptionType {
 
                             <Spacer />
                               <Box >
-                                <Box as="span" flex='1' textAlign='left' >
-                                <Stepper width={'auto'} margin="1rem" size='lg' colorScheme='green' index={activeStep}>
+                                <Stepper width={{base: "0%",sm: "0%", md: "auto", lg: "auto",xl: "auto"}} visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}} margin="1rem" size={{base: "sm",sm: "sm", md: "sm", lg: "md",xl: "md"}} colorScheme='green' index={activeStep}>
                                   {steps.map((step, index) => (
                                     <Step key={index}>
                                       <StepIndicator>
@@ -623,23 +644,24 @@ interface OptionType {
                                     </Step>
                                   ))}
                           </Stepper>  
-                                </Box>
+                                
                               </Box>
-                              </HStack>
+                              {/* </HStack> */}
+                              </Flex>
 
                         
-                      <Text padding={'10rem'} paddingTop={'2rem'} paddingBottom={'2rem'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
+                      <Text padding={'2rem'} paddingTop={'2rem'} paddingBottom={'2rem'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
 
                         To get started, upload your protein structure file or choose a pre-existing AlphaFold structure, and let re-glyco do the rest!
 
                         here are some example UniProt IDs to get you started:
                         </Text>
                         <Text fontFamily={'texts'}>
-                        <Button margin='-1rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
-                        <Button margin='-1rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P29016</Button>
-                        <Button margin='-1rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>O15552</Button>
-                        <Button margin='-1rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P27918</Button>
-                        <Button margin='-1rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P29016</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>O15552</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P27918</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
                         
                         </Text>
                         <video autoPlay loop muted id="bgVideo">
