@@ -12,12 +12,13 @@ import FAQ from './components/FAQ';
 import Search from './components/SearchTop';
 import API from './components/API';
 import Download from './components/Download';
-import Contact from './components/Contact';
+import Contact from './components/eLab/Elab';
 import ReGlyco from './components/ReGlyco';
 import Elab from './components/eLab/Elab';
 import SearchPage from './components/SearchPage';
 import GlycanPage from './components/GlycanPage';
 import theme from './components/Theme';
+import Test from './components/Draw';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -45,6 +46,7 @@ const App: React.FC = () => {
           <Route path="/search" element={<SearchPage/>} />
           <Route path="/glycan" element={<GlycanPage/>} />
           <Route path="/elab" element={<div><Search /><Contact /></div>} />
+          <Route path="/test" element={<div><Search /><Test /></div>} />
         </Routes>
       </Flex>
 

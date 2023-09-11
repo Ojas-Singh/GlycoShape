@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef,  } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import {
- Grid,Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
+ Show, Hide, Grid,Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
   } from "@chakra-ui/react";
 import Searchbar from './SearchBar';
 import draw from './assets/draw.png';
@@ -31,6 +31,11 @@ const GlycanPage: React.FC = () => {
     const contentRef3 = useRef<HTMLDivElement>(null);
     const contentRef4 = useRef<HTMLDivElement>(null);
     const contentRef5 = useRef<HTMLDivElement>(null);
+    const contentRef6 = useRef<HTMLDivElement>(null);
+    const contentRef7 = useRef<HTMLDivElement>(null);
+    const contentRef8 = useRef<HTMLDivElement>(null);
+    const contentRef9 = useRef<HTMLDivElement>(null);
+    const contentRef10 = useRef<HTMLDivElement>(null);
 
 
     type SectionRefs = {
@@ -39,6 +44,7 @@ const GlycanPage: React.FC = () => {
         Glycan_information: React.MutableRefObject<HTMLDivElement | null>;
         Nomenclature : React.MutableRefObject<HTMLDivElement | null>;
         Simulation_information: React.MutableRefObject<HTMLDivElement | null>;
+
     };
 
     const refs: SectionRefs = {
@@ -47,6 +53,7 @@ const GlycanPage: React.FC = () => {
       Chemical_information: contentRef3,
       Biological_information: contentRef4,
       Simulation_information: contentRef5,
+
     };
 
     useEffect(() => {
@@ -58,7 +65,7 @@ const GlycanPage: React.FC = () => {
                   }
               });
           },
-          { threshold: 0.3 } // Adjust this value as needed
+          { threshold: 0.6} // Adjust this value as needed
       );
   
       (Object.keys(refs) as Array<keyof SectionRefs>).forEach(key => {
@@ -198,9 +205,9 @@ interface GlycanData {
               <TabPanel >
               <Box display="flex" >
             {/* Sidebar */}
+            <Show above='lg'>
             <Box position={'sticky'} top="0" zIndex={5}
-            visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}}
-            width={{base: "0",sm: "0", md: "10%", lg: "15%",xl: "15%"}}  height={'50vh'}  paddingTop={'5rem'} paddingLeft={'0rem'}>
+            width={{base: "0",sm: "0", md: "0", lg: "15%",xl: "15%"}}  height={'50vh'}  paddingTop={'5rem'} paddingLeft={'0rem'}>
             <VStack align="right" spacing={1} justify="start"> {/* Added justify="start" */}
                     <Button 
                         onClick={() => scrollToContent(contentRef1)}
@@ -272,8 +279,9 @@ interface GlycanData {
                 </VStack>
 
             </Box>
+            </Show>
             {/* Main Content */}
-            <Box flex="1"  p={'2rem'} >
+            <Box flex="1"  p={{base: "-2rem",sm: "0rem", md: "2rem", lg: "2rem",xl: "2rem"}} >
             
                 <Box ref={contentRef1}  id="Nomenclature" pb={'4rem'}
                     boxShadow="md"
@@ -286,8 +294,8 @@ interface GlycanData {
 
                     <Wrap >
                       
-                      <VStack align={'left'} padding={'1rem'}>
-                      <WrapItem alignContent={'center'}>
+                      
+                      <WrapItem alignContent={'left'}>
                       <Text fontFamily={'texts'}>SNFG</Text>
                     <Image
               src={`/database/${sequence}/${sequence}.svg`} 
@@ -295,17 +303,21 @@ interface GlycanData {
               height={{base: "10rem",sm: "10rem", md: "20rem", lg: "25rem",xl: "25rem"}}
               width={'25rem'}
               // marginRight="1rem"
-            />       
+            />      
+            </WrapItem>
+            <WrapItem alignContent={'left'}> 
              <iframe
                       // key={sequence}
-                      width="100%"
+                      width="600px"
                       height="400px"
                       src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
                       // src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
-                              /> </WrapItem>
+                              /> 
+                              </WrapItem>
+                              <VStack align={'left'} padding={'1rem'}>
             <Box alignItems={'center'} alignContent={'center'} justifyContent={'center'} justifyItems={'center'}>
             <WrapItem alignContent={'center'}>
                       <Text  fontFamily={'texts'} transform="translateY(50%)"  fontSize="md" >
@@ -474,7 +486,7 @@ interface GlycanData {
    <VStack align={'left'} padding={'1rem'}>
       <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Chemical Information</Text>
       <Divider />
-      <Grid templateColumns="repeat(2, 1fr)" gap={6} padding={'1rem'}>
+      <Grid templateColumns="repeat(2, 1fr)" gap={{base: "0",sm: "0", md: "4", lg: "6",xl: "6"}} padding={'1rem'}>
          {[
             { label: "Mass", value: data?.mass || "Not Available" },
             { label: "Topological Polar Surface Area", value: data?.tpsa || "Not Available" },
@@ -495,10 +507,10 @@ interface GlycanData {
 
 
 <Box ref={contentRef4} id="Biological_information" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
-   <VStack align={'left'} padding={'1rem'}>
+   <VStack align={'left'} padding={{base: "0rem",sm: "0rem", md: "1rem", lg: "1rem",xl: "1rem"}}>
       <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Biological Information</Text>
       <Divider />
-      <Grid templateColumns="repeat(2, 1fr)" gap={6} padding={'1rem'}>
+      <Grid templateColumns="repeat(2, 1fr)" gap={{base: "0",sm: "0", md: "4", lg: "6",xl: "6"}} padding={'1rem'}>
          {[
             { label: "Species", value: data?.species || "Not Available" },
             { label: "Genus", value: data?.genus || "Not Available" },
@@ -527,7 +539,7 @@ interface GlycanData {
    <VStack align={'left'} padding={'1rem'}>
       <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Simulation Information</Text>
       <Divider />
-      <Grid templateColumns="repeat(2, 1fr)" gap={6} padding={'1rem'}>
+      <Grid templateColumns="repeat(2, 1fr)" gap={{base: "0",sm: "0", md: "4", lg: "6",xl: "6"}} padding={'1rem'}>
          {[
             { label: "Simulation Length (μs)", value: data?.length || "Not Available" },
             { label: "MD Engine", value: data?.package || "Not Available" },
@@ -555,15 +567,12 @@ interface GlycanData {
 
 
 
-          <TabPanel>
-          
-            
-          </TabPanel>
+         
           <TabPanel>
 
-          {/* <ContourPlot dataUrl="/torsions.csv" /> */}
+          <ContourPlot dataUrl="/torsions.csv" />
           
-          {/* <Scatter3D dataUrl="/pca.csv" /> */}
+          <Scatter3D dataUrl="/pca.csv" />
           {/* </Box> */}
               
             </TabPanel>

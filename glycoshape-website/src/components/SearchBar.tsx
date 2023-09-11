@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import {
-  FormControl, ChakraProvider ,AspectRatio, Wrap, Highlight, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem
+  FormControl, ChakraProvider ,AspectRatio, Wrap, Highlight, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, Spacer
 } from "@chakra-ui/react";
 import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import draw from './assets/draw.png';
 import un from './assets/un.png';
 
 import { Kbd } from '@chakra-ui/react'
+import Draw from './Draw';
 
 
 const Bar: React.FC = () => {
@@ -111,17 +112,19 @@ const Bar: React.FC = () => {
           <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
             <Image src={draw} alt="Icon Description" w="24px" h="24px" />
           </Button>
-          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Freehand Glycan Drawer</ModalHeader>
+          <Modal isCentered size={'xl'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <ModalOverlay bg='none'
+      backdropFilter='auto'
+      backdropInvert='80%'
+      backdropBlur='3px' />
+        <ModalContent >
+          <ModalHeader>Freehand Glycan Drawer <Spacer /></ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            {/* Place your modal content here */}
-            <Box>
-              <Image src={un} alt="Description" />
-              <Text></Text>
-            </Box>
+            
+              {/* <Image src={un} alt="Description" /> */}
+
+              <Draw />
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
