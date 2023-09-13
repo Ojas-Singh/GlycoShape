@@ -5,7 +5,7 @@ import {
 } from "@chakra-ui/react";
 import draw from './assets/draw.png';
 import un from './assets/un.png';
-import bg from './assets/Glycans_bg_dark3.png';
+import bg from './assets/Glycans_bg_dark.jpg';
 import { Kbd } from '@chakra-ui/react'
 import Searchbar from './SearchBar';
 

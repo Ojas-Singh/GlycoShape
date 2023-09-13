@@ -19,7 +19,7 @@ const ContentSection: React.FC = () => {
         flex="1" 
         padding="5em"
         minHeight={{ base: "60vh" }}
-        backgroundImage={`url(${bg})`} 
+        backgroundImage={`url(${bg})`}
         backgroundSize="cover" 
         backgroundRepeat="no-repeat"
         backgroundPosition="center"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef,  } from 'react';
+import { CopyIcon, CheckIcon } from '@chakra-ui/icons' ;
 import { useLocation, useNavigate } from 'react-router';
 import {
  Show, Hide, Grid,Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
@@ -199,6 +200,7 @@ interface GlycanData {
                                   backgroundColor: "#51BF9D"
                               }}
                               size = {{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
+                              onClick={() => navigate(`/database/${sequence}/${sequence}.zip`)}
                               >Download</Button>
         </TabList>
         <TabPanels>
@@ -341,7 +343,7 @@ interface GlycanData {
                       backgroundColor: "#51BF9D"
                     }}  onClick={onCopy}>
 
-                    {hasCopied ? "Copied!" : "Copy"}
+                    {hasCopied ? <CheckIcon /> : <CopyIcon />}
             
                       </Button>
                       </WrapItem>
@@ -367,7 +369,7 @@ interface GlycanData {
                       backgroundColor: "#51BF9D"
                     }}  onClick={onCopy}>
 
-                    {hasCopied ? "Copied!" : "Copy"}
+{hasCopied ? <CheckIcon /> : <CopyIcon />}
             
                       </Button>
                       
@@ -394,7 +396,7 @@ interface GlycanData {
                       backgroundColor: "#51BF9D"
                     }}  onClick={onCopy}>
 
-                    {hasCopied ? "Copied!" : "Copy"}
+{hasCopied ? <CheckIcon /> : <CopyIcon />}
             
                       </Button>
                       </WrapItem>
@@ -421,7 +423,7 @@ interface GlycanData {
                       backgroundColor: "#51BF9D"
                     }}  onClick={onCopy}>
 
-                    {hasCopied ? "Copied!" : "Copy"}
+{hasCopied ? <CheckIcon /> : <CopyIcon />}
             
                       </Button>
                       </WrapItem>
@@ -447,7 +449,7 @@ interface GlycanData {
                       backgroundColor: "#51BF9D"
                     }}  onClick={onCopy}>
 
-                    {hasCopied ? "Copied!" : "Copy"}
+{hasCopied ? <CheckIcon /> : <CopyIcon />}
             
                       </Button>
                       </WrapItem>
@@ -570,10 +572,147 @@ interface GlycanData {
          
           <TabPanel>
 
-          <ContourPlot dataUrl="/torsions.csv" />
           
-          <Scatter3D dataUrl="/pca.csv" />
-          {/* </Box> */}
+          
+         
+          
+          <Box display="flex" >
+            {/* Sidebar */}
+            <Show above='lg'>
+            <Box position={'sticky'} top="0" zIndex={5}
+            width={{base: "0",sm: "0", md: "0", lg: "15%",xl: "15%"}}  height={'50vh'}  paddingTop={'5rem'} paddingLeft={'0rem'}>
+            <VStack align="right" spacing={1} justify="start"> {/* Added justify="start" */}
+                    <Button 
+                        onClick={() => scrollToContent(contentRef6)}
+                        bg={activeSection === 'Clusters' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'Clusters' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'Clusters' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                        Clusters
+                    </Button>
+                    <Button 
+                        onClick={() => scrollToContent(contentRef7)}
+                        bg={activeSection === 'Torsion_distribution' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'Torsion_distribution' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'Torsion_distribution' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                        Torsion distribution
+                    </Button>
+                    <Button 
+                        onClick={() => scrollToContent(contentRef8)}
+                        bg={activeSection === 'Ramachandran_plot' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'Ramachandran_plot' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'Ramachandran_plot' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
+                        // fontFamily={'thin'}
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                        Ramachandran plot
+                    </Button>
+                    <Button 
+                        onClick={() => scrollToContent(contentRef9)}
+                        bg={activeSection === 'PCA_details ' ? '#466263' : 'gray.300'}
+                        fontSize={activeSection === 'PCA_details' ? 'larger' : 'medium'} // Adjust font sizes as desired
+                        color={activeSection === 'PCA_details' ? 'white' : '#1A202C'}
+                        fontStyle={'medium'}
+                        _hover={{
+                          bg: '#51BF9D', // replace with the color you want on hover
+                        }}
+                        // fontFamily={'thin'}
+                        borderRadius="0" // Sharp rectangular edges
+                    >
+                              PCA details                   </Button>
+                    
+                </VStack>
+
+            </Box>
+            </Show>
+            {/* Main Content */}
+            <Box flex="1"  p={{base: "-2rem",sm: "0rem", md: "2rem", lg: "2rem",xl: "2rem"}} >
+            
+                <Box ref={contentRef6}  id="clusters"p={'2rem'} pb={'4rem'} 
+                    boxShadow="md"
+                    marginBottom="1em"
+                    backgroundColor="white"
+                    borderRadius="md">
+                    <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Clusters</Text>
+                    <Divider />
+
+                    
+             <iframe
+                      // key={sequence}
+                      width="100%"
+                      height="400px"
+                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
+                      // src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Protein Structure"
+                              /> 
+                            
+                </Box>
+               
+    
+
+
+
+
+
+<Box ref={contentRef7} id="Torsion_distribution" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
+   <VStack align={'left'} padding={'1rem'}>
+      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Simulation Information</Text>
+      <Divider />
+      <Grid templateColumns="repeat(2, 1fr)" gap={{base: "0",sm: "0", md: "4", lg: "6",xl: "6"}} padding={'1rem'}>
+         {[
+            { label: "Simulation Length (μs)", value: data?.length || "Not Available" },
+            { label: "MD Engine", value: data?.package || "Not Available" },
+            { label: "Force Field", value: data?.forcefield || "Not Available" },
+            { label: "Temperature (K)", value: data?.temperature || "Not Available" },
+            { label: "Pressure (bar)", value: data?.pressure || "Not Available" },
+            { label: "Salt (mM)", value: data?.salt || "Not Available" }
+         ].map(item => (
+            <Flex key={item.label} align="center" justify="space-between">
+               <Text fontFamily={'texts'} fontSize="md"  width="45%" textAlign="right">{item.label}</Text>
+               <Divider orientation="vertical" height="20px" />
+               <Text fontFamily={'texts'} fontSize="md"  width="45%" textAlign="left">{item.value}</Text>
+            </Flex>
+         ))}
+      </Grid>
+   </VStack>
+</Box>
+
+
+<Box ref={contentRef8} id="Ramachandran_plot" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
+   <VStack align={'left'} padding={'1rem'}>
+      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Ramachandran plot</Text>
+      <Divider />
+      <ContourPlot dataUrl={`/database/${sequence}/output/torsions.csv`} />
+   </VStack>
+</Box>
+
+
+
+<Box ref={contentRef9} id="PCA_details" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
+   <VStack align={'left'} padding={'1rem'}>
+      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>PCA details</Text>
+      <Divider />
+      <Scatter3D dataUrl={`/database/${sequence}/output/pca.csv`} />
+   </VStack>
+</Box>
+            </Box></Box>
               
             </TabPanel>
         </TabPanels>

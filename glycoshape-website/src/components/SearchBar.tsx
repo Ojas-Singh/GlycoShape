@@ -6,7 +6,6 @@ import {
 import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import draw from './assets/draw.png';
 import un from './assets/un.png';
-
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
 
@@ -112,13 +111,23 @@ const Bar: React.FC = () => {
           <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
             <Image src={draw} alt="Icon Description" w="24px" h="24px" />
           </Button>
-          <Modal isCentered size={'xl'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <Modal isCentered size={'90%'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalOverlay bg='none'
       backdropFilter='auto'
-      backdropInvert='80%'
+      // backdropInvert='80%'
       backdropBlur='3px' />
-        <ModalContent >
-          <ModalHeader>Freehand Glycan Drawer <Spacer /></ModalHeader>
+        <ModalContent  >
+          <ModalHeader  alignSelf={'center'}> <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='3xl'
+          fontWeight='bold'
+          marginBottom={'-1rem'}
+        ><Highlight query='Glycan Drawer' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+        Glycan Drawer
+       </Highlight>
+          
+        </Text></ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             
@@ -127,7 +136,7 @@ const Bar: React.FC = () => {
               <Draw />
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
+            {/* <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button> */}
           </ModalFooter>
         </ModalContent>
       </Modal>
