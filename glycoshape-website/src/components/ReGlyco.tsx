@@ -18,7 +18,7 @@ import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Co
   Stepper,
   useSteps, Badge, WrapItem, Image} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
-import bg from './assets/Glycans_bg_dark.jpg';
+import bg from './assets/Glycans_bg_dark_neg.png';
 import { Config } from '@testing-library/user-event/dist/types/setup/setup';
 
 import Select, { ActionMeta, OnChangeValue } from 'react-select';
@@ -290,7 +290,7 @@ interface OptionType {
                   direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}
                    >
                       <Text
-                          bgGradient='linear(to-l,  #FDFDA1, #E2FCC5)'
+                          bgGradient='linear(to-l,  #CE9D8F, #D7C9C0)'
                           bgClip='text'
                           fontSize={{base: "4xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "5xl"}}
                           
@@ -336,9 +336,9 @@ interface OptionType {
                               position={"absolute"}
                               right="3%"
                               borderRadius="full"
-                              backgroundColor="#7CC9A9"
+                              backgroundColor="#B07095"
                               _hover={{
-                                  backgroundColor: "#51BF9D"
+                                  backgroundColor: "#CF6385"
                               }}
                               size = {{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
                               onClick={(e) => (setIsUpload(false),handleSearch)}
@@ -349,7 +349,7 @@ interface OptionType {
                       
                       <Text 
                           marginLeft={"2rem"}
-                          bgGradient='linear(to-l, #44666C, #44666C)'
+                          bgGradient='linear(to-l, #B07095, #B07095)'
                           bgClip='text'
                           fontSize={{base: "2xl",sm: "2xl", md: "2xl", lg: "2xl",xl: "2xl"}}
                           alignItems="center"
@@ -361,7 +361,10 @@ interface OptionType {
                       <Box position="relative" display="inline-block" marginLeft={"2rem"} alignItems="center">
    <Button
        as="label"
-       colorScheme="teal"
+       backgroundColor="#B07095"
+                              _hover={{
+                                  backgroundColor: "#CF6385"
+                              }}
        size={{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
        cursor="pointer"
        w="full"
@@ -400,7 +403,7 @@ interface OptionType {
                       
                                   <Spacer />
                                     <Box >
-                                      <Stepper width={{base: "0%",sm: "0%", md: "auto", lg: "auto",xl: "auto"}} visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}} margin="1rem" size={{base: "sm",sm: "sm", md: "sm", lg: "md",xl: "md"}} colorScheme='green' index={activeStep}>
+                                      <Stepper width={{base: "0%",sm: "0%", md: "auto", lg: "auto",xl: "auto"}} visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}} margin="1rem" size={{base: "sm",sm: "sm", md: "sm", lg: "md",xl: "md"}} colorScheme='pink' index={activeStep}>
                                         {steps.map((step, index) => (
                                           <Step key={index}>
                                             <StepIndicator>
@@ -541,14 +544,16 @@ interface OptionType {
           onChange={(e) => handleSelectChange(e, glycoConf.residueID)}
         >
           {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
-            <option key={glycanIndex} value={glycanID}>{glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}</option>
-          ))}
-        </ChakraSelect>
-        <Image
-          src="/glycan.jpg" 
+            <option key={glycanIndex} value={glycanID}>{glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}
+            <Image
+          src={`/database/${glycanID}/${glycanID}.svg` }
           alt="Glycan Image"
           width="150px"
         />
+            </option>
+          ))}
+        </ChakraSelect>
+        
       </HStack>
     </div>
   ) : null;
@@ -558,10 +563,10 @@ interface OptionType {
     position={"relative"}
     margin={'1rem'}
     borderRadius="full"
-    backgroundColor="#7CC9A9"
-    _hover={{
-        backgroundColor: "#51BF9D"
-    }}
+    backgroundColor="#B07095"
+                              _hover={{
+                                  backgroundColor: "#CF6385"
+                              }}
     size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}
     onClick={isUpload ? handleProcessCustom : handleProcess}
     isDisabled={isLoading}  // Disable the button while processing to prevent multiple requests
@@ -583,11 +588,11 @@ interface OptionType {
     <Button position={"relative"}
      margin={'1rem'}
      borderRadius="full"
-     backgroundColor="#7CC9A9"
      isDisabled={isLoading}
-     _hover={{
-         backgroundColor: "#51BF9D"
-     }}
+     backgroundColor="#B07095"
+                              _hover={{
+                                  backgroundColor: "#CF6385"
+                              }}
      size = {{base: "md",sm: "md", md: "md", lg: "lg",xl: "lg"}}>
        
         Download PDB File
@@ -612,7 +617,7 @@ interface OptionType {
                   flex="1" 
                   padding="0rem" paddingTop={'0rem'} direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}>
                         <Text 
-                        bgGradient='linear(to-l, #44666C, #A7C4A3)'
+                        bgGradient='linear(to-l,  #B07095, #D7C9C0)'
                         bgClip='text'
                         fontSize={{base: "3xl",sm: "3xl", md: "4xl", lg: "5xl",xl: "5xl"}}
                         fontWeight='bold'
@@ -624,7 +629,7 @@ interface OptionType {
 
                             <Spacer />
                               <Box >
-                                <Stepper width={{base: "0%",sm: "0%", md: "auto", lg: "auto",xl: "auto"}} visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}} margin="1rem" size={{base: "sm",sm: "sm", md: "sm", lg: "md",xl: "md"}} colorScheme='green' index={activeStep}>
+                                <Stepper width={{base: "0%",sm: "0%", md: "auto", lg: "auto",xl: "auto"}} visibility={{base: "hidden",sm: "hidden", md: "visible", lg: "visible",xl: "visible"}} margin="1rem" size={{base: "sm",sm: "sm", md: "sm", lg: "md",xl: "md"}} colorScheme='pink' index={activeStep}>
                                   {steps.map((step, index) => (
                                     <Step key={index}>
                                       <StepIndicator>
@@ -657,11 +662,11 @@ interface OptionType {
                         here are some example UniProt IDs to get you started:
                         </Text>
                         <Text fontFamily={'texts'}>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P29016</Button>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>O15552</Button>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P27918</Button>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='teal' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P29016</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>O15552</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P27918</Button>
+                        <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
                         
                         </Text>
                         <video autoPlay loop muted id="bgVideo">

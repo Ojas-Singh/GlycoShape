@@ -3,9 +3,9 @@ import Plot from 'react-plotly.js';
 import * as d3 from 'd3';
 
 type CSVData = {
-  x : string;
-  y: string;
-  z: string;
+  '0': string;
+  '1': string;
+  '2': string;
   cluster: string;
 };
 
@@ -26,9 +26,9 @@ const Scatter3D: React.FC<Scatter3DProps> = ({ dataUrl }) => {
   if (!data.length) return <div>Loading...</div>;
 
   const trace = {
-    x: data.map(d => parseFloat(d.x)),
-    y: data.map(d => parseFloat(d.y)),
-    z: data.map(d => parseFloat(d.z)),
+    x: data.map(d => parseFloat(d['0'])),
+    y: data.map(d => parseFloat(d['1'])),
+    z: data.map(d => parseFloat(d['2'])),
     mode: 'markers' as const,  // Note the "as const" here.
     type: 'scatter3d' as const,
     marker: {
@@ -38,7 +38,6 @@ const Scatter3D: React.FC<Scatter3DProps> = ({ dataUrl }) => {
       opacity: 0.8
     }
   };
-  
 
   const layout = {
     autosize: true,

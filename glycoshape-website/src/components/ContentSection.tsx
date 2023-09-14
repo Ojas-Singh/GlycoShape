@@ -51,7 +51,8 @@ const ContentSection: React.FC = () => {
                 backgroundColor="#F7F9E5" 
                 padding="20px"
               >
-                      <Text
+
+<Text
                       align={"center"}
                 bgGradient='linear(to-l, #44666C, #A7C4A3)'
                 bgClip='text'
@@ -59,7 +60,14 @@ const ContentSection: React.FC = () => {
                 fontWeight='bold'
                 fontFamily={'texts'}
               >
-              GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder to accelerate scientific research. 
+                {/* <Highlight
+    query='(Re-Glyco)'
+    styles={{ px: '2', py: '1', rounded: 'full', color: '#AD769B' }}
+  > */}
+                      
+              GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder <Link color={'#B07095'} href="/reglyco" marginRight="20px">(Re-Glyco)</Link>to accelerate scientific research. 
+              
+              {/* </Highlight> */}
               </Text>
               </Flex>
               <Flex direction="column" align={'center'} padding={'2rem'}>
