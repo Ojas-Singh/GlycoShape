@@ -163,6 +163,7 @@ interface OptionType {
       const [selectedGlycans, setSelectedGlycans] = useState({});
       const [outputPath, setOutputPath] = useState("");
       const [clashValue, setClashValue] = useState(false);
+      const [selectedGlycanImage, setSelectedGlycanImage] = useState<{[key: number]: string}>({});
       
 
 
@@ -172,6 +173,10 @@ interface OptionType {
             ...prevState,
             [residueID]: value
         }));
+        setSelectedGlycanImage(prevState => ({
+          ...prevState,
+          [residueID]: value
+      }));
     }
 
 
@@ -544,16 +549,22 @@ interface OptionType {
           onChange={(e) => handleSelectChange(e, glycoConf.residueID)}
         >
           {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
-            <option key={glycanIndex} value={glycanID}>{glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}
-            <Image
-          src={`/database/${glycanID}/${glycanID}.svg` }
-          alt="Glycan Image"
-          width="150px"
-        />
+            
+            <option key={glycanIndex} value={glycanID}>
+            
+              {glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}
+            
             </option>
+            
           ))}
         </ChakraSelect>
-        
+        {selectedGlycanImage[glycoConf.residueID] && (
+                            <Image
+                                src={`/database/${selectedGlycanImage[glycoConf.residueID]}/${selectedGlycanImage[glycoConf.residueID]}.svg`}
+                                alt="Glycan Image"
+                                width="150px"
+                            />
+                        )}
       </HStack>
     </div>
   ) : null;
