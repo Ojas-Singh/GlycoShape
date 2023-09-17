@@ -17,6 +17,9 @@ sudo nano /etc/nginx/sites-available/glycoshape.io
 sudo nginx -t
 sudo systemctl reload nginx
 sudo systemctl restart nginx
+
+cat /var/log/nginx/error.log
+
 ```
 
 

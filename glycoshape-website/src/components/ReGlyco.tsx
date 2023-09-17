@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, useEffect, useRef,  } from 'react';
-
+import axios from 'axios';
 import { Select as ChakraSelect } from '@chakra-ui/react';
 import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
   Spacer,
@@ -104,34 +104,37 @@ interface OptionType {
         e.preventDefault();  // Prevents the default form submission behavior
         fetchProteinData();
     };
+    
+    
     const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0]; // Get the first file (if multiple files are allowed, this will only get the first)
-      if (file) {
-          const formData = new FormData();
-          formData.append('pdbFile', file);  // 'pdbFile' will be the field name to retrieve this file on the server-side
-          
-          try {
-              const response = await fetch('https://glycoshape.io/api/upload_pdb', {
-                  method: 'POST',
-                  body: formData  // Send the file as FormData
-              });
-              
-              if (response.ok) {
-                  const responseData = await response.json();
-                  setUniprotData(responseData);
-                  setIsUpload(true);
-                  setActiveStep(1);
-                  // Handle the response data as needed
-                  // For example, if the server returns the URL of the uploaded file:
-                  // setPdbUrl(responseData.fileUrl);
-              } else {
-                  console.error("Failed to upload file.");
-              }
-          } catch (error) {
-              console.error("Error occurred during file upload:", error);
-          }
-      }
-  }
+        const file = event.target.files?.[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('pdbFile', file);
+    
+            try {
+                const response = await axios.post('https://glycoshape.io/api/upload_pdb', formData, {
+                    timeout: 600000, // Set a timeout of 10 minutes (value in milliseconds)
+                    onUploadProgress: progressEvent => {
+                        const percentage = progressEvent.total ? (progressEvent.loaded * 100) / progressEvent.total : 0;
+                        console.log(`Upload Progress: ${Math.round(percentage)}%`);
+                    }
+                });
+    
+                if (response.status === 200) {
+                    setUniprotData(response.data);
+                    setIsUpload(true);
+                    setActiveStep(1);
+                } else {
+                    console.error("Failed to upload file.");
+                }
+            } catch (error) {
+                console.error("Error occurred during file upload:", error);
+            }
+        }
+    };
+    
+
   
 
       const fetchProteinData = async () => {

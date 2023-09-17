@@ -11,6 +11,7 @@ import bg from './assets/Glycans_bg_dark.jpg';
 import { Kbd } from '@chakra-ui/react'
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
+// import { Cluster } from 'cluster';
 
 const GlycanPage: React.FC = () => {
     const navigate  = useNavigate();
@@ -91,6 +92,9 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
   }
 };
 
+interface Cluster {
+  [key: string]: string[];
+}
 
 interface GlycanData {
   glycam: string;
@@ -119,7 +123,7 @@ interface GlycanData {
   phylum: string | null;
   kingdom: string | null;
   domain: string | null;
-  clusters: Record<string, number>;
+  clusters: Cluster;
   length: string;
   package: string;
   forcefield: string;
@@ -130,8 +134,24 @@ interface GlycanData {
 }
 
 
-  const [data, setData] = useState<GlycanData | null>(null);
 
+  const [data, setData] = useState<GlycanData | null>(null);
+    // Using conditional chaining to check if data and clusters exist
+  const clusterLength = data?.clusters ? Object.keys(data.clusters).length : 0;
+
+  const generateIframeSrc = (sequence: string, clusterLength: number) => {
+    const baseClusterURL = `https://glycoshape.io/database/${sequence}/${sequence}_cluster`;
+  
+    // Generate an array of cluster URLs based on the clusterLength
+    const clusterUrls = Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.pdb`);
+  
+    // Join the URLs into a single string with commas between them
+    const clusterUrlString = clusterUrls.join(',');
+  
+    return `/viewer/embedded_multi.html?pdbUrls=${clusterUrlString}&formats=${"pdb,".repeat(clusterLength).slice(0, -1)}`;
+  };
+
+  const iframeSrc = generateIframeSrc(sequence, clusterLength);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -650,18 +670,29 @@ interface GlycanData {
                     borderRadius="md">
                     <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Clusters</Text>
                     <Divider />
-
+                    <VStack>
+                    <Box padding={'0.5rem'}>
+              <Code 
+                    p={2} 
+                    display="block" 
+                    whiteSpace="pre" 
+                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    overflowX="auto"
+                    fontFamily={'mono'}
+                  >{clusterLength}
+                  </Code></Box>
                     
              <iframe
                       // key={sequence}
                       width="100%"
                       height="400px"
-                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
+                      src={iframeSrc}
+                      // src={`/viewer/embedded_multi.html?pdbUrls=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb,https://glycoshape.io/database/${sequence}/${sequence}_cluster1_alpha.pdb&formats=pdb,pdb`}    
                       // src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
-                              /> 
+                              /> </VStack>
                             
                 </Box>
                

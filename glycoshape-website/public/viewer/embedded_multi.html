@@ -21,32 +21,36 @@
         <script type="text/javascript" src="./molstar.js"></script>
         <script type="text/javascript">
             const urlParams = new URLSearchParams(window.location.search);
-            const pdbUrl = urlParams.get('pdbUrl');
-            const format = urlParams.get('format');
+            const pdbUrls = urlParams.get('pdbUrls');
+            const formats = urlParams.get('formats');
+        
+            // Split the comma-separated lists into arrays
+            const pdbUrlArray = pdbUrls ? pdbUrls.split(',') : [];
+            const formatArray = formats ? formats.split(',') : [];
+        
             molstar.Viewer.create('app', {
                 layoutIsExpanded: true,
-                layoutShowControls: false,
+                layoutShowControls: true,
                 layoutShowRemoteState: false,
-                layoutShowSequence: true,
-                layoutShowLog: true,
+                layoutShowSequence: false,
+                layoutShowLog: false,
                 layoutShowLeftPanel: true,
-
+        
                 viewportShowExpand: true,
                 viewportShowSelectionMode: false,
                 viewportShowAnimation: false,
-
+        
                 pdbProvider: 'rcsb',
                 emdbProvider: 'rcsb',
             }).then(viewer => {
-                const label = pdbUrl ? pdbUrl.slice(-18) : 'Unknown';
-                viewer.loadStructureFromUrl(pdbUrl, format, false, {
-                    
-                    label: label
-                }).then(() => {
-        // Call the stylized method here
-    });
-                
+                for (let i = 0; i < pdbUrlArray.length; i++) {
+                    const label = pdbUrlArray[i] ? pdbUrlArray[i].slice(-18) : 'Unknown';
+                    viewer.loadStructureFromUrl(pdbUrlArray[i], formatArray[i], false, {
+                        label: label
+                    });
+                }
             });
         </script>
+        
     </body>
 </html>
