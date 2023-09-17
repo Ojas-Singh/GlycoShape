@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Stack,Badge,
   Flex,
   Box,
   Link,
@@ -27,8 +28,14 @@ const Navbar: React.FC = () => {
     <Flex as="nav"  bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
       <Box>
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
-        <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} paddingLeft={"1.5rem"} href="/" >GlycoShape.io</Link> 
+        <Stack direction='row'>
+  
+          <Text top="50%" fontFamily={'texts'} 
+            transform="translateY(20%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Beta</Badge>   </Text>
+
+        <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} href="/" >GlycoShape.io</Link> 
         {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
+        </Stack>
       </Box>
 
       {isMobile ? (

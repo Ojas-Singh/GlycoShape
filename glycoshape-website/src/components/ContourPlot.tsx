@@ -32,7 +32,13 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
       setData(data as CSVData[]);
 
       if (data.length > 0) {
-        setColumns(Object.keys(data[0]));
+        const cols = Object.keys(data[0]);
+        setColumns(cols);
+  
+        // Set the default selections for X and Y axes.
+        if (cols.length >= 4) {
+          setSelectedColumns({ x: cols[2], y: cols[3] });
+        }
       }
     });
   }, [dataUrl]);
@@ -116,10 +122,13 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
     return (
       <div>
         <div>
-          <label>
-            X Axis:
+          <label >
+            X Axis: &nbsp;&nbsp;
             <select
+              
+              style={{ width: '150px', height: '30px', borderRadius: '5px', }}
               value={selectedColumns.x}
+              
               onChange={(e) => setSelectedColumns((prev) => ({ ...prev, x: e.target.value }))}
             >
               {columns.map((col) => (
@@ -129,9 +138,11 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
               ))}
             </select>
           </label>
+          &nbsp;&nbsp;&nbsp;&nbsp;
           <label>
-            Y Axis:
+            Y Axis: &nbsp;&nbsp;
             <select
+            style={{ width: '150px', height: '30px', borderRadius: '5px' }}
               value={selectedColumns.y}
               onChange={(e) => setSelectedColumns((prev) => ({ ...prev, y: e.target.value }))}
             >

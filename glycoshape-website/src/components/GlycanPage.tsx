@@ -133,6 +133,7 @@ interface GlycanData {
   contributor: string;
 }
 
+  const colors = ["#1B9C75", "#D55D02", "#746FB1", "#E12886", "#939242","#E3A902","#A4751D","#646464","#E11A1C","#357AB3"];  // Your color array
 
 
   const [data, setData] = useState<GlycanData | null>(null);
@@ -150,7 +151,15 @@ interface GlycanData {
   
     return `/viewer/embedded_multi.html?pdbUrls=${clusterUrlString}&formats=${"pdb,".repeat(clusterLength).slice(0, -1)}`;
   };
-
+  
+  const generateDownloadUrls = (sequence: string, clusterLength: number) => {
+    const baseClusterURL = `https://glycoshape.io/database/${sequence}/${sequence}_cluster`;
+  
+    // Generate an array of cluster URLs based on the clusterLength
+    return Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.pdb`);
+  };
+  
+  const downloadUrls = generateDownloadUrls(sequence, clusterLength);
   const iframeSrc = generateIframeSrc(sequence, clusterLength);
   useEffect(() => {
     const fetchData = async () => {
@@ -598,10 +607,10 @@ interface GlycanData {
           
           <Box display="flex" >
             {/* Sidebar */}
-            <Show above='lg'>
+            {/* <Show above='lg'>
             <Box position={'sticky'} top="0" zIndex={5}
             width={{base: "0",sm: "0", md: "0", lg: "15%",xl: "15%"}}  height={'50vh'}  paddingTop={'5rem'} paddingLeft={'0rem'}>
-            <VStack align="right" spacing={1} justify="start"> {/* Added justify="start" */}
+            <VStack align="right" spacing={1} justify="start"> 
                     <Button 
                         onClick={() => scrollToContent(contentRef6)}
                         bg={activeSection === 'Clusters' ? '#466263' : 'gray.300'}
@@ -659,40 +668,48 @@ interface GlycanData {
                 </VStack>
 
             </Box>
-            </Show>
+            </Show> */}
             {/* Main Content */}
-            <Box flex="1"  p={{base: "-2rem",sm: "0rem", md: "2rem", lg: "2rem",xl: "2rem"}} >
+            <Box flex="1"  p={{base: "-2rem",sm: "0rem", md: "2rem", lg: "2rem",xl: "2rem"}} marginTop={'-2.5rem'} >
             
-                <Box ref={contentRef6}  id="clusters"p={'2rem'} pb={'4rem'} 
+                <Box ref={contentRef6}  id="clusters"p={'2rem'} pb={'4rem'} paddingTop={'1rem'}
                     boxShadow="md"
                     marginBottom="1em"
                     backgroundColor="white"
                     borderRadius="md">
-                    <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Clusters</Text>
+                    <Text fontSize="2xl" color={"#2D5E6B"} mb={2}> {clusterLength} Clusters</Text>
                     <Divider />
                     <VStack>
-                    <Box padding={'0.5rem'}>
-              <Code 
-                    p={2} 
-                    display="block" 
-                    whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
-                    overflowX="auto"
-                    fontFamily={'mono'}
-                  >{clusterLength}
-                  </Code></Box>
+                    
                     
              <iframe
                       // key={sequence}
                       width="100%"
-                      height="400px"
+                      height="500px"
                       src={iframeSrc}
                       // src={`/viewer/embedded_multi.html?pdbUrls=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb,https://glycoshape.io/database/${sequence}/${sequence}_cluster1_alpha.pdb&formats=pdb,pdb`}    
                       // src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
-                              /> </VStack>
+                              /> 
+
+                <div>
+                  <HStack>
+                        <Text size={'md'}>Download Clusters : </Text>
+                        <ul>
+                          {downloadUrls.map((url, index) => (
+                            <Button colorScheme='purple' variant='link' key={index} style={{ color: colors[index % colors.length] }}>
+                              <a href={url} download>
+                                Cluster {index}&nbsp;&nbsp;&nbsp;
+                              </a></Button> 
+                            
+                          ))}
+                        </ul>
+                        </HStack>
+                      </div>
+                              
+                              </VStack>
                             
                 </Box>
                
@@ -728,9 +745,20 @@ interface GlycanData {
 
 <Box ref={contentRef8} id="Ramachandran_plot" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
    <VStack align={'left'} padding={'1rem'}>
-      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Ramachandran plot</Text>
+    <HStack>
+      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Ramachandran plot</Text> <Spacer />  <Button  
+                            marginLeft={'1rem'}
+                             transform="translateY(0%)"
+                              borderRadius="full"
+                              backgroundColor="#7CC9A9"
+                              _hover={{
+                                  backgroundColor: "#51BF9D"
+                              }}
+                              size = {{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
+                              onClick={() => navigate(`/database/${sequence}/output/torsions.csv`)}
+                              >Download torsion DATA</Button></HStack>
       <Divider />
-      <ContourPlot dataUrl={`/database/${sequence}/output/torsions.csv`} />
+      <ContourPlot dataUrl={`https://glycoshape.io/database/${sequence}/output/torsions.csv`} />
    </VStack>
 </Box>
 
@@ -740,7 +768,7 @@ interface GlycanData {
    <VStack align={'left'} padding={'1rem'}>
       <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>PCA details</Text>
       <Divider />
-      <Scatter3D dataUrl={`/database/${sequence}/output/pca.csv`} />
+      <Scatter3D dataUrl={`https://glycoshape.io/database/${sequence}/output/pca.csv`} />
    </VStack>
 </Box>
             </Box></Box>
