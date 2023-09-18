@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef,  } from 'react';
+import React, { useState, useEffect, useRef, MouseEventHandler } from 'react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons' ;
 import { useLocation, useNavigate } from 'react-router';
 import {
@@ -11,7 +11,9 @@ import bg from './assets/Glycans_bg_dark.jpg';
 import { Kbd } from '@chakra-ui/react'
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
-// import { Cluster } from 'cluster';
+import PieChart from './Pie';
+
+
 
 const GlycanPage: React.FC = () => {
     const navigate  = useNavigate();
@@ -24,7 +26,22 @@ const GlycanPage: React.FC = () => {
     const searchRef = useRef<HTMLInputElement>(null);
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
-    const { hasCopied, onCopy } = useClipboard(sequence || '');  // Provide a fallback empty string
+    // const { hasCopied, onCopy } = useClipboard(sequence || '');  // Provide a fallback empty string
+
+    const [hasCopied, setHasCopied] = useState(false);
+
+  const handleCopyClick = (text:string) => {
+    const textarea = document.createElement("textarea");
+    textarea.innerText = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+    setHasCopied(true);
+
+    // Reset after some time if you want
+    setTimeout(() => setHasCopied(false), 2000);
+  };
 
     const [activeSection, setActiveSection] = useState<string | null>(null);
 
@@ -93,7 +110,7 @@ const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => 
 };
 
 interface Cluster {
-  [key: string]: string[];
+  data: Record<string, number | GLfloat>
 }
 
 interface GlycanData {
@@ -139,6 +156,14 @@ interface GlycanData {
   const [data, setData] = useState<GlycanData | null>(null);
     // Using conditional chaining to check if data and clusters exist
   const clusterLength = data?.clusters ? Object.keys(data.clusters).length : 0;
+
+  const transformedClusters = data?.clusters || {};
+
+  // const transformedClusters = Object.fromEntries(
+  //   Object.entries(data?.clusters || {}).map(([key, value]) => [key, value])
+  // );
+  console.log("clusters data:", data?.clusters);
+  console.log("transformed clusters:", transformedClusters);
 
   const generateIframeSrc = (sequence: string, clusterLength: number) => {
     const baseClusterURL = `https://glycoshape.io/database/${sequence}/${sequence}_cluster`;
@@ -370,7 +395,7 @@ interface GlycanData {
                     backgroundColor="#7CC9A9"
                     _hover={{
                       backgroundColor: "#51BF9D"
-                    }}  onClick={onCopy}>
+                    }}  onClick={() => handleCopyClick(data?.iupac || '')}>
 
                     {hasCopied ? <CheckIcon /> : <CopyIcon />}
             
@@ -396,8 +421,8 @@ interface GlycanData {
                     backgroundColor="#7CC9A9"
                     _hover={{
                       backgroundColor: "#51BF9D"
-                    }}  onClick={onCopy}>
-
+                    }}  
+                    onClick={() => handleCopyClick(data?.glycam || '')}>
 {hasCopied ? <CheckIcon /> : <CopyIcon />}
             
                       </Button>
@@ -423,7 +448,7 @@ interface GlycanData {
                     backgroundColor="#7CC9A9"
                     _hover={{
                       backgroundColor: "#51BF9D"
-                    }}  onClick={onCopy}>
+                    }} onClick={() => handleCopyClick(data?.glytoucan_id || '')}>
 
 {hasCopied ? <CheckIcon /> : <CopyIcon />}
             
@@ -450,7 +475,7 @@ interface GlycanData {
                     backgroundColor="#7CC9A9"
                     _hover={{
                       backgroundColor: "#51BF9D"
-                    }}  onClick={onCopy}>
+                    }}  onClick={() => handleCopyClick(data?.wurcs || '')}>
 
 {hasCopied ? <CheckIcon /> : <CopyIcon />}
             
@@ -476,7 +501,7 @@ interface GlycanData {
                     backgroundColor="#7CC9A9"
                     _hover={{
                       backgroundColor: "#51BF9D"
-                    }}  onClick={onCopy}>
+                    }}  onClick={() => handleCopyClick(data?.smiles || '')}>
 
 {hasCopied ? <CheckIcon /> : <CopyIcon />}
             
@@ -681,7 +706,8 @@ interface GlycanData {
                     <Divider />
                     <VStack>
                     
-                    
+
+
              <iframe
                       // key={sequence}
                       width="100%"
@@ -696,6 +722,8 @@ interface GlycanData {
 
                 <div>
                   <HStack>
+                  {data?.clusters ? <PieChart data={transformedClusters} /> : <div>No cluster data available</div>}
+
                         <Text size={'md'}>Download Clusters : </Text>
                         <ul>
                           {downloadUrls.map((url, index) => (
@@ -746,7 +774,8 @@ interface GlycanData {
 <Box ref={contentRef8} id="Ramachandran_plot" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
    <VStack align={'left'} padding={'1rem'}>
     <HStack>
-      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Ramachandran plot</Text> <Spacer />  <Button  
+      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Ramachandran plot</Text> <Spacer /> 
+                             <Button  
                             marginLeft={'1rem'}
                              transform="translateY(0%)"
                               borderRadius="full"
@@ -755,7 +784,14 @@ interface GlycanData {
                                   backgroundColor: "#51BF9D"
                               }}
                               size = {{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
-                              onClick={() => navigate(`/database/${sequence}/output/torsions.csv`)}
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = `/database/${sequence}/output/torsions.csv`;
+                                link.setAttribute('download', 'torsions.csv');
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
                               >Download torsion DATA</Button></HStack>
       <Divider />
       <ContourPlot dataUrl={`https://glycoshape.io/database/${sequence}/output/torsions.csv`} />
@@ -768,8 +804,14 @@ interface GlycanData {
    <VStack align={'left'} padding={'1rem'}>
       <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>PCA details</Text>
       <Divider />
+      <HStack>
       <Scatter3D dataUrl={`https://glycoshape.io/database/${sequence}/output/pca.csv`} />
+      <VStack>
+        <Image width='25rem' src={`https://glycoshape.io/database/${sequence}/output/PCA_variance.png`} />
+      <Image width='25rem' src={`https://glycoshape.io/database/${sequence}/output/Silhouette_Score.png`} /></VStack>
+      </HStack>
    </VStack>
+
 </Box>
             </Box></Box>
               

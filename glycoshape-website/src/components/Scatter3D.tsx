@@ -58,7 +58,7 @@ const Scatter3D: React.FC<Scatter3DProps> = ({ dataUrl }) => {
     }
   };
 
-  return <Plot data={[trace]} layout={layout} useResizeHandler={true} style={{ width: "60rem", height: "30rem" }} />;
+  return <Plot data={[trace]} layout={layout} useResizeHandler={true} style={{ width: "50rem", height: "30rem" }} />;
 };
 
 export default Scatter3D;

@@ -24,7 +24,7 @@ const ContentSection: React.FC = () => {
 
         backgroundSize="cover" 
         backgroundRepeat="no-repeat"
-        backgroundPosition="center"
+        // backgroundPosition="center"
       >        
         <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "3xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "6xl"}} fontWeight='bold' marginBottom="0.2em">
         <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>

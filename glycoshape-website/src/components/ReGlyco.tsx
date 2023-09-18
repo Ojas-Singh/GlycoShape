@@ -620,7 +620,7 @@ interface OptionType {
                       )}
                       {!UniprotData && (
 
-                        <Flex w="100%" minHeight={'90vh'} justifyContent="left" alignItems="center" p={2 } marginTop={"0"} direction="column"  background={`url('https://glycam.org/static/img/Supplemental%20Simulation1.Abundant.Rotation.mp4')`} 
+                        <Flex w="100%" minHeight={'70vh'} justifyContent="left" alignItems="center" p={2 } marginTop={"0"} direction="column"  background={`url('https://glycam.org/static/img/Supplemental%20Simulation1.Abundant.Rotation.mp4')`} 
                         backgroundSize="cover" 
                         backgroundPosition="center"
                         backgroundRepeat="no-repeat" >  
@@ -668,13 +668,18 @@ interface OptionType {
                               {/* </HStack> */}
                               </Flex>
 
-                        
-                      <Text padding={'2rem'} paddingTop={'2rem'} paddingBottom={'2rem'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
+                              <video width={'45%'}autoPlay loop muted id="bgVideo" style={ {zIndex: -1,objectFit: 'cover',position: 'absolute',filter: 'blur(2px)'}}>
+        <source  src="https://glycam.org/static/img/Supplemental%20Simulation1.Abundant.Rotation.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+                      <Text position='relative' padding={'2rem'} paddingTop={'2rem'} paddingBottom={'2rem'} align={'center'} fontSize={'lg'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
 
                         To get started, upload your protein structure file or choose a pre-existing AlphaFold structure, and let re-glyco do the rest!
 
                         here are some example UniProt IDs to get you started:
+                        
                         </Text>
+                        
                         <Text fontFamily={'texts'}>
                         <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
                         <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P29016</Button>
@@ -683,10 +688,7 @@ interface OptionType {
                         <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
                         
                         </Text>
-                        <video autoPlay loop muted id="bgVideo">
-        <source  src="" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+                        
                       </Flex>
 
 
