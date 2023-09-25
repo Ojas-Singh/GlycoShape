@@ -5,10 +5,7 @@ import {
  Show, Hide, Grid,Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
   } from "@chakra-ui/react";
 import Searchbar from './SearchBar';
-import draw from './assets/draw.png';
-import un from './assets/un.png';
-import bg from './assets/Glycans_bg_dark.jpg';
-import { Kbd } from '@chakra-ui/react'
+import bg from './assets/Glycans_bg_dark3.png';
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
 import PieChart from './Pie';
@@ -40,7 +37,7 @@ const GlycanPage: React.FC = () => {
     setHasCopied(true);
 
     // Reset after some time if you want
-    setTimeout(() => setHasCopied(false), 2000);
+    setTimeout(() => setHasCopied(false), 800);
   };
 
     const [activeSection, setActiveSection] = useState<string | null>(null);

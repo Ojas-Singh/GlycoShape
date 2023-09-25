@@ -46,8 +46,10 @@ interface Glycosylation {
 }
 
 interface GlycoConf {
+  residueTag: number;
   residueID: number; 
   residueName: string;
+  residueChain: string;
   glycanIDs: string[];
 }
 
@@ -170,7 +172,7 @@ interface OptionType {
       
 
 
-      const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>, residueID: number) => {
+      const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>, residueID: string) => {
         const value = event.target.value;
         setSelectedGlycans(prevState => ({
             ...prevState,
@@ -530,18 +532,18 @@ interface OptionType {
       classNamePrefix="select"
       onChange={onChange}
       options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
-        value: glycoConf.residueID,
-        label: `${glycoConf.residueName}${glycoConf.residueID}`
+        value: glycoConf.residueTag,
+        label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
       }))}
     />
 
 {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
-  const isSelected = value.find(option => option.value === glycoConf.residueID);
+  const isSelected = value.find(option => option.value === glycoConf.residueTag);
   return isSelected ? (
     <div key={index}>
       <HStack>
       <Heading margin={'1rem'} fontSize={{base: "1xl",sm: "1xl", md: "1xl", lg: "2xl",xl: "2xl"}} id={`glycan-${index}`} fontFamily={'texts'}>
-        {`Residue: ${glycoConf.residueName}${glycoConf.residueID}`}
+        {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
       </Heading>  
       
         <ChakraSelect 
@@ -549,7 +551,7 @@ interface OptionType {
           width='70%'   
           defaultValue="none" 
           placeholder='Select glycan...'  
-          onChange={(e) => handleSelectChange(e, glycoConf.residueID)}
+          onChange={(e) => handleSelectChange(e, `${glycoConf.residueID}_${glycoConf.residueChain}`)}
         >
           {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
             

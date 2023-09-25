@@ -3,12 +3,13 @@ import { useLocation, useNavigate } from 'react-router';
 import { FiCopy } from 'react-icons/fi';
 import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import {
-  useClipboard ,Code, Center, Wrap, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
+  Highlight, useClipboard ,Code, Center, Wrap, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
   } from "@chakra-ui/react";
 import draw from './assets/draw.png';
 import un from './assets/un.png';
-import bg from './assets/Glycans_bg_dark.jpg';
+import bg from './assets/Glycans_bg_dark3.png';
 import { Kbd } from '@chakra-ui/react'
+import Draw from './Draw';
 
 
 const SearchPage = () =>{
@@ -116,20 +117,32 @@ const SearchPage = () =>{
           <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
             <Image src={draw} alt="Icon Description" w="24px" h="24px" />
           </Button>
-          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Freehand Glycan Drawer</ModalHeader>
+          <Modal isCentered size={'90%'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <ModalOverlay bg='none'
+      backdropFilter='auto'
+      // backdropInvert='80%'
+      backdropBlur='3px' />
+        <ModalContent  >
+          <ModalHeader  alignSelf={'center'}> <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='3xl'
+          fontWeight='bold'
+          marginBottom={'-1rem'}
+        ><Highlight query='Glycan Drawer' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+        Glycan Drawer
+       </Highlight>
+          
+        </Text></ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            {/* Place your modal content here */}
-            <Box>
-              <Image src={un} alt="Description" />
-              <Text></Text>
-            </Box>
+            
+              {/* <Image src={un} alt="Description" /> */}
+
+              <Draw />
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
+            {/* <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button> */}
           </ModalFooter>
         </ModalContent>
       </Modal>
