@@ -1,6 +1,8 @@
 import React, { useState, ChangeEvent, useEffect, useRef,  } from 'react';
 import axios from 'axios';
 import { Select as ChakraSelect } from '@chakra-ui/react';
+import { JsonView, allExpanded, collapseAllNested, darkStyles, defaultStyles } from 'react-json-view-lite';
+import 'react-json-view-lite/dist/index.css';
 import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
   Spacer,
   Checkbox,
@@ -513,9 +515,11 @@ interface OptionType {
                                   <Text fontWeight="bold">Sequence:</Text>
                                   <Code width={"70rem"}>{JSON.stringify(UniprotData.glycosylation_locations.sequence, null, 2)}</Code>
                                   <Text fontWeight="bold">Glycosylations</Text>
-                                  <Code width={"70rem"}>{JSON.stringify(UniprotData.glycosylation_locations.glycosylations, null, 2)}</Code>
-                                  <Text fontWeight="bold">Configuration</Text>
-                                  <Code width={"70rem"}>{JSON.stringify(UniprotData.configuration, null, 2)}</Code>
+                                  <JsonView data={UniprotData.glycosylation_locations.glycosylations} shouldExpandNode={allExpanded} style={defaultStyles} />
+                                  {/* <Code width={"70rem"}>{JSON.stringify(UniprotData.glycosylation_locations.glycosylations, null, 2)}</Code> */}
+                                  {/* <Text fontWeight="bold">Configuration</Text>
+                                  <JsonView data={UniprotData.configuration} shouldExpandNode={allExpanded} style={defaultStyles} /> */}
+                                  {/* <Code width={"70rem"}>{JSON.stringify(UniprotData.configuration, null, 2)}</Code> */}
                                   
                               </Box>
                                   </AccordionPanel>
@@ -671,7 +675,7 @@ interface OptionType {
                               </Flex>
 
                               <video width={'45%'}autoPlay loop muted id="bgVideo" style={ {zIndex: -1,objectFit: 'cover',position: 'absolute',filter: 'blur(2px)'}}>
-        <source  src="https://glycam.org/static/img/Supplemental%20Simulation1.Abundant.Rotation.mp4" type="video/mp4" />
+        <source  src="" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
                       <Text position='relative' padding={'2rem'} paddingTop={'2rem'} paddingBottom={'2rem'} align={'center'} fontSize={'lg'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
