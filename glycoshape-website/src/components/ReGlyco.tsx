@@ -170,6 +170,7 @@ interface OptionType {
       const [selectedGlycans, setSelectedGlycans] = useState({});
       const [outputPath, setOutputPath] = useState("");
       const [clashValue, setClashValue] = useState(false);
+      const [boxValue, setBoxValue] = useState("");
       const [selectedGlycanImage, setSelectedGlycanImage] = useState<{[key: number]: string}>({});
       
 
@@ -223,6 +224,7 @@ interface OptionType {
               const responseData = await response.json();
                 setOutputPath(responseData.output);
                 setClashValue(responseData.clash);
+                setBoxValue(responseData.box)
                 setActiveStep(3);  // Move to the 'Download' step after processing
 
               console.log(responseData);
@@ -258,6 +260,7 @@ interface OptionType {
             const responseData = await response.json();
               setOutputPath(responseData.output);
               setClashValue(responseData.clash);
+              setBoxValue(responseData.box)
               setActiveStep(3);  // Move to the 'Download' step after processing
 
             console.log(responseData);
@@ -616,7 +619,14 @@ interface OptionType {
      size = {{base: "md",sm: "md", md: "md", lg: "lg",xl: "lg"}}>
        
         Download PDB File
-    </Button></a>
+    </Button></a> <Text fontWeight="bold">Processing log:</Text><Code>
+  {boxValue.split('\n').map((line, index) => (
+    <React.Fragment key={index}>
+      {line}
+      <br/>
+    </React.Fragment>
+  ))}
+</Code>
 </Box>
                               )} 
                               </Accordion>
