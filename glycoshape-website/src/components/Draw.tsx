@@ -236,7 +236,7 @@ const DrawingPage = () => {
 
   return (
     <div >
-      <div>
+      {/* <div>
         <HStack>
         <Button onClick={handleUndo}><ChevronLeftIcon /></Button>
         <Spacer />
@@ -249,9 +249,18 @@ const DrawingPage = () => {
             <shapeObj.component width="50px" />
           </button>
         ))}
-      </div>
+      </div> */}
       <HStack>
-      <div
+      <iframe
+                      // key={sequence}
+                      width="100%"
+                      height="600px"
+                      src={`/draw/index.html`}                                  frameBorder="0"
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Protein Structure"
+                              />
+      {/* <div
         style={{
           border: '1px solid teal',
           width: '85rem',
@@ -273,8 +282,8 @@ const DrawingPage = () => {
           </div>
         ))}
         
-      </div>
-      <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"2rem"} type="submit"
+      </div> */}
+      {/* <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"2rem"} type="submit"
             borderRadius="full" 
             backgroundColor="#7CC9A9"
             _hover={{
@@ -283,7 +292,7 @@ const DrawingPage = () => {
             // onClick={handleSearch}
           >
             Search <Search2Icon />
-          </Button>
+          </Button> */}
       </HStack>
     </div>
   );

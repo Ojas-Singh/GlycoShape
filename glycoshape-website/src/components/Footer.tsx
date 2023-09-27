@@ -31,18 +31,16 @@ const Footer: React.FC = () => {
           <Divider />
           <Link color="white" href="#">Literature citations</Link>
           <Link color="white" href="#">Keywords</Link>
-          <Link color="white" href="#">Subcellular locations</Link>
           <Link color="white" href="#">Cross-referenced databases</Link>
-          <Link color="white" href="#">Diseases</Link>
         </VStack>
         <VStack align="start">
           <Text color="white" fontWeight="bold">Tools</Text>
           <Divider />
-          <Link color="white" href="#">Re-Glyco</Link>
+          <Link color="white" href="/reglyco">Re-Glyco</Link>
           <Link color="white" href="#">Pridiction</Link>
-          <Link color="white" href="#">Glyco Blocks</Link>
+          <Link color="white" href="/viewer/index.html">Mol * Viewer</Link>
           <Link color="white" href="#">Sequence search</Link>
-          <Link color="white" href="#">Tool results</Link>
+          
         </VStack>
         <VStack align="start">
           <Text color="white"  fontWeight="bold">Information</Text>
@@ -50,7 +48,6 @@ const Footer: React.FC = () => {
           <Link color="white" href="#">Cite GlycoShape</Link>
           <Link color="white" href="#">About & Help</Link>
           <Link color="white" href="#">Glycam manual</Link>
-          <Link color="white" href="#">Technical corner</Link>
           <Link color="white" href="#">Statistics</Link>
         </VStack>
         <Box >

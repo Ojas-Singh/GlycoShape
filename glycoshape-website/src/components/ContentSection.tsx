@@ -67,7 +67,7 @@ const ContentSection: React.FC = () => {
     styles={{ px: '2', py: '1', rounded: 'full', color: '#AD769B' }}
   > */}
                       
-              GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder <Link color={'#B07095'} href="/reglyco" marginRight="20px">(Re-Glyco)</Link>to accelerate scientific research. 
+              GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder <Link color={'#B07095'} href="/reglyco" >(Re-Glyco)</Link> to accelerate scientific research. 
               
               {/* </Highlight> */}
               </Text>

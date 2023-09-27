@@ -13,7 +13,7 @@ import {
 
 const FAQ: React.FC = () => {
   return (
-    <Box p={5} maxWidth="800px" margin="0 auto">
+    <Box p={5} maxWidth="60%" margin="0 auto">
       <Text 
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
@@ -29,7 +29,16 @@ const FAQ: React.FC = () => {
         <AccordionItem>
           <AccordionButton>
             <Box flex="1" textAlign="left">
-              What is GlycoShape?
+            <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='2xl'
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          What is GlycoShape?
+        </Text>
+              
             </Box>
             <AccordionIcon />
           </AccordionButton>
@@ -48,7 +57,16 @@ const FAQ: React.FC = () => {
         <AccordionItem>
           <AccordionButton>
             <Box flex="1" textAlign="left">
-              How it is curated?
+            <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='2xl'
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          How it is curated?
+        </Text>
+              
             </Box>
             <AccordionIcon />
           </AccordionButton>
@@ -63,7 +81,146 @@ const FAQ: React.FC = () => {
           </AccordionPanel>
         </AccordionItem>
 
-        {/* Add more endpoints as needed */}
+
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+            <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='2xl'
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          How it is curated?
+        </Text>
+              
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+            <Text>Description of the MD...</Text>
+            <Code>
+              {/* Sample request or response */}
+              {`{
+  "key": "value"
+}`}
+            </Code>
+          </AccordionPanel>
+        </AccordionItem>
+
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+            <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='2xl'
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          How it is curated?
+        </Text>
+              
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+            <Text>Description of the MD...</Text>
+            <Code>
+              {/* Sample request or response */}
+              {`{
+  "key": "value"
+}`}
+            </Code>
+          </AccordionPanel>
+        </AccordionItem>
+
+
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+            <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='2xl'
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          How it is curated?
+        </Text>
+              
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+            <Text>Description of the MD...</Text>
+            <Code>
+              {/* Sample request or response */}
+              {`{
+  "key": "value"
+}`}
+            </Code>
+          </AccordionPanel>
+        </AccordionItem>
+
+
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+            <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='2xl'
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          How it is curated?
+        </Text>
+              
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+            <Text>Description of the MD...</Text>
+            <Code>
+              {/* Sample request or response */}
+              {`{
+  "key": "value"
+}`}
+            </Code>
+          </AccordionPanel>
+        </AccordionItem>
+
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+            <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize='2xl'
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          How it is curated?
+        </Text>
+              
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+            <Text>Description of the MD...</Text>
+            <Code>
+              {/* Sample request or response */}
+              {`{
+  "key": "value"
+}`}
+            </Code>
+          </AccordionPanel>
+        </AccordionItem>
+
+
+
       </Accordion>
     </Box>
   );

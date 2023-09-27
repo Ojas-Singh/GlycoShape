@@ -111,7 +111,7 @@ const Bar: React.FC = () => {
           <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
             <Image src={draw} alt="Icon Description" w="24px" h="24px" />
           </Button>
-          <Modal isCentered size={'90%'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <Modal isCentered size={'full'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalOverlay bg='none'
       backdropFilter='auto'
       // backdropInvert='80%'
