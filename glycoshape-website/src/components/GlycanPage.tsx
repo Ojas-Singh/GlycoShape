@@ -746,24 +746,7 @@ interface GlycanData {
 
 <Box ref={contentRef7} id="Torsion_distribution" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
    <VStack align={'left'} padding={'1rem'}>
-      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Simulation Information</Text>
-      <Divider />
-      <Grid templateColumns="repeat(2, 1fr)" gap={{base: "0",sm: "0", md: "4", lg: "6",xl: "6"}} padding={'1rem'}>
-         {[
-            { label: "Simulation Length (μs)", value: data?.length || "Not Available" },
-            { label: "MD Engine", value: data?.package || "Not Available" },
-            { label: "Force Field", value: data?.forcefield || "Not Available" },
-            { label: "Temperature (K)", value: data?.temperature || "Not Available" },
-            { label: "Pressure (bar)", value: data?.pressure || "Not Available" },
-            { label: "Salt (mM)", value: data?.salt || "Not Available" }
-         ].map(item => (
-            <Flex key={item.label} align="center" justify="space-between">
-               <Text fontFamily={'texts'} fontSize="md"  width="45%" textAlign="right">{item.label}</Text>
-               <Divider orientation="vertical" height="20px" />
-               <Text fontFamily={'texts'} fontSize="md"  width="45%" textAlign="left">{item.value}</Text>
-            </Flex>
-         ))}
-      </Grid>
+      
    </VStack>
 </Box>
 
@@ -791,7 +774,7 @@ interface GlycanData {
                               }}
                               >Download torsion DATA</Button></HStack>
       <Divider />
-      <ContourPlot dataUrl={`https://glycoshape.io/database/${sequence}/output/torsions.csv`} />
+      <ContourPlot dataUrl={`/database/${sequence}/output/torsions.csv`} />
    </VStack>
 </Box>
 
@@ -802,7 +785,7 @@ interface GlycanData {
       <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>PCA details</Text>
       <Divider />
       <HStack>
-      <Scatter3D dataUrl={`https://glycoshape.io/database/${sequence}/output/pca.csv`} />
+      <Scatter3D dataUrl={`/database/${sequence}/output/pca.csv`} />
       <VStack>
         <Image width='25rem' src={`https://glycoshape.io/database/${sequence}/output/PCA_variance.png`} />
       <Image width='25rem' src={`https://glycoshape.io/database/${sequence}/output/Silhouette_Score.png`} /></VStack>

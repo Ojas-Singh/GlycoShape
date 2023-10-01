@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import { Wrap, Highlight, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link,  WrapItem} from "@chakra-ui/react";
 import Searchbar from './SearchBar';
-import bg from './assets/Glycans_bg_dark3.png';
+import bg from './assets/banner.png';
 import cell from './assets/cell_surface.jpg';
 import dem1 from './assets/dem1.jpg';
 

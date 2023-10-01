@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import * as d3 from 'd3';
 import { contourDensity } from 'd3-contour';
+import { HStack, Heading, Spacer, Flex, Box, VStack } from '@chakra-ui/react';
 
 type CSVData = {
   [key: string]: string;
@@ -10,11 +11,107 @@ type ContourPlotProps = {
   dataUrl: string;
 };
 
+type Statistic = {
+  cluster: string;
+  mean: number;
+  std: number;
+};
+
 const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
+
+  const colors = ["#1B9C75", "#D55D02", "#746FB1", "#E12886", "#939242","#E3A902","#A4751D","#646464","#E11A1C","#357AB3"];  // Your color array
+
   const ref = useRef<SVGSVGElement | null>(null);
   const [columns, setColumns] = useState<string[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<{ x: string; y: string }>({ x: '', y: '' });
   const [data, setData] = useState<CSVData[]>([]);
+
+
+  const computeStatistics = (data: CSVData[], column: string): Statistic[] => {
+    const groupedByCluster = d3.group(data, d => d['cluster']);
+    const stats: Statistic[] = [];
+  
+    groupedByCluster.forEach((values, cluster) => {
+      const numericValues = values.map(d => +d[column]).filter(v => !isNaN(v));
+      const mean = d3.mean(numericValues) || 0;
+      const std = d3.deviation(numericValues) || 0;
+      stats.push({ cluster, mean, std });
+    });
+  
+    return stats;
+  };
+  const statistics: Statistic[] = computeStatistics(data, selectedColumns.x);
+  const sortedStatistics = [...statistics].sort((a, b) => 
+  parseInt(a.cluster, 10) - parseInt(b.cluster, 10)
+);
+
+
+  // const renderStatisticsTable = () => (
+  //   <table>
+  //     <thead>
+  //       <tr>
+  //         <th>Cluster</th>
+  //         <th>Mean</th>
+  //         <th>Standard Deviation</th>
+  //       </tr>
+  //     </thead>
+  //     <tbody>
+  //       {statistics.map((stat: Statistic) => (
+  //         <tr key={stat.cluster}>
+  //           <td>{stat.cluster}</td>
+  //           <td>{stat.mean.toFixed(2)}</td>
+  //           <td>{stat.std.toFixed(2)}</td>
+  //         </tr>
+  //       ))}
+  //     </tbody>
+  //   </table>
+  // );
+  
+
+  const renderStatisticsTable = (selectedColumn: string) => (
+    
+    <Box flex='1'>
+      <VStack>
+      <Heading size={'1xl'} marginLeft={'20px'} style={{ textAlign: 'center' }}>Statistics for {selectedColumn}</Heading>
+
+      <table style={{ 
+      border: '3px solid teal', 
+      borderCollapse: 'collapse', 
+      width: '100%', 
+      textAlign: 'center', 
+      
+      
+    }}>
+
+      <thead>
+
+        <tr>
+          <th style={{ border: '2px solid #66826C', padding: '10px' }}>Cluster</th>
+          <th style={{ border: '2px solid #66826C', padding: '10px' }}>Mean</th>
+          <th style={{ border: '2px solid #66826C', padding: '10px' }}>Standard Deviation</th>
+        </tr>
+      </thead>
+      <tbody>
+      {sortedStatistics.map((stat: Statistic, index: number) => (
+  <tr key={stat.cluster}>
+    <td style={{ border: '2px solid #66826C', padding: '10px', color: colors[index] }}>{stat.cluster}</td>
+    <td style={{ border: '2px solid #66826C', padding: '10px', color: colors[index] }}>{stat.mean.toFixed(2)}</td>
+    <td style={{ border: '2px solid #66826C', padding: '10px', color: colors[index] }}>{stat.std.toFixed(2)}</td>
+  </tr>
+))}
+
+
+      </tbody>
+
+    </table>
+    </VStack>
+    </Box>
+  );
+  
+
+  
+  
+  
 
   useEffect(() => {
     if (!ref.current) return;
@@ -48,11 +145,11 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
 
     const svg = d3.select(ref.current);
 
-    const width = 600;
-    const height = 400;
+    const width = 500;
+    const height = 500;
     const marginTop = 20;
     const marginRight = 30;
-    const marginBottom = 30;
+    const marginBottom = 100;
     const marginLeft = 40;
 
     const xScale = d3.scaleLinear()
@@ -72,6 +169,10 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
       .bandwidth(30)
       .thresholds(30)
       (contourData);
+
+    
+
+    const statistics = computeStatistics(data, selectedColumns.x);
 
     svg.selectAll('path').remove();
     svg.selectAll('g').remove();
@@ -119,6 +220,8 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
 
     }, [data, selectedColumns]);
 
+    
+
     return (
       <div>
         <div>
@@ -154,7 +257,15 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
             </select>
           </label>
         </div>
+        <HStack>
+        {renderStatisticsTable(selectedColumns['x'])}
+        {/* <Spacer /> */}
+        
         <svg ref={ref} width="40rem" height="30rem" />
+        </HStack>
+      
+  
+ 
       </div>
     );
   };
