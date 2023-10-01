@@ -774,7 +774,7 @@ interface GlycanData {
                               }}
                               >Download torsion DATA</Button></HStack>
       <Divider />
-      <ContourPlot dataUrl={`/database/${sequence}/output/torsions.csv`} />
+      <ContourPlot dataUrl={`/database/${sequence}/output/torsions.csv`} seq={`${sequence}`}/>
    </VStack>
 </Box>
 

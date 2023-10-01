@@ -9,6 +9,7 @@ type CSVData = {
 
 type ContourPlotProps = {
   dataUrl: string;
+  seq: string;
 };
 
 type Statistic = {
@@ -17,7 +18,13 @@ type Statistic = {
   std: number;
 };
 
-const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
+type ScatterPoint = {
+  x: number;
+  y: number;
+};
+
+
+const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
 
   const colors = ["#1B9C75", "#D55D02", "#746FB1", "#E12886", "#939242","#E3A902","#A4751D","#646464","#E11A1C","#357AB3"];  // Your color array
 
@@ -25,7 +32,13 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
   const [columns, setColumns] = useState<string[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<{ x: string; y: string }>({ x: '', y: '' });
   const [data, setData] = useState<CSVData[]>([]);
+  const [infoData, setInfoData] = useState<any | null>(null);
 
+  useEffect(() => {
+    fetch(`/database/${seq}/output/info.json`)
+      .then(response => response.json())
+      .then(data => setInfoData(data));
+  }, []);
 
   const computeStatistics = (data: CSVData[], column: string): Statistic[] => {
     const groupedByCluster = d3.group(data, d => d['cluster']);
@@ -46,27 +59,6 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
 );
 
 
-  // const renderStatisticsTable = () => (
-  //   <table>
-  //     <thead>
-  //       <tr>
-  //         <th>Cluster</th>
-  //         <th>Mean</th>
-  //         <th>Standard Deviation</th>
-  //       </tr>
-  //     </thead>
-  //     <tbody>
-  //       {statistics.map((stat: Statistic) => (
-  //         <tr key={stat.cluster}>
-  //           <td>{stat.cluster}</td>
-  //           <td>{stat.mean.toFixed(2)}</td>
-  //           <td>{stat.std.toFixed(2)}</td>
-  //         </tr>
-  //       ))}
-  //     </tbody>
-  //   </table>
-  // );
-  
 
   const renderStatisticsTable = (selectedColumn: string) => (
     
@@ -174,6 +166,25 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl }) => {
 
     const statistics = computeStatistics(data, selectedColumns.x);
 
+    if (infoData && infoData.popp) {
+      const scatterData: ScatterPoint[] = infoData.popp.map((index: number) => { 
+        const d = data[index];
+        return {
+          x: +d[selectedColumns.x],
+          y: +d[selectedColumns.y]
+        };
+      });
+    
+      svg.selectAll(".scatter-point")
+        .data(scatterData)
+        .join("circle")
+        .attr("class", "scatter-point")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", 5)
+        .attr("fill", (d, i) => colors[i % colors.length]);
+    }
+    // svg.selectAll(".scatter-point").remove();
     svg.selectAll('path').remove();
     svg.selectAll('g').remove();
     svg.selectAll('defs').remove();
