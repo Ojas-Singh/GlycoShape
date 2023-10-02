@@ -4,11 +4,10 @@ import { useLocation, useNavigate } from 'react-router';
 import {
  Show, Hide, Grid,Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
   } from "@chakra-ui/react";
-import Searchbar from './SearchBar';
-import bg from './assets/Glycans_bg_dark3.png';
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
 import PieChart from './Pie';
+
 
 
 
@@ -16,14 +15,11 @@ const GlycanPage: React.FC = () => {
     const navigate  = useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
-    const [results, setResults] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [sequence, setsequence] = useState<string>(queryParams.get('query') || '');
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const searchRef = useRef<HTMLInputElement>(null);
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
-    // const { hasCopied, onCopy } = useClipboard(sequence || '');  // Provide a fallback empty string
+    const [sequence, setsequence] = useState<string>(queryParams.get('IUPAC') || '');
+    
+ 
+    
 
     const [hasCopied, setHasCopied] = useState(false);
 
@@ -76,24 +72,30 @@ const GlycanPage: React.FC = () => {
       const observer = new IntersectionObserver(
           entries => {
               entries.forEach(entry => {
-                  if (entry.isIntersecting) {
+                  if (entry.isIntersecting && entry.target.id) {
                       setActiveSection(entry.target.id);
                   }
               });
           },
-          { threshold: 0.6} // Adjust this value as needed
+          { threshold: 0.6 } // Adjust this value as needed
       );
   
-      (Object.keys(refs) as Array<keyof SectionRefs>).forEach(key => {
-          observer.observe(refs[key].current as Element);
+      Object.keys(refs).forEach(key => {
+          const ref = refs[key as keyof SectionRefs];
+          if (ref && ref.current instanceof Element) {
+              observer.observe(ref.current);
+          }
       });
   
       return () => {
-          (Object.keys(refs) as Array<keyof SectionRefs>).forEach(key => {
-              observer.unobserve(refs[key].current as Element);
+          Object.keys(refs).forEach(key => {
+              const ref = refs[key as keyof SectionRefs];
+              if (ref && ref.current instanceof Element) {
+                  observer.unobserve(ref.current);
+              }
           });
       };
-  }, []);
+  }, [refs, setActiveSection]);
   
 
 const scrollToContent = (ref: React.MutableRefObject<HTMLDivElement | null>) => {
@@ -206,8 +208,10 @@ interface GlycanData {
 
 
   return (
+    
     <Box >
-      <Flex 
+      
+      {/* <Flex 
         direction="column" 
         align="center" 
         justify="center" 
@@ -220,7 +224,7 @@ interface GlycanData {
         backgroundRepeat="no-repeat"  
       >
        <Searchbar />
-      </Flex>
+      </Flex> */}
 
       {sequence && (
         <Flex>

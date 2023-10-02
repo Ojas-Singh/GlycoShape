@@ -197,7 +197,7 @@ const SearchPage = () =>{
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/glycan?query=GlcNAc(b1-4)Man')}
+              onClick={url => window.location.replace('/glycan?IUPAC=GlcNAc(b1-4)Man')}
             >
               GlcNAc(b1-4)Man
             </Button>&nbsp;
@@ -218,16 +218,16 @@ const SearchPage = () =>{
         <Flex direction="column" align="center" width="100%">
         <Box width="100%" padding="4em" paddingTop={'2rem'}>
           <Text fontSize="2xl" marginBottom="1em">
-            Showing all search results for "{searchString}"
+            Showing {results.length} search results for "{searchString}"
           </Text>
-          <Text marginBottom="1rem">1 - 20 of {results.length} results</Text>
+          {/* <Text marginBottom="1rem">1 - 20 of {results.length} results</Text> */}
         </Box>
     
         <Flex direction="row" width="100%" padding="2em" paddingTop={'0.5em'}>
           {/* Filters on the left */}
           <Box width="30%" padding="1em">
             {/* Example filter */}
-            <Text>Filter 1</Text>
+            {/* <Text>Filter 1</Text> */}
             {/* Add more filters as needed */}
           </Box>
           <Box width="80%" padding="1em">
@@ -250,7 +250,7 @@ const SearchPage = () =>{
                 
                 <WrapItem>
 
-                  <Link href={`/glycan?query=${glycan}`}>
+                  <Link href={`/glycan?IUPAC=${glycan}`}>
               <Image
                 src={`/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image
                 alt="Glycan Image"

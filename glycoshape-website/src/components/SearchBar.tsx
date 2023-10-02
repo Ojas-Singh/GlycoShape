@@ -185,7 +185,7 @@ const Bar: React.FC = () => {
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/glycan?query=GlcNAc(b1-4)Man')}
+              onClick={url => window.location.replace('/glycan?IUPAC=GlcNAc(b1-4)Man')}
             >
               GlcNAc(b1-4)Man
             </Button>&nbsp;

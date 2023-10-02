@@ -36,9 +36,23 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
 
   useEffect(() => {
     fetch(`/database/${seq}/output/info.json`)
-      .then(response => response.json())
-      .then(data => setInfoData(data));
+      .then(response => {
+        // First, check if the response is ok (status code in the 200-299 range)
+        if (!response.ok) {
+          // Convert non-2xx HTTP responses into errors
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => setInfoData(data))
+      .catch(error => {
+        // Handle the error, you can set some state, log it, or show an error message
+        console.error("Fetch error: ", error);
+        // Optionally, you can set some state to display an error message to the user
+        // setErrorMsg(error.message);
+      });
   }, []);
+
 
   const computeStatistics = (data: CSVData[], column: string): Statistic[] => {
     const groupedByCluster = d3.group(data, d => d['cluster']);
