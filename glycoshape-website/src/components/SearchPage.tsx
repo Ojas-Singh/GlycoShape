@@ -6,7 +6,6 @@ import {
   Highlight, useClipboard ,Code, Center, Wrap, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
   } from "@chakra-ui/react";
 import draw from './assets/draw.png';
-import un from './assets/un.png';
 import bg from './assets/Glycans_bg_dark3.png';
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
@@ -19,15 +18,33 @@ const SearchPage = () =>{
     const [results, setResults] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [searchString, setSearchString] = useState<string>(queryParams.get('query') || '');
+    const [isWurcsSearch, setIsWurcsSearch] = useState(true);
+    const [wurcsString, setWurcsString] = useState<string>(queryParams.get('wurcsString') || '');
+    const [wurcsImageSrc, setWurcsImageSrc] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const searchRef = useRef<HTMLInputElement>(null);
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
     const [copiedGlycan, setCopiedGlycan] = useState<string | null>(null);  // Track the copied glycan
     const { hasCopied, onCopy } = useClipboard(copiedGlycan || '');  // Provide a fallback empty string
-    useEffect(() => {
-        handleSearch();
-      }, [searchString]);
+    
+  useEffect(() => {
+    const fetchWurcsImage = async () => {
+      try {
+        if(wurcsString) {
+          const response = await fetch(`https://api.glycosmos.org/wurcs2image/1.23.1/png/html/${encodeURIComponent(wurcsString)}`);
+          const data = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(data, "text/html");
+          const imgsrc = doc.getElementsByTagName("img")[0]?.src || null;
+          setWurcsImageSrc(imgsrc);
+        }
+      } catch (err) {
+        console.error("Error fetching WURCS image", err);
+      }
+    };
+    fetchWurcsImage();
+  }, [wurcsString]);
 
 
     useEffect(() => {
@@ -48,38 +65,57 @@ const SearchPage = () =>{
     }, []);
   
     const handleSearch = async () => {
-        try {
-            const requestBody = {
-                search_string: searchString, 
-            };
-    
-            const response = await fetch('https://glycoshape.io/api/search', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody)
+      try {
+          let url, body;
+          if (wurcsString && !searchString) {
+            url = 'https://glycoshape.io/api/wurcs';
+            body = JSON.stringify({
+                wurcs_string: wurcsString,
             });
-    
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-    
-            const data = await response.json();
-    
-            if (data.results) {
-                setResults(data.results); 
-            } else {
-                console.warn("Please provide a valid search string!");
-            }
-        } catch (err) {
-            const errorMessage = (err instanceof Error) ? err.message : "An unknown error occurred";
-            console.error("There was an error fetching the data", errorMessage);
-            setError(errorMessage);
+        } else if (searchString) {
+            setIsWurcsSearch(false);
+            url = 'https://glycoshape.io/api/search';
+            body = JSON.stringify({
+                search_string: searchString,
+            });
+        } else {
+          // Handle the case when neither wurcsString nor searchString has a value
+          console.warn("Please provide a valid search string or WURCS string!");
+          setError("No search string or WURCS string provided.");
+          return;
         }
-    };
+  
+          const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: body
+          });
+  
+          if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+  
+          const data = await response.json();
+  
+          if (data.results) {
+              setResults(data.results); 
+          } else {
+              console.warn("Please provide a valid search string!");
+          }
+      } catch (err) {
+          const errorMessage = (err instanceof Error) ? err.message : "An unknown error occurred";
+          console.error("There was an error fetching the data", errorMessage);
+          setError(errorMessage);
+      }
+  };
+  
     
-      
+  useEffect(() => {
+    handleSearch();
+    
+}, [searchString]);
     
     const handleImageClick = () => {
       setIsModalOpen(true);
@@ -176,16 +212,7 @@ const SearchPage = () =>{
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
           </Text>
-          {/* <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"1rem"} type="submit"
-            borderRadius="full" 
-            backgroundColor="#7CC9A9"
-            _hover={{
-              backgroundColor: "#51BF9D"
-            }}
-            // onClick={handleSearch}
-          >
-            Search
-          </Button> */}
+          
           
         </Flex>
         
@@ -217,11 +244,17 @@ const SearchPage = () =>{
       {results.length > 0 && (
         <Flex direction="column" align="center" width="100%">
         <Box width="100%" padding="4em" paddingTop={'2rem'}>
-          <Text fontSize="2xl" marginBottom="1em">
-            Showing {results.length} search results for "{searchString}"
-          </Text>
-          {/* <Text marginBottom="1rem">1 - 20 of {results.length} results</Text> */}
-        </Box>
+  <Text fontSize="2xl" marginBottom="1em">
+    Showing {results.length} search results for {
+      isWurcsSearch 
+        ? <img src={wurcsImageSrc === null ? undefined : wurcsImageSrc} alt="WURCS Image" style={{width: '200px', height: 'auto', objectFit: 'contain'}} />
+        
+        : `"${searchString}"`
+    }
+  </Text>
+</Box>
+
+
     
         <Flex direction="row" width="100%" padding="2em" paddingTop={'0.5em'}>
           {/* Filters on the left */}
