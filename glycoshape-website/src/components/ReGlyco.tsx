@@ -20,7 +20,8 @@ import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Co
   Stepper,
   useSteps, Badge, WrapItem, Image} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
-import bg from './assets/Glycans_bg_dark_neg.png';
+// import bg from './assets/Glycans_bg_dark_neg.png';
+import bg from './assets/gly.png';
 import { Config } from '@testing-library/user-event/dist/types/setup/setup';
 
 import Select, { ActionMeta, OnChangeValue } from 'react-select';
@@ -298,14 +299,27 @@ interface OptionType {
                   flex="1" 
                   padding="0em"
                   minHeight={{ base: "15vh" }}
-                  backgroundImage={`url(${bg})`} 
-                  backgroundSize="cover" 
-                  // backgroundPosition="center"
+                  // backgroundImage={`url(${bg})`} 
+                  // backgroundSize="cover" 
+                  // // backgroundPosition="center"
+                  sx={{
+                    backgroundImage: `
+                radial-gradient(
+                  circle, 
+                  rgba(177, 114, 150, 0.2) 0%, 
+                  rgba(207, 99, 133, 0.6) 100%
+                ), 
+                url(${bg})`,
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "50% 30%"
+                  }}
                   backgroundRepeat="no-repeat"  justifyContent="center" alignItems="center" p={1}
                   direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}
                    >
                       <Text
-                          bgGradient='linear(to-l,  #CE9D8F, #D7C9C0)'
+                          // bgGradient='linear(to-l,  #CE9D8F, #D7C9C0)'
+                          bgGradient='linear(to-l, #F7FFE6, #F7FFE6)'
                           bgClip='text'
                           fontSize={{base: "4xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "5xl"}}
                           

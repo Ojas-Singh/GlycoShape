@@ -6,7 +6,7 @@ import {
   Highlight, useClipboard ,Code, Center, Wrap, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
   } from "@chakra-ui/react";
 import draw from './assets/draw.png';
-import bg from './assets/Glycans_bg_dark3.png';
+import bg from './assets/gly.png';
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
 
@@ -131,10 +131,22 @@ const SearchPage = () =>{
         padding="1em"
         paddingTop="2em"
         minHeight={{ base: "15vh" }}
-        backgroundImage={`url(${bg})`} 
-        backgroundSize="cover" 
-        // backgroundPosition="center"
-        backgroundRepeat="no-repeat"  
+        // backgroundImage={`url(${bg})`} 
+        // backgroundSize="cover" 
+        // // backgroundPosition="center"
+        // backgroundRepeat="no-repeat"  
+        sx={{
+          backgroundImage: `
+      radial-gradient(
+        circle, 
+        rgba(253, 252, 251, 0.2) 0%, 
+        rgba(65, 104, 106, 0.6) 100%
+      ), 
+      url(${bg})`,
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "50% 30%"
+        }}
       >
         
 
