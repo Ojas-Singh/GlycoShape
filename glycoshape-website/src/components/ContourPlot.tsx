@@ -92,17 +92,17 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
       <thead>
 
         <tr>
-          <th style={{ border: '2px solid #66826C', padding: '10px' }}>Cluster</th>
-          <th style={{ border: '2px solid #66826C', padding: '10px' }}>Mean</th>
-          <th style={{ border: '2px solid #66826C', padding: '10px' }}>Standard Deviation</th>
+          <th style={{ border: '2px solid #66826C', padding: '5px' }}>Cluster</th>
+          <th style={{ border: '2px solid #66826C', padding: '5px' }}>Mean</th>
+          <th style={{ border: '2px solid #66826C', padding: '5px' }}>Standard Deviation</th>
         </tr>
       </thead>
       <tbody>
       {sortedStatistics.map((stat: Statistic, index: number) => (
   <tr key={stat.cluster}>
-    <td style={{ border: '2px solid #66826C', padding: '10px', color: colors[index] }}>{stat.cluster}</td>
-    <td style={{ border: '2px solid #66826C', padding: '10px', color: colors[index] }}>{stat.mean.toFixed(2)}</td>
-    <td style={{ border: '2px solid #66826C', padding: '10px', color: colors[index] }}>{stat.std.toFixed(2)}</td>
+    <td style={{ border: '2px solid #66826C', padding: '5px', color: colors[index] }}>{stat.cluster}</td>
+    <td style={{ border: '2px solid #66826C', padding: '5px', color: colors[index] }}>{stat.mean.toFixed(2)}</td>
+    <td style={{ border: '2px solid #66826C', padding: '5px', color: colors[index] }}>{stat.std.toFixed(2)}</td>
   </tr>
 ))}
 
@@ -286,7 +286,7 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
         {renderStatisticsTable(selectedColumns['x'])}
         {/* <Spacer /> */}
         
-        <svg ref={ref} width="40rem" height="30rem" />
+        <svg ref={ref} width="40vw" height="500px" />
         </HStack>
       
   

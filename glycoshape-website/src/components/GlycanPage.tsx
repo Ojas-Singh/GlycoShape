@@ -352,28 +352,26 @@ interface GlycanData {
                     <Wrap >
                       
                       
-                      <WrapItem alignContent={'left'}>
+                      {/* <WrapItem alignContent={'left'}> */}
                       <Text fontFamily={'texts'}>SNFG</Text>
                     <Image
               src={`/database/${sequence}/${sequence}.svg`} 
               alt="Glycan Image"
               height={{base: "10rem",sm: "10rem", md: "20rem", lg: "25rem",xl: "25rem"}}
-              width={'25rem'}
+              width={'30vw'}
               // marginRight="1rem"
             />      
-            </WrapItem>
-            <WrapItem alignContent={'left'}> 
+            {/* </WrapItem> */}
+            {/* <WrapItem alignContent={'left'}>  */}
+            <Spacer />
              <iframe
-                      // key={sequence}
-                      width="600px"
-                      height="400px"
+                      style={{ width: '40vw', height: '50vh' }}
                       src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
-                      // src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
                               /> 
-                              </WrapItem>
+                              {/* </WrapItem> */}
                               <VStack align={'left'} padding={'1rem'}>
             <Box alignItems={'center'} alignContent={'center'} justifyContent={'center'} justifyItems={'center'}>
             <WrapItem alignContent={'center'}>
@@ -384,7 +382,8 @@ interface GlycanData {
                     p={2} 
                     display="block" 
                     whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    // width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    width={'60vw'}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
@@ -410,7 +409,8 @@ interface GlycanData {
                     p={2} 
                     display="block" 
                     whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    // width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    width={'60vw'}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
@@ -437,7 +437,8 @@ interface GlycanData {
                     p={2} 
                     display="block" 
                     whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "58rem",xl: "58rem"}}
+                    // width={{base: "10rem",sm: "10rem", md: "20rem", lg: "58rem",xl: "58rem"}}
+                    width={'60vw'}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
@@ -464,7 +465,8 @@ interface GlycanData {
                     p={2} 
                     display="block" 
                     whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    // width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    width={'60vw'}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
@@ -490,7 +492,8 @@ interface GlycanData {
                     p={2} 
                     display="block" 
                     whiteSpace="pre" 
-                    width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    // width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                    width={'60vw'}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
@@ -511,10 +514,8 @@ interface GlycanData {
                       </Box>
                       </VStack>
                     </Wrap>
-                    {/* <Code>{JSON.stringify(data, null, 2)}</Code> */}
                     
                       </VStack>
-                      {/* <Scatter3D dataUrl="/pca.csv" /> */}
                     
                 </Box>
                 <Box ref={contentRef2} id="Glycan_information" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
@@ -524,8 +525,8 @@ interface GlycanData {
           <Grid templateColumns="repeat(2, 5fr)" gap={3} padding={'1rem'} >
              {[
                 { label: "Glycan Type", value: data?.glycan_type || "Not Available" },
-                { label: "Components", value: 'JSON.stringify(data?.components)' },
-                { label: "Composition", value: 'data?.composition' || "Not Available" },
+                { label: "Components", value: JSON.stringify(data?.components) },
+                { label: "Composition", value:  JSON.stringify(data?.composition) || "Not Available" },
                 { label: "Motifs", value: data?.motifs.join(', ') },
                 { label: "Termini", value: data?.termini.join(', ') }
              ].map(item => (
@@ -632,69 +633,7 @@ interface GlycanData {
          
           
           <Box display="flex" >
-            {/* Sidebar */}
-            {/* <Show above='lg'>
-            <Box position={'sticky'} top="0" zIndex={5}
-            width={{base: "0",sm: "0", md: "0", lg: "15%",xl: "15%"}}  height={'50vh'}  paddingTop={'5rem'} paddingLeft={'0rem'}>
-            <VStack align="right" spacing={1} justify="start"> 
-                    <Button 
-                        onClick={() => scrollToContent(contentRef6)}
-                        bg={activeSection === 'Clusters' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'Clusters' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'Clusters' ? 'white' : '#1A202C'}
-                        fontStyle={'medium'}
-                        _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
-                        }}
-                        borderRadius="0" // Sharp rectangular edges
-                    >
-                        Clusters
-                    </Button>
-                    <Button 
-                        onClick={() => scrollToContent(contentRef7)}
-                        bg={activeSection === 'Torsion_distribution' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'Torsion_distribution' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'Torsion_distribution' ? 'white' : '#1A202C'}
-                        fontStyle={'medium'}
-                        _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
-                        }}
-                        borderRadius="0" // Sharp rectangular edges
-                    >
-                        Torsion distribution
-                    </Button>
-                    <Button 
-                        onClick={() => scrollToContent(contentRef8)}
-                        bg={activeSection === 'Ramachandran_plot' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'Ramachandran_plot' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'Ramachandran_plot' ? 'white' : '#1A202C'}
-                        fontStyle={'medium'}
-                        _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
-                        }}
-                        // fontFamily={'thin'}
-                        borderRadius="0" // Sharp rectangular edges
-                    >
-                        Ramachandran plot
-                    </Button>
-                    <Button 
-                        onClick={() => scrollToContent(contentRef9)}
-                        bg={activeSection === 'PCA_details ' ? '#466263' : 'gray.300'}
-                        fontSize={activeSection === 'PCA_details' ? 'larger' : 'medium'} // Adjust font sizes as desired
-                        color={activeSection === 'PCA_details' ? 'white' : '#1A202C'}
-                        fontStyle={'medium'}
-                        _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
-                        }}
-                        // fontFamily={'thin'}
-                        borderRadius="0" // Sharp rectangular edges
-                    >
-                              PCA details                   </Button>
-                    
-                </VStack>
-
-            </Box>
-            </Show> */}
+            
             {/* Main Content */}
             <Box flex="1"  p={{base: "-2rem",sm: "0rem", md: "2rem", lg: "2rem",xl: "2rem"}} marginTop={'-2.5rem'} >
             
@@ -710,12 +649,8 @@ interface GlycanData {
 
 
              <iframe
-                      // key={sequence}
-                      width="100%"
-                      height="500px"
+                      style={{ width: '100%', height: '60vh' }}
                       src={iframeSrc}
-                      // src={`/viewer/embedded_multi.html?pdbUrls=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb,https://glycoshape.io/database/${sequence}/${sequence}_cluster1_alpha.pdb&formats=pdb,pdb`}    
-                      // src={`/litemol/index.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}                                  frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
@@ -790,9 +725,10 @@ interface GlycanData {
       <Divider />
       <HStack>
       <Scatter3D dataUrl={`/database/${sequence}/output/pca.csv`} />
+      <Spacer />
       <VStack>
-        <Image width='25rem' src={`https://glycoshape.io/database/${sequence}/output/PCA_variance.png`} />
-      <Image width='25rem' src={`https://glycoshape.io/database/${sequence}/output/Silhouette_Score.png`} /></VStack>
+        <Image width='25vw' src={`https://glycoshape.io/database/${sequence}/output/PCA_variance.png`} />
+      <Image width='25vw' src={`https://glycoshape.io/database/${sequence}/output/Silhouette_Score.png`} /></VStack>
       </HStack>
    </VStack>
 

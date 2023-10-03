@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import { Wrap, Highlight, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link,  WrapItem} from "@chakra-ui/react";
 import Searchbar from './SearchBar';
-import bg from './assets/banner.png';
+import bg from './assets/gly.png';
 import cell from './assets/cell_surface.jpg';
 import dem1 from './assets/dem1.jpg';
 
@@ -19,12 +19,26 @@ const ContentSection: React.FC = () => {
         flex="1" 
         padding="5em"
         minHeight={{ base: "60vh" }}
-        backgroundImage={`url(${bg})`}
+        
+        // backgroundImage={`radial-gradient(circle, #fdfcfb 0%, #F7F9E5 60%),url(${bg})`}
         
 
-        backgroundSize="cover" 
-        backgroundRepeat="no-repeat"
-        // backgroundPosition="center"
+        // backgroundSize="cover" 
+        // backgroundRepeat="no-repeat"
+        // backgroundPosition="50% 30%"
+
+        sx={{
+          backgroundImage: `
+      radial-gradient(
+        circle, 
+        rgba(253, 252, 251, 0.2) 0%, 
+        rgba(247, 249, 229, 0.6) 100%
+      ), 
+      url(${bg})`,
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "50% 30%"
+        }}
       >        
         <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "3xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "6xl"}} fontWeight='bold' marginBottom="0.2em">
         <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
@@ -38,8 +52,12 @@ const ContentSection: React.FC = () => {
           fontSize='2xl'
           fontWeight='bold'
           marginBottom="1em"
-        >
-          Developed by  <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">elab</Link>
+
+        ><Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">
+          <Highlight query='Developed by elab' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+
+          Developed by elab
+          </Highlight></Link>
         </Text>
         
         <Searchbar />
