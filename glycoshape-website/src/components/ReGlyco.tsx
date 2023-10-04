@@ -650,11 +650,7 @@ interface OptionType {
                       )}
                       {!UniprotData && (
 
-                        <Flex w="100%" minHeight={'70vh'} justifyContent="left" alignItems="center" p={2 } marginTop={"0"} direction="column"  background={`url('https://glycam.org/static/img/Supplemental%20Simulation1.Abundant.Rotation.mp4')`} 
-                        backgroundSize="cover" 
-                        backgroundPosition="center"
-                        backgroundRepeat="no-repeat" >  
-                        {/* <HStack margin={'1rem'} marginTop={'-1rem'} display="flex" width={'100%'} top="0" bg="white" zIndex="10" >  */}
+                        <Flex w="100%" minHeight={'60vh'} justifyContent="left" alignItems="left" p={2 } marginTop={"0"} direction="column" >  
                         <Flex w="100%" 
                    
                   justify="center" 
@@ -695,14 +691,27 @@ interface OptionType {
                           </Stepper>  
                                 
                               </Box>
-                              {/* </HStack> */}
                               </Flex>
-
-                              <video width={'45%'}autoPlay loop muted id="bgVideo" style={ {zIndex: -1,objectFit: 'cover',position: 'absolute',filter: 'blur(2px)'}}>
-        <source  src="" type="video/mp4" />
+                              <Wrap>
+                                <WrapItem>
+                              <iframe
+                                  
+                                  style={{paddingLeft:"4  rem" ,zIndex:0,width: '60vw', height: '70vh' }}
+                                  // style={ {objectFit: 'cover',position: 'absolute'}}
+                                  src={
+                                    `/viewer/index_full.html?snapshot-url=/gamma.molx&snapshot-url-type=molx` 
+                                }                                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  title="Protein Structure"
+                              /></WrapItem>
+                              {/* <video  width={'50%'} autoPlay loop muted id="bgVideo" style={ {zIndex: -1,objectFit: 'cover',position: 'absolute'}}>
+        <source  src="/Gamma.webm" type="video/mp4" />
         Your browser does not support the video tag.
-      </video>
-                      <Text position='relative' padding={'2rem'} paddingTop={'2rem'} paddingBottom={'2rem'} align={'center'} fontSize={'lg'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
+      </video> */}
+      <WrapItem>
+                        <VStack >
+                          
+                      <Text paddingTop= "10rem" width={{base: "80vw",sm: "80vw", md: "30vw", lg: "30vw",xl: "30vw"}} align={'center'} fontSize={'lg'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
 
                         To get started, upload your protein structure file or choose a pre-existing AlphaFold structure, and let re-glyco do the rest!
 
@@ -718,7 +727,9 @@ interface OptionType {
                         <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
                         
                         </Text>
-                        
+                        </VStack>
+                        </WrapItem>
+                        </Wrap>
                       </Flex>
 
 
