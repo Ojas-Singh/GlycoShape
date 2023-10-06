@@ -116,6 +116,8 @@ interface OptionType {
         if (file) {
             const formData = new FormData();
             formData.append('pdbFile', file);
+            setSelectedGlycans({});
+            setSelectedGlycanImage({});
     
             try {
                 const response = await axios.post('https://glycoshape.io/api/upload_pdb', formData, {
@@ -154,6 +156,8 @@ interface OptionType {
 
               const data: UniprotData = await response.json();
               setUniprotData(data);
+              setSelectedGlycans({});
+              setSelectedGlycanImage({});
               setActiveStep(1);
           } catch (error) {
               if (error instanceof Error) {
