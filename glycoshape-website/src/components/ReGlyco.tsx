@@ -176,7 +176,7 @@ interface OptionType {
       
 
 
-      const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>, residueID: string) => {
+      const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>, residueID: string, residueTag: number) => {
         const value = event.target.value;
         setSelectedGlycans(prevState => ({
             ...prevState,
@@ -184,7 +184,7 @@ interface OptionType {
         }));
         setSelectedGlycanImage(prevState => ({
           ...prevState,
-          [residueID]: value
+          [residueTag]: value
       }));
     }
 
@@ -572,7 +572,8 @@ interface OptionType {
           width='70%'   
           defaultValue="none" 
           placeholder='Select glycan...'  
-          onChange={(e) => handleSelectChange(e, `${glycoConf.residueID}_${glycoConf.residueChain}`)}
+          onChange={(e) => handleSelectChange(e, `${glycoConf.residueID}_${glycoConf.residueChain}`, glycoConf.residueTag)}
+         
         >
           {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
             
@@ -584,11 +585,11 @@ interface OptionType {
             
           ))}
         </ChakraSelect>
-        {selectedGlycanImage[glycoConf.residueID] && (
+        {selectedGlycanImage[glycoConf.residueTag] && (
                             <Image
-                                src={`/database/${selectedGlycanImage[glycoConf.residueID]}/${selectedGlycanImage[glycoConf.residueID]}.svg`}
+                                src={`https://glycoshape.io/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
                                 alt="Glycan Image"
-                                width="150px"
+                                height="150px"
                             />
                         )}
       </HStack>
