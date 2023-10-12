@@ -5,6 +5,8 @@ import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
   Spacer,
+  CircularProgress,
+  CircularProgressLabel,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
@@ -60,9 +62,13 @@ interface UniprotData {
 }
 
   const ReGlyco = () => {
+
       const [uniprotID, setUniprotID] = useState<string>("");
       const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
       const [isUpload, setIsUpload] = useState<boolean>(false);
+      const [uploadProgress, setUploadProgress] = useState(67);
+      const [isUploading, setIsUploading] = useState(false);
+      const [error, setError] = useState<string | null>(null);
       const searchRef = useRef(null);
       useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
@@ -101,35 +107,55 @@ interface UniprotData {
     };
     
     
-    const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const formData = new FormData();
-            formData.append('pdbFile', file);
-            setSelectedGlycans({});
-            setSelectedGlycanImage({});
     
-            try {
-                const response = await axios.post('https://glycoshape.io/api/upload_pdb', formData, {
-                    timeout: 600000, // Set a timeout of 10 minutes (value in milliseconds)
-                    onUploadProgress: progressEvent => {
-                        const percentage = progressEvent.total ? (progressEvent.loaded * 100) / progressEvent.total : 0;
-                        console.log(`Upload Progress: ${Math.round(percentage)}%`);
-                    }
-                });
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+
+      const allowedExtensions = [".pdb"]; // Example extensions
+    const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
     
-                if (response.status === 200) {
-                    setUniprotData(response.data);
-                    setIsUpload(true);
-                    setActiveStep(1);
-                } else {
-                    console.error("Failed to upload file.");
-                }
-            } catch (error) {
-                console.error("Error occurred during file upload:", error);
-            }
+    if (!allowedExtensions.includes("." + fileExtension)) {
+      console.error("File type not allowed.");
+      setError("File type not allowed.");
+      return;
+    }
+      const formData = new FormData();
+      formData.append('pdbFile', file);
+      setSelectedGlycans({});
+      setSelectedGlycanImage({});
+      // Other state updates...
+
+      try {
+        setIsUploading(true); // Set uploading state to true when upload begins
+
+        const response = await axios.post('https://glycoshape.io/api/upload_pdb', formData, {
+          timeout: 600000,
+          onUploadProgress: (progressEvent) => {
+            const percentage = progressEvent.total ? (progressEvent.loaded * 100) / progressEvent.total : 0;
+            setUploadProgress(Math.round(percentage)); // Update progress in state
+            console.log(`Upload Progress: ${percentage}%`);
+          },
+        });
+
+        if (response.status === 200) {
+          setUniprotData(response.data);
+          setIsUpload(true);
+          setActiveStep(1);
+          setError(null);
+          setIsUploading(false); // Reset uploading state once upload is finished
+          setUploadProgress(0);
+        } else {
+          console.error("Failed to upload file.");
         }
-    };
+      } catch (error) {
+        console.error("Error occurred during file upload:", error);
+      } 
+    }
+  };
+
+ 
+
     
 
   
@@ -221,7 +247,7 @@ interface UniprotData {
                 setClashValue(responseData.clash);
                 setBoxValue(responseData.box)
                 setActiveStep(3);  // Move to the 'Download' step after processing
-
+                setElapsedTime(0);
               console.log(responseData);
               // Handle the response data as needed
           } else {
@@ -257,7 +283,7 @@ interface UniprotData {
               setClashValue(responseData.clash);
               setBoxValue(responseData.box)
               setActiveStep(3);  // Move to the 'Download' step after processing
-
+              setElapsedTime(0);
             console.log(responseData);
             // Handle the response data as needed
         } else {
@@ -269,6 +295,19 @@ interface UniprotData {
       setIsLoading(false);  // End loading regardless of success or failure
   }
 }
+  const [elapsedTime, setElapsedTime] = useState(0);
+  useEffect(() => {
+    let timer: NodeJS.Timeout; 
+    if (isLoading) {
+      timer = setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000); // Increment elapsed time every second
+    }
+
+    // Cleanup: Stop the timer when the component is unmounted or when processing is stopped
+    return () => clearInterval(timer);
+  }, [isLoading]);
+
 
   const steps = [
     {  title: 'Choose Structure', description: 'from AlphaFold or upload your own'},
@@ -381,31 +420,37 @@ interface UniprotData {
                       >
                           or
                       </Text>
-                      <Box position="relative" display="inline-block" marginLeft={"2rem"} alignItems="center">
-   <Button
-       as="label"
-       backgroundColor="#B07095"
-                              _hover={{
-                                  backgroundColor: "#CF6385"
-                              }}
-       size={{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
-       cursor="pointer"
-       w="full"
-   >
-       Upload your .pdb
-   </Button>
-   <Input
-       type="file"
-       position="absolute"
-       top="0"
-       left="0"
-       opacity="0"
-       width="100%"
-       height="100%"
-       cursor="pointer"
-       onChange={handleFileUpload}
-   />
-</Box>
+                      <Box position="relative" display="inline-block" ml="2rem" alignItems="center">
+      {!isUploading ? (
+        <>
+          <Button as="label" backgroundColor="#B07095" _hover={{ backgroundColor: "#CF6385" }} size="md" w="full">
+            Upload your .pdb
+          </Button>
+          <Input
+            type="file"
+            position="absolute"
+            top="0"
+            left="0"
+            opacity="0"
+            width="100%"
+            height="100%"
+            cursor="pointer"
+            onChange={handleFileUpload}
+          />
+        </>
+      ) : (
+        <CircularProgress
+          isIndeterminate 
+          // value={uploadProgress}
+          color="#B07095"
+          size="50px"
+          thickness="5px"
+          capIsRound
+        >
+          <CircularProgressLabel>{uploadProgress}%</CircularProgressLabel>
+        </CircularProgress>
+      )}
+    </Box>
 
                       
                   </Flex>
@@ -595,20 +640,36 @@ interface UniprotData {
   ) : null;
 })}
 
-            <Button
-    position={"relative"}
-    margin={'1rem'}
-    borderRadius="full"
-    backgroundColor="#B07095"
-                              _hover={{
-                                  backgroundColor: "#CF6385"
-                              }}
-    size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}
-    onClick={isUpload ? handleProcessCustom : handleProcess}
-    isDisabled={isLoading}  // Disable the button while processing to prevent multiple requests
->
-    {isLoading ? "Processing..." : "Process"}
-</Button>
+<Button
+      position={"relative"}
+      margin={'1rem'}
+      borderRadius="full"
+      backgroundColor="#B07095"
+      _hover={{ backgroundColor: "#CF6385" }}
+      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+      onClick={isLoading ? handleProcessCustom : handleProcess}
+      isDisabled={isLoading} // Disable the button while processing
+    >
+      {isLoading ? (
+        <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+          <CircularProgress
+            position="absolute"
+            color="#B07095"
+            size="50px"
+            thickness="5px"
+            isIndeterminate 
+            marginLeft={"15rem"}
+            capIsRound
+          >
+            <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+          </CircularProgress>
+          Processing...
+          
+        </Box>
+      ) : (
+        "Process"
+      )}
+    </Button>
                           {outputPath &&  (
                             <Box>
                           <iframe
@@ -735,6 +796,12 @@ interface UniprotData {
 
 
                       )}
+
+{error && (
+  <Text color="red.500" textAlign="center">
+    {error}
+  </Text>
+)}
                   </VStack>
               </>
           );
