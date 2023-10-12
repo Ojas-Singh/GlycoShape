@@ -112,14 +112,14 @@ interface UniprotData {
     const file = event.target.files?.[0];
     if (file) {
 
-    //   const allowedExtensions = [".pdb"]; // Example extensions
-    // const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
+      const allowedExtensions = [".pdb"]; // Example extensions
+    const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
     
-    // if (!allowedExtensions.includes("." + fileExtension)) {
-    //   console.error("File type not allowed.");
-    //   setError("File type not allowed.");
-    //   return;
-    // }
+    if (!allowedExtensions.includes("." + fileExtension)) {
+      console.error("File type not allowed.");
+      setError("File type not allowed.");
+      return;
+    }
       const formData = new FormData();
       formData.append('pdbFile', file);
       setSelectedGlycans({});
