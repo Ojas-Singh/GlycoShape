@@ -1,11 +1,10 @@
 import React, { useState, ChangeEvent, useEffect, useRef,  } from 'react';
 import axios from 'axios';
 import { Select as ChakraSelect } from '@chakra-ui/react';
-import { JsonView, allExpanded, collapseAllNested, darkStyles, defaultStyles } from 'react-json-view-lite';
+import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Code, Heading,   Accordion,
   Spacer,
-  Checkbox,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
@@ -20,11 +19,8 @@ import {Wrap, Box, Input, Text, Button, VStack, HStack, useToast, Link, Flex, Co
   Stepper,
   useSteps, Badge, WrapItem, Image} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
-// import bg from './assets/Glycans_bg_dark_neg.png';
 import bg from './assets/gly.png';
-import { Config } from '@testing-library/user-event/dist/types/setup/setup';
-
-import Select, { ActionMeta, OnChangeValue } from 'react-select';
+import Select, { ActionMeta, OnChangeValue,  } from 'react-select';
 
 
 interface ResidueOption {
@@ -63,19 +59,11 @@ interface UniprotData {
   configuration: [GlycoConf];
 }
 
-
-interface OptionType {
-  label: string;
-  value: number;
-}
-
   const ReGlyco = () => {
       const [uniprotID, setUniprotID] = useState<string>("");
       const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
       const [isUpload, setIsUpload] = useState<boolean>(false);
-      const toast = useToast();
       const searchRef = useRef(null);
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
           if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
@@ -103,6 +91,8 @@ interface OptionType {
     actionMeta: ActionMeta<ResidueOption>
   ) => {
     setValue(newValue ? newValue : []);
+    // setSelectedGlycans({});
+    // setSelectedGlycanImage({});
   };
 
       const handleSearch = (e: React.FormEvent) => {
@@ -556,6 +546,9 @@ interface OptionType {
       className="basic-multi-select"
       classNamePrefix="select"
       onChange={onChange}
+      // onSelectResetsInput = {false}
+      closeMenuOnSelect = {false}
+
       options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
         value: glycoConf.residueTag,
         label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
@@ -590,11 +583,12 @@ interface OptionType {
           ))}
         </ChakraSelect>
         {selectedGlycanImage[glycoConf.residueTag] && (
+                            <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
                             <Image
                                 src={`https://glycoshape.io/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
                                 alt="Glycan Image"
-                                height="150px"
-                            />
+                                width="150px"
+                            /></Link>
                         )}
       </HStack>
     </div>
@@ -699,8 +693,7 @@ interface OptionType {
                               </Flex>
                               <Wrap>
                                 <WrapItem>
-                              <iframe
-                                  
+                              {/* <iframe
                                   style={{paddingLeft:"4  rem" ,zIndex:0,width: '60vw', height: '70vh' }}
                                   // style={ {objectFit: 'cover',position: 'absolute'}}
                                   src={
@@ -708,11 +701,14 @@ interface OptionType {
                                 }                                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                   allowFullScreen
                                   title="Protein Structure"
-                              /></WrapItem>
-                              {/* <video  width={'50%'} autoPlay loop muted id="bgVideo" style={ {zIndex: -1,objectFit: 'cover',position: 'absolute'}}>
-        <source  src="/Gamma.webm" type="video/mp4" />
+                              /> */}
+                              <video width={'60%'} autoPlay loop muted id="bgVideo" style={ {paddingLeft:"7rem", zIndex: -1,objectFit: 'cover',position: 'relative'}}>
+        <source  src="/gamma_s.mp4" type="video/mp4" />
         Your browser does not support the video tag.
-      </video> */}
+      </video>
+                              </WrapItem>
+                              
+                              
       <WrapItem>
                         <VStack >
                           

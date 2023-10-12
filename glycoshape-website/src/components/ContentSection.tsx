@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate  } from 'react-router-dom';
-import { Wrap, Highlight, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link,  WrapItem} from "@chakra-ui/react";
+import React from 'react';
+import { Wrap, Highlight, Text, Flex, Box, Image, Heading, Container, Link,  WrapItem} from "@chakra-ui/react";
 import Searchbar from './SearchBar';
 import bg from './assets/gly.png';
 import cell from './assets/cell_surface.jpg';

@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef,  } from 'react';
-import { useLocation, useNavigate } from 'react-router';
-import { FiCopy } from 'react-icons/fi';
-import { PhoneIcon, AddIcon, WarningIcon, SearchIcon, ArrowForwardIcon } from '@chakra-ui/icons'
+import  { useState, useEffect, useRef,  } from 'react';
+import { useLocation} from 'react-router';
+import {ArrowForwardIcon } from '@chakra-ui/icons'
 import {
-  Highlight, useClipboard ,Code, Center, Wrap, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
+  Highlight, Wrap, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
   } from "@chakra-ui/react";
 import draw from './assets/draw.png';
 import bg from './assets/gly.png';
@@ -12,7 +11,6 @@ import Draw from './Draw';
 
 
 const SearchPage = () =>{
-    const navigate  = useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const [results, setResults] = useState<string[]>([]);
@@ -23,10 +21,6 @@ const SearchPage = () =>{
     const [wurcsImageSrc, setWurcsImageSrc] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const searchRef = useRef<HTMLInputElement>(null);
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const keyHint = useBreakpointValue({ base: isMac ? '⌘K' : 'Ctrl+K', md: 'Press Ctrl+K to search' });
-    const [copiedGlycan, setCopiedGlycan] = useState<string | null>(null);  // Track the copied glycan
-    const { hasCopied, onCopy } = useClipboard(copiedGlycan || '');  // Provide a fallback empty string
     
   useEffect(() => {
     const fetchWurcsImage = async () => {

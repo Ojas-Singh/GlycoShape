@@ -1,12 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate  } from 'react-router-dom';
-import {
-  Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
-} from "@chakra-ui/react";
-import draw from './assets/draw.png';
-import un from './assets/un.png';
+import React from 'react';
+import { Flex } from "@chakra-ui/react";
 import bg from './assets/gly.png';
-import { Kbd } from '@chakra-ui/react'
 import Searchbar from './SearchBar';
 
 

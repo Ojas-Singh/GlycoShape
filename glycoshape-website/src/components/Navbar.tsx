@@ -5,11 +5,8 @@ import {
   Box,
   Link,
   Text,
-  Select,
-  Image,
   Menu,
   MenuButton,
-  Button,
   MenuList,
   MenuItem,
   useBreakpointValue,
@@ -17,7 +14,7 @@ import {
   Divider
 } from "@chakra-ui/react";
 import { HamburgerIcon } from '@chakra-ui/icons';
-import logo from './assets/logo.png';
+// import logo from './assets/logo.png';
 
 const Navbar: React.FC = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -48,6 +45,7 @@ const Navbar: React.FC = () => {
           />
           <MenuList>
             <MenuItem as={Link} href="/reglyco" >Re-Glyco</MenuItem>
+            {/* <MenuItem as={Link} href="/af" >AF test</MenuItem> */}
             <MenuItem as={Link} href="/downloads">Downloads</MenuItem>
             <MenuItem as={Link} href="/api-docs">API</MenuItem>
             <MenuItem as={Link} href="/faq">FAQ</MenuItem>
@@ -58,6 +56,7 @@ const Navbar: React.FC = () => {
       ) : (
         <Flex align="center">
           <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link>
+          {/* <Link fontWeight="bold" color={"#F7FFE6"} href="/af" marginRight="20px">AF test</Link> */}
           <Link fontWeight="bold" color={"#F7FFE6"} href="/downloads" marginRight="20px">Downloads</Link>
           <Box alignContent={"center"} height='40px'>
   <Divider orientation='vertical' />

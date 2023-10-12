@@ -18,7 +18,7 @@ import Elab from './components/eLab/Elab';
 import SearchPage from './components/SearchPage';
 import GlycanPage from './components/GlycanPage';
 import theme from './components/Theme';
-import Test from './components/Draw';
+import Test from './components/Af';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -46,7 +46,9 @@ const App: React.FC = () => {
           <Route path="/search" element={<SearchPage/>} />
           <Route path="/glycan" element={<div><Search /><GlycanPage/></div>} />
           <Route path="/elab" element={<div><Search /><Contact /></div>} />
+          <Route path="/af" element={<div><Search /><Test /></div>} />
           <Route path="/test" element={<div><Search /><Test /></div>} />
+          
         </Routes>
       </Flex>
 

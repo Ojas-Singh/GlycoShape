@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, MouseEventHandler } from 'react';
+import React, { useState, useEffect, useRef, } from 'react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons' ;
 import { useLocation, useNavigate } from 'react-router';
 import {
- Show, Hide, Grid,Divider, Spacer, useClipboard, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Input, Button, Text, Flex, Box, Image, useBreakpointValue, SimpleGrid, Heading, Container, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
+ Show, Grid,Divider, Spacer, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack
   } from "@chakra-ui/react";
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
@@ -47,7 +47,6 @@ const GlycanPage: React.FC = () => {
     const contentRef7 = useRef<HTMLDivElement>(null);
     const contentRef8 = useRef<HTMLDivElement>(null);
     const contentRef9 = useRef<HTMLDivElement>(null);
-    const contentRef10 = useRef<HTMLDivElement>(null);
 
 
     type SectionRefs = {
