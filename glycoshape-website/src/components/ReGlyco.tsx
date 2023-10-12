@@ -112,14 +112,14 @@ interface UniprotData {
     const file = event.target.files?.[0];
     if (file) {
 
-      const allowedExtensions = [".pdb"]; // Example extensions
-    const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
+    //   const allowedExtensions = [".pdb"]; // Example extensions
+    // const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
     
-    if (!allowedExtensions.includes("." + fileExtension)) {
-      console.error("File type not allowed.");
-      setError("File type not allowed.");
-      return;
-    }
+    // if (!allowedExtensions.includes("." + fileExtension)) {
+    //   console.error("File type not allowed.");
+    //   setError("File type not allowed.");
+    //   return;
+    // }
       const formData = new FormData();
       formData.append('pdbFile', file);
       setSelectedGlycans({});
@@ -140,6 +140,7 @@ interface UniprotData {
 
         if (response.status === 200) {
           setUniprotData(response.data);
+          console.log(UniprotData?.uniprot);
           setIsUpload(true);
           setActiveStep(1);
           setError(null);
@@ -266,6 +267,7 @@ interface UniprotData {
     const payload = {
         selectedGlycans: selectedGlycans,
         uniprotID : UniprotData?.uniprot
+        
     };
 
     try {
@@ -284,7 +286,8 @@ interface UniprotData {
               setBoxValue(responseData.box)
               setActiveStep(3);  // Move to the 'Download' step after processing
               setElapsedTime(0);
-            console.log(responseData);
+            // console.log(responseData);
+            console.log(UniprotData?.uniprot);
             // Handle the response data as needed
         } else {
             console.error("Failed to post data.");
@@ -549,7 +552,7 @@ interface UniprotData {
                                   src={isUpload ? 
                                     `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` : 
                                     `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=mmcif`
-                                }                                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                }                                  
                                   allowFullScreen
                                   title="Protein Structure"
                               /></Flex> 
@@ -647,7 +650,7 @@ interface UniprotData {
       backgroundColor="#B07095"
       _hover={{ backgroundColor: "#CF6385" }}
       size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-      onClick={isLoading ? handleProcessCustom : handleProcess}
+      onClick={isUpload ? handleProcessCustom : handleProcess}
       isDisabled={isLoading} // Disable the button while processing
     >
       {isLoading ? (
