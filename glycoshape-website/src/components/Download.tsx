@@ -26,8 +26,15 @@ const Download: React.FC = () => {
         {/* Download Resource 1 */}
         <Box>
           <HStack justifyContent="space-between" width="100%">
-            <Text fontSize="xl" fontWeight="bold">Resource 1 Name</Text>
-            <Button colorScheme="blue" size="sm">Download</Button>
+            <Text fontSize="xl" fontWeight="bold">Glycan Structures</Text>
+            <Button colorScheme="blue" size="sm" onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = `/database/GlycoShape.zip`;
+                                link.setAttribute('download', `GlycoShape.zip`);
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}>Download</Button>
           </HStack>
           <Text mt={2}>Description for Resource 1. This is some additional text to describe what this resource is and how it can be used.</Text>
         </Box>
@@ -37,8 +44,15 @@ const Download: React.FC = () => {
         {/* Download Resource 2 */}
         <Box>
           <HStack justifyContent="space-between" width="100%">
-            <Text fontSize="xl" fontWeight="bold">Resource 2 Name</Text>
-            <Button colorScheme="blue" size="sm">Download</Button>
+            <Text fontSize="xl" fontWeight="bold">Molecular Dynamics Simulations trajectory</Text>
+            <Button colorScheme="blue" size="sm"  onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = `/database/Simulation.zip`;
+                                link.setAttribute('download', `Simulation.zip`);
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}>Download</Button>
           </HStack>
           <Text mt={2}>Description for Resource 2. This is some additional text to describe what this resource is and how it can be used.</Text>
         </Box>

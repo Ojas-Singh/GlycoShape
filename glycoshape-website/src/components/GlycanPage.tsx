@@ -130,7 +130,7 @@ interface GlycanData {
   glytoucan_id: string;
   disease: string | null;
   tissue: string | null;
-  species: string | null;
+  species: string[] | null;
   genus: string | null;
   family: string | null;
   order: string | null;
@@ -254,7 +254,15 @@ interface GlycanData {
                                   backgroundColor: "#51BF9D"
                               }}
                               size = {{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
-                              onClick={() => navigate(`/database/${sequence}/${sequence}.zip`)}
+                              // onClick={() => navigate(`/database/${sequence}/${sequence}.zip`)}
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = `/database/${sequence}/${sequence}.zip`;
+                                link.setAttribute('download', `${sequence}.zip`);
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
                               >Download</Button>
         </TabList>
         <TabPanels>
@@ -580,7 +588,7 @@ interface GlycanData {
             { label: "Tissue", value: data?.tissue || "Not Available" },
             { label: "Diseases", value: data?.disease || "Not Available" }
          ].map(item => (
-            <Flex key={item.label} align="center" justify="space-between">
+            <Flex key={item.label} maxWidth={'30rem'} align="center" justify="space-between">
                <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="right">{item.label}</Text>
                <Divider orientation="vertical" height="20px" />
                <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="left">{item.value}</Text>

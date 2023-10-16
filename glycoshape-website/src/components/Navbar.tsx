@@ -30,7 +30,7 @@ const Navbar: React.FC = () => {
           <Text top="50%" fontFamily={'texts'} 
             transform="translateY(20%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Beta</Badge>   </Text>
 
-        <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} href="/" >GlycoShape.io</Link> 
+        <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} href="/" >GlycoShape</Link> 
         {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
         </Stack>
       </Box>

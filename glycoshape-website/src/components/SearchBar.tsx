@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
-import { Highlight, Input, Button, Text, Flex, Image, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
+import { Link, Highlight, Input, Button, Text, Flex, Image, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
 } from "@chakra-ui/react";
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 import draw from './assets/draw.png';
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
+// import { Link } from 'react-router-dom';
 
 
 const Bar: React.FC = () => {
@@ -174,25 +175,50 @@ const Bar: React.FC = () => {
         
         <Flex direction="row" justify="space-between" width="80%" mt={2}>
           <Flex align="center">
-            <Text color="white" marginRight={2}>Examples:</Text>
-            <Button 
+          <Highlight query='Browse:' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
+        Browse:
+       </Highlight>
+            {/* <Text color="white" marginRight={2}>Examples:</Text> */}
+            {/* <Button 
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
               onClick={url => window.location.replace('/glycan?IUPAC=GlcNAc(b1-4)Man')}
             >
               GlcNAc(b1-4)Man
+            </Button>&nbsp; */}
+
+&nbsp;  
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=N-Glycans')}
+            >
+             N-Glycans
             </Button>&nbsp;
             <Button 
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=N-Glycan')}
+              onClick={url => window.location.replace('/search?query=O-Glycans')}
             >
-             N-Glycan
-            </Button>
+             O-Glycans
+            </Button>&nbsp;
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=GAGs')}
+            >
+             GAGs
+            </Button>&nbsp;
           </Flex>
-          <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text>
+          <Link href='/faq' color={"#F7FFE6"}> 
+          <Highlight query='See search help' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
+          See search help
+       </Highlight></Link>
+          {/* <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text> */}
         </Flex>
         </Flex>
 

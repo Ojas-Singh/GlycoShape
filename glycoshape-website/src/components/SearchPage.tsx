@@ -74,7 +74,7 @@ const SearchPage = () =>{
             });
         } else {
           // Handle the case when neither wurcsString nor searchString has a value
-          console.warn("Please provide a valid search string or WURCS string!");
+          // console.warn("Please provide a valid search string or WURCS string!");
           setError("No search string or WURCS string provided.");
           return;
         }
@@ -225,25 +225,49 @@ const SearchPage = () =>{
 
         <Flex direction="row" justify="space-between" width="80%" mt={2}>
           <Flex align="center">
-            <Text color="white" marginRight={2}>Examples:</Text>
-            <Button 
+          <Highlight query='Browse:' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
+        Browse:
+       </Highlight>
+            {/* <Text color="white" marginRight={2}>Examples:</Text> */}
+            {/* <Button 
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
               onClick={url => window.location.replace('/glycan?IUPAC=GlcNAc(b1-4)Man')}
             >
               GlcNAc(b1-4)Man
+            </Button>&nbsp; */}
+
+&nbsp;  
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=N-Glycans')}
+            >
+             N-Glycans
             </Button>&nbsp;
             <Button 
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=N-Glycan')}
+              onClick={url => window.location.replace('/search?query=O-Glycans')}
             >
-             N-Glycan
-            </Button>
+             O-Glycans
+            </Button>&nbsp;
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=GAGs')}
+            >
+             GAGs
+            </Button>&nbsp;
           </Flex>
-          <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text>
+          <Link href='/faq' color={"#F7FFE6"}> 
+          <Highlight query='See search help' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
+          See search help
+       </Highlight></Link>
         </Flex>
       </Flex>
 
