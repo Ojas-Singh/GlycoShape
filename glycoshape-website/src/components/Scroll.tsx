@@ -38,8 +38,9 @@ const ScrollToTopButton: React.FC = () => {
       right={4} 
       onClick={scrollToTop} 
       bgColor={bgColor} 
+      opacity={0.8}
       color={color} 
-      _hover={{ opacity: 0.8 }}>
+      _hover={{ opacity: 1 }}>
       <Icon as={FaArrowUp} />
     </Button>
   );

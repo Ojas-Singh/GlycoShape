@@ -13,13 +13,13 @@ const LinkedInIcon = () => <Icon viewBox="0 0 24 24">/* SVG content for LinkedIn
 
 const Footer: React.FC = () => {
   return (
-    <Box as="footer" padding="1.5rem" backgroundColor="#28363F">
+    <Box as="footer" padding="1.5rem" paddingBottom={"0.5rem"} backgroundColor="#28363F">
       <Flex direction="row" justify="space-between" wrap="wrap" marginBottom="0em">
         <Box>
-          <Image src={logo} alt="GlycoShape Logo" height="150px" marginBottom="0.2em" paddingLeft={"1.5rem"}/>
-          <Text color="lightblue">© GlycoShape</Text>
-          <Link color="white" >Legal Disclaimer</Link>
-          <Link color="white" > Privacy Notice</Link>
+          <Image src={logo} alt="GlycoShape Logo" height="200px" marginBottom="0.2em" paddingLeft={"1.5rem"} paddingBottom={"0.5rem"}/>
+          <Text alignSelf="center" color="lightblue">© GlycoShape</Text>
+          <Link color="white" >Legal Disclaimer | Privacy Notice</Link>
+          
         </Box>
         <VStack align="start">
           <Text color="white" fontWeight="bold">Core Data</Text>
@@ -69,18 +69,18 @@ const Footer: React.FC = () => {
           <Text fontWeight="Medium" color={'white'}>Main Funding by:
           <HStack direction='row'>
             <Link href='https://www.sfi.ie/'>
-          <Image src={logo_sfi} alt="SFI Logo" height="60px" marginBottom="1em" /></Link><Link href='https://www.oracle.com/ie/research/'><Image src={logo_oracle} alt="Oracle Logo" height="60px" marginBottom="1em" /></Link> 
+          <Image src={logo_sfi} alt="SFI Logo" height="60px" marginBottom="0em" /></Link><Link href='https://www.oracle.com/ie/research/'><Image src={logo_oracle} alt="Oracle Logo" height="60px" marginBottom="0em" /></Link> 
           
           </HStack> 
           </Text>
         </Box>
       </Flex>
-      <Flex justify="space-between">
+      {/* <Flex justify="space-between">
         <Text color="white" >Release and Statistics</Text>
 
         
 
-      </Flex>
+      </Flex> */}
     </Box>
   );
 }

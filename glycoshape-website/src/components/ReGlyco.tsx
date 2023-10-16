@@ -19,7 +19,11 @@ import {Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Headin
   StepStatus,
   StepTitle,
   Stepper,
-  useSteps, Badge, WrapItem, Image} from '@chakra-ui/react';
+  useSteps, Badge, WrapItem, Image,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
 import Select, { ActionMeta, OnChangeValue,  } from 'react-select';
@@ -654,7 +658,7 @@ interface UniprotData {
       isDisabled={isLoading} // Disable the button while processing
     >
       {isLoading ? (
-        <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+        <Box  position="relative" display="inline-flex" alignItems="center" justifyContent="center">
           <CircularProgress
             position="absolute"
             color="#B07095"
@@ -668,11 +672,16 @@ interface UniprotData {
           </CircularProgress>
           Processing...
           
+          
         </Box>
       ) : (
         "Process"
       )}
     </Button>
+    {isLoading && (<Alert status='warning' > 
+    <AlertIcon />
+    It can take up to 5 minutes to process your request. Please wait.
+  </Alert>)}
                           {outputPath &&  (
                             <Box>
                           <iframe

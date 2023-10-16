@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wrap, Highlight, Text, Flex, Box, Image, Heading, Container, Link,  WrapItem} from "@chakra-ui/react";
+import {SimpleGrid , Wrap, Highlight, Text, Flex, Box, Image, Heading, Container, Link,  WrapItem} from "@chakra-ui/react";
 import Searchbar from './SearchBar';
 import bg from './assets/gly.png';
 import cell from './assets/cell_surface.jpg';
@@ -93,8 +93,27 @@ const ContentSection: React.FC = () => {
               {/* </Highlight> */}
               </Text>
               </Flex>
+              <SimpleGrid columns={2} spacing={10}>
+            <Box ><Text
+                align={"left"}
+                bgGradient='linear(to-l, #44666C, #4E6E6D)'
+                bgClip='text'
+                fontSize={{base: "3xl",sm: "3xl", md: "3xl", lg: "4xl",xl: "4xl"}}
+                fontWeight='bold'
+              > 
+                What are Glycans?
+              </Text>
+              <Container textAlign={'left'} padding={'0rem'} fontFamily={'texts'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "lg",xl: "lg"}}>
+              Complex carbohydrates (or glycans) are the most abundant biopolymers in Nature, covering both structural and functional roles, e.g. as key scaffolding constituents of plant cell walls, vital energy storage and nutrients of all living cells and organisms, and essential elements to the biology of virtually all domains of life. The term glycans is more often used to indicate biologically functional carbohydrates, where chemical derivatization of proteins, lipids and nucleic acids with sugars expands and changes on the fly their biological structure, functions and message-delivering potentials in health and disease. 
+              </Container></Box>
+            <Box ><Image maxHeight={"25rem"} width={'auto'} padding={'2rem'} src={cell} alt="Description Image" />
+                  </Box>
+  <Box bg='tomato' height='80px'></Box>
+  <Box bg='tomato' height='80px'></Box>
+  <Box bg='tomato' height='80px'></Box>
+</SimpleGrid>
               <Flex direction="column" align={'center'} padding={'2rem'}>
-          
+              
             <Wrap align='center'>
               <WrapItem >
             <Box flex="1">

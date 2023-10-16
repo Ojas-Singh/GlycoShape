@@ -273,7 +273,14 @@ const SearchPage = () =>{
 
       {results.length > 0 && (
         <Flex direction="column" align="center" width="100%">
-        <Box width="100%" padding="4em" paddingTop={'2rem'}>
+        
+
+
+    
+        <Flex direction="row" width="100%" padding="2em" paddingTop={'1em'}>
+          {/* Filters on the left */}
+
+          <Box width="30%" padding="4em" paddingTop={'2rem'}>
   <Text fontSize="2xl" marginBottom="1em">
     Showing {results.length} search results for {
       isWurcsSearch 
@@ -284,15 +291,11 @@ const SearchPage = () =>{
   </Text>
 </Box>
 
-
-    
-        <Flex direction="row" width="100%" padding="2em" paddingTop={'0.5em'}>
-          {/* Filters on the left */}
-          <Box width="30%" padding="1em">
+          {/* <Box width="30%" padding="0em"> */}
             {/* Example filter */}
             {/* <Text>Filter 1</Text> */}
             {/* Add more filters as needed */}
-          </Box>
+          {/* </Box> */}
           <Box width="80%" padding="1em">
           {results.map((glycan, index) => (
             <Box
