@@ -26,7 +26,7 @@ const Download: React.FC = () => {
         {/* Download Resource 1 */}
         <Box>
           <HStack justifyContent="space-between" width="100%">
-            <Text fontSize="xl" fontWeight="bold">Glycan Structures</Text>
+            <Text fontSize="xl" fontWeight="bold">Glycan Structures Data</Text>
             <Button colorScheme="blue" size="sm" onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = `/database/GlycoShape.zip`;
@@ -44,7 +44,7 @@ const Download: React.FC = () => {
         {/* Download Resource 2 */}
         <Box>
           <HStack justifyContent="space-between" width="100%">
-            <Text fontSize="xl" fontWeight="bold">Molecular Dynamics Simulations trajectory</Text>
+            <Text fontSize="xl" fontWeight="bold">Molecular Dynamics Simulations Trajectory Data</Text>
             <Button colorScheme="blue" size="sm"  onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = `/database/Simulation.zip`;

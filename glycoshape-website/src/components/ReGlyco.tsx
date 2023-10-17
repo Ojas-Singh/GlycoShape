@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Select as ChakraSelect } from '@chakra-ui/react';
 import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
-import {Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading,   Accordion,
+import {SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading,   Accordion,
   Spacer,
   CircularProgress,
   CircularProgressLabel,
@@ -764,46 +764,44 @@ interface UniprotData {
                                 
                               </Box>
                               </Flex>
-                              <Wrap>
-                                <WrapItem>
-                              {/* <iframe
-                                  style={{paddingLeft:"4  rem" ,zIndex:0,width: '60vw', height: '70vh' }}
-                                  // style={ {objectFit: 'cover',position: 'absolute'}}
-                                  src={
-                                    `/viewer/index_full.html?snapshot-url=/gamma.molx&snapshot-url-type=molx` 
-                                }                                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                  title="Protein Structure"
-                              /> */}
-                              <video width={'60%'} autoPlay loop muted id="bgVideo" style={ {paddingLeft:"7rem", zIndex: -1,objectFit: 'cover',position: 'relative'}}>
+
+
+                              <SimpleGrid  alignSelf="center" justifyItems="center" columns={[1,2]} spacing={10} paddingTop={'2rem'} paddingBottom={'2rem'}>
+                                    <Box> <video width={'60%'} autoPlay loop muted id="bgVideo" style={ {paddingLeft:"7rem", zIndex: -1,objectFit: 'cover',position: 'relative'}}>
         <source  src="/gamma_s.mp4" type="video/mp4" />
         Your browser does not support the video tag.
-      </video>
-                              </WrapItem>
-                              
-                              
-      <WrapItem>
-                        <VStack >
-                          
-                      <Text paddingTop= "10rem" width={{base: "80vw",sm: "80vw", md: "30vw", lg: "30vw",xl: "30vw"}} align={'center'} fontSize={'lg'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
+      </video></Box>          
+                                      <Box padding={"2rem"}><Text 
+                        bgGradient='linear(to-l,  #B07095, #C39CAA)'
+                        bgClip='text'
+                        fontSize={{base: "3xl",sm: "3xl", md: "4xl", lg: "5xl",xl: "5xl"}}
+                        fontWeight='bold'
+                        marginBottom="0.2em"
+                        align={"center"}
+                        marginLeft={'2rem'}
+                      >
+                        About
+                      </Text>
+                                        <Text paddingTop= "10rem" padding={"1rem"} justifySelf="center" align={'center'} fontSize={'lg'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
 
-                        To get started, upload your protein structure file or choose a pre-existing AlphaFold structure, and let re-glyco do the rest!
+To get started, upload your protein structure file or choose a pre-existing AlphaFold structure, and let re-glyco do the rest!
 
-                        here are some example UniProt IDs to get you started:
-                        
-                        </Text>
-                        
-                        <Text fontFamily={'texts'}>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P29016</Button>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>O15552</Button>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P27918</Button>
-                        <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
-                        
-                        </Text>
-                        </VStack>
-                        </WrapItem>
-                        </Wrap>
+here are some example UniProt IDs to get you started:
+
+</Text>
+
+<Text fontFamily={'texts'}>
+<Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
+<Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P29016</Button>
+<Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>O15552</Button>
+<Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P27918</Button>
+<Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
+
+</Text></Box>
+                                    
+                                    </SimpleGrid>
+
+                            
                       </Flex>
 
 

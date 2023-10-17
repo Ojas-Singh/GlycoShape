@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
-import { Link, Highlight, Input, Button, Text, Flex, Image, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
+import { Hide, Link, Highlight, Input, Button, Text, Flex, Image, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
 } from "@chakra-ui/react";
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 import draw from './assets/draw.png';
@@ -174,19 +174,12 @@ const Bar: React.FC = () => {
         </Flex>
         
         <Flex direction="row" justify="space-between" width="80%" mt={2}>
+        <Hide below='sm'> 
           <Flex align="center">
           <Highlight query='Browse:' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
         Browse:
        </Highlight>
-            {/* <Text color="white" marginRight={2}>Examples:</Text> */}
-            {/* <Button 
-              backgroundColor="#7CC9A9" 
-              _hover={{ backgroundColor: "#51BF9D" }} 
-              color="white"
-              onClick={url => window.location.replace('/glycan?IUPAC=GlcNAc(b1-4)Man')}
-            >
-              GlcNAc(b1-4)Man
-            </Button>&nbsp; */}
+            
 
 &nbsp;  
             <Button 
@@ -213,7 +206,7 @@ const Bar: React.FC = () => {
             >
              GAGs
             </Button>&nbsp;
-          </Flex>
+          </Flex></Hide>
           <Link href='/faq' color={"#F7FFE6"}> 
           <Highlight query='See search help' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
           See search help
