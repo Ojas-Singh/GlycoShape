@@ -229,7 +229,7 @@ interface GlycanData {
         <Flex>
         
       <Box flex="1" >
-        <Tabs align={"end"} padding={'1rem'} paddingTop={"1rem"}  colorScheme='green'>
+        <Tabs align={"start"} padding={'1rem'} paddingTop={"1rem"}  colorScheme='green'>
           <TabList  display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" marginRight={'2rem'} >
             <HStack >
             <Image
@@ -372,7 +372,7 @@ interface GlycanData {
             {/* <WrapItem alignContent={'left'}>  */}
             <Spacer />
              <iframe
-                      style={{ width: '40vw', height: '50vh' }}
+                      style={{ width: '35vw', height: '50vh' }}
                       src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen

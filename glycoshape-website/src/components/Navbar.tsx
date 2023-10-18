@@ -50,7 +50,7 @@ const Navbar: React.FC = () => {
             <MenuItem as={Link} href="/downloads">Downloads</MenuItem>
             <MenuItem as={Link} href="/api-docs">API</MenuItem>
             <MenuItem as={Link} href="/faq">FAQ</MenuItem>
-            <MenuItem as={Link} href="/elab">Contact us</MenuItem>
+            <MenuItem as={Link} href="/elab">eLab</MenuItem>
             
           </MenuList>
         </Menu>

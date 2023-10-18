@@ -1,4 +1,5 @@
 import  { useState, useEffect, useRef,  } from 'react';
+import { useBreakpointValue } from "@chakra-ui/react";
 import { useLocation} from 'react-router';
 import {ArrowForwardIcon } from '@chakra-ui/icons'
 import {
@@ -22,6 +23,15 @@ const SearchPage = () =>{
     const [wurcsImageSrc, setWurcsImageSrc] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const searchRef = useRef<HTMLInputElement>(null);
+  
+   
+    const trimLength = useBreakpointValue({
+      base: 30,
+      sm: 40,
+      md: 40,
+      lg: 80,
+      xl: 80
+    }) ?? 40; // Fallback to 40 if undefined
     
   useEffect(() => {
     const fetchWurcsImage = async () => {
@@ -238,7 +248,7 @@ const SearchPage = () =>{
 
         <Flex direction="row" justify="space-between" width="80%" mt={2}>
           <Flex align="center">
-          <Hide below='sm'>
+          <Hide below='lg'>
           <Highlight query='Browse:' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
         Browse:
        </Highlight>
@@ -311,12 +321,12 @@ const SearchPage = () =>{
             {/* <Text>Filter 1</Text> */}
             {/* Add more filters as needed */}
           {/* </Box> */}
-          <Box width="80%" padding="1em">
+          <Box width="70%" >
           {results.map((glycan, index) => (
             <Box
               key={index}
-              width="100%"
-              padding="1em"
+              // width="100%"
+              padding="1rem"
               boxShadow="md"
               marginBottom="1em"
               backgroundColor="white"
@@ -325,29 +335,26 @@ const SearchPage = () =>{
               flex='1'
               
             ><VStack align={'left'}>
-              <Heading padding={'1rem'} fontSize={{base: "xs",sm: "xs", md: "xl", lg: "xl",xl: "xl"}} marginRight="1em"> {glycan.length > 60 ? glycan.substring(0, 60) + '...' : glycan}  </Heading>
-              <Wrap >
+<Heading fontSize={{ base: "xs", sm: "xs", md: "xl", lg: "xl", xl: "xl" }}>
+  {glycan.length > trimLength ? glycan.substring(0, trimLength) + '...' : glycan}
+</Heading>
+              
+              
 
-                
-                <WrapItem>
 
                   <Link href={`/glycan?IUPAC=${glycan}`}>
               <Image
-                src={`/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image
+                
+                src={`https://glycoshape.io/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image
                 alt="Glycan Image"
+                // width="300px"
                 height="150px"
+                
+                // marginRight="1rem"
                 maxWidth={"200px"}
-                marginRight="1em"
               /></Link>
-              </WrapItem>
-              <WrapItem>
-                {/* <Text>Type : Free</Text> */}
-                
-                </WrapItem>
-              <WrapItem   alignContent={'center'}>
-                
-              </WrapItem>
-              </Wrap>
+              
+              
               </VStack>
             </Box>
           ))}</Box></Flex>

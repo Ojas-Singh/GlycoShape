@@ -1,9 +1,14 @@
 // eLab.tsx
 
 import React, { useState } from 'react';
-import { SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack  } from '@chakra-ui/react';
+import { useLocation, Link as RouterLink } from 'react-router-dom';
+
+
+
+import { Show, SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack, Spacer, Hide  } from '@chakra-ui/react';
 
 const ELab: React.FC = () => {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any | null>(null);
   const [hoveredMember, setHoveredMember] = useState<number | null>(null);
@@ -15,9 +20,29 @@ const handleCloseModal = () => {
   setSelectedMember(null);
   setIsOpen(false);
 }
-
+let defaultIndex: number;
+switch (location.pathname) {
+case '/team':
+defaultIndex = 1;
+break;
+case '/blog':
+defaultIndex = 2;
+break;
+case '/publications':
+defaultIndex = 3;
+break;
+default:
+defaultIndex = 0;
+break;
+}
   const members = [
-    { name: 'Dr. Elisa Fadda', role: 'Principal Investigator', image: '/img/Fadda.png', hoverImage: '/img/cat2.jpg', coolImage: '/img/elisa.jpg',bio: 'Elisa (she/her) got a BSc and MSc (Laurea 110/110 cum laude) in Chemistry from the Università degli Studi di Cagliari. She obtained her Ph.D. in theoretical chemistry at the Université de Montréal in 2004 under the supervision of Prof Dennis R. Salahub. After her Ph.D. she worked as a Postdoctoral Fellow in Molecular Structure and Function at the Hospital for Sick Children (Sickkids) Research Institute in Toronto, where she specialised in biophysics and statistical mechanics-based methods in Dr Regis Pomes’ research group. In 2008 Elisa joined Prof Rob Woods’ Computational Glycobiology Laboratory as a Senior Research Scientist in the School of Chemistry at the University of Galway. She started her independent career in 2013 in the Department of Chemistry at Maynooth University, where she is now an Associate Professor. From January 2024 Elisa will be taking a new position in the School of Biological Sciences at the University of Southampton, where she will be an Associate Professor in Pharmacology. Elisa loves cats, running (slowly), good food, nice drinks, reading and most of all travelling to visit friends and places. Her astrological sign (and favourite monosaccharide) is a-L-fucose.' },
+    { name: 'Dr. Elisa Fadda', role: 'Principal Investigator', image: '/img/Fadda.png', hoverImage: '/img/cat2.jpg', coolImage: '/img/elisa.jpg',bio: 'Elisa (she/her) got a BSc and MSc (Laurea 110/110 cum laude) in Chemistry from the Università degli Studi di Cagliari. She obtained her Ph.D. in theoretical chemistry at the Université de Montréal in 2004 under the supervision of Prof Dennis R. Salahub. After her Ph.D. she worked as a Postdoctoral Fellow in Molecular Structure and Function at the Hospital for Sick Children (Sickkids) Research Institute in Toronto, where she specialised in biophysics and statistical mechanics-based methods in Dr Regis Pomes’ research group. In 2008 Elisa joined Prof Rob Woods’ Computational Glycobiology Laboratory as a Senior Research Scientist in the School of Chemistry at the University of Galway. She started her independent career in 2013 in the Department of Chemistry at Maynooth University, where she is now an Associate Professor. From January 2024 Elisa will be taking a new position in the School of Biological Sciences at the University of Southampton, where she will be an Associate Professor in Pharmacology. Elisa loves cats, running (slowly), good food, nice drinks, reading and most of all travelling to visit friends and places. Her astrological sign (and favourite monosaccharide) is a-L-fucose.' 
+    ,socialLinks: [
+      { platform: 'Twitter', url: 'https://twitter.com/elisafadda' },
+      { platform: 'Mastodon', url: 'https://twitter.com/elisafadda' },
+      { platform: 'Github', url: 'https://twitter.com/elisafadda' },
+      
+  ]},
     { name: 'Dr. Callum Ives', role: 'Postdoctoral Researcher', image: '/img/Ives.png', hoverImage: '/img/cat1.jpeg', coolImage: '/img/callum.jpg' },
     { name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg' , hoverImage: '/img/cat3.jpg', coolImage: '/img/elisa.png'},
     { name: "Silvia D'Andrea", role: 'PhD Student', image: '/img/leg.png' , hoverImage: '/img/cat4.jpeg', coolImage: '/img/elisa.png'},
@@ -203,28 +228,58 @@ const publications = [
 ];
 
   return (
-    <Box p={5}  >
-      <Text 
-          align='center'
+    
+    <Box   >
+      
+
+        <Tabs 
+    align={"start"} 
+    // alignItems={"start"}
+    maxWidth="100%" 
+    padding={"0rem"} 
+    paddingTop={"1rem"} 
+    variant='soft-rounded' 
+    colorScheme='green'
+    defaultIndex={defaultIndex}
+  >
+    <TabList display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" padding={"0rem"}>
+    
+    
+    {/* <SimpleGrid    columns={[1,2]} spacing={10} paddingTop={'0rem'} paddingBottom={'0rem'}> */}
+    <Hide below="lg">
+    <Text 
+          paddingLeft={{base: "0.2rem",sm: "0.2rem", md: "0.2rem", lg: "5rem",xl: "5rem"}}
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
-          fontSize={{base: "3xl",sm: "4xl", md: "6xl", lg: "6xl",xl: "6xl"}}
+          fontSize={{base: "xl",sm: "3xl", md: "3xl", lg: "5xl",xl: "5xl"}}
           fontWeight='extrabold'
-          marginBottom="0.2em"
+          // marginBottom="0.2em"
         >
-          Elisa Fadda Research Group
+          Elisa Fadda Research Group 
+        </Text></Hide>
+        <Show below="lg">
+        <Text 
+          paddingLeft={{base: "0.2rem",sm: "0.2rem", md: "0.2rem", lg: "5rem",xl: "5rem"}}
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize={{base: "xl",sm: "3xl", md: "3xl", lg: "5xl",xl: "5xl"}}
+          fontWeight='extrabold'
+          // marginBottom="0.2em"
+        >
+          Elisa Group
         </Text>
-
-      <Tabs align={"end"} maxWidth="100%" padding={"0rem"} paddingTop={"1rem"} variant='soft-rounded' colorScheme='green'>
-        <TabList>
-          <Tab>eLab</Tab>
-          <Tab>Team</Tab>
-          <Tab>Blog</Tab>
-          <Tab>Publications</Tab>
-        </TabList>
+          </Show>
+      <Spacer />
+        <HStack>
+      <Tab as={RouterLink} to="/elab">eLab</Tab>
+      <Tab as={RouterLink} to="/team">Team</Tab>
+      <Tab as={RouterLink} to="/blog">Blog</Tab>
+      <Tab as={RouterLink} to="/publications">Publications</Tab></HStack>
+      {/* </SimpleGrid> */}
+    </TabList>
 
         <TabPanels>
-          <TabPanel >
+          <TabPanel paddingTop={"2rem"}>
           <Container maxWidth={{base: "100%",sm: "100%", md: "80%", lg: "80%",xl: "80%"}} > 
                       <Heading size="lg" marginBottom="5" >
                       Molecular Structure and Function of Glycans and Glycoproteins in the Biology of Health and Disease      </Heading>

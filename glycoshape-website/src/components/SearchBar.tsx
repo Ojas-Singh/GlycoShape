@@ -150,7 +150,7 @@ const Bar: React.FC = () => {
       <form style={{ width: '100%', flex:"1" }} onSubmit={handleSearch} >
           <Input 
             
-            width={{base: "50%",sm: "50%", md: "80%", lg: "80%",xl: "80%"}}
+            width={{base: "80%",sm: "80%", md: "80%", lg: "80%",xl: "80%"}}
             fontFamily={'texts'}
             ref={searchRef}
             placeholder={placeholderText}
@@ -165,6 +165,7 @@ const Bar: React.FC = () => {
               outline: "none"
             }}
           />
+          <Hide below='md'>
           <Text 
             position="absolute" 
             right={{base: "7rem",sm: "7rem", md: "7rem", lg: "8rem",xl: "8rem"}}
@@ -176,6 +177,7 @@ const Bar: React.FC = () => {
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
           </Text>
+          </Hide>
           <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"1rem"} type="submit"
             borderRadius="full" 
             backgroundColor="#7CC9A9"
@@ -192,8 +194,8 @@ const Bar: React.FC = () => {
         <Flex direction="row" justify="space-between" width="80%" mt={2}>
          
           <Flex align="center">
-          <Hide below='sm'>
-          <Highlight query='Browse:' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
+          <Hide below='lg'>
+          <Highlight query='Browse:' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
         Browse:
        </Highlight>
             
@@ -226,7 +228,7 @@ const Bar: React.FC = () => {
             </Hide>
           </Flex>
           <Link href='/faq' color={"#F7FFE6"}> 
-          <Highlight query='See search help' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
+          <Highlight query='See search help' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
           See search help 
        </Highlight>
        </Link>
