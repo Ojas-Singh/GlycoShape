@@ -59,8 +59,9 @@ const Footer: React.FC = () => {
           <HStack spacing="24px" padding={"1rem"} paddingBottom={"4rem"}>
             {/* <Link href="#"><FacebookIcon /></Link>
             <Link href="#"><TwitterIcon /></Link> */}
-              <SocialIcon url="https://twitter.com" />
-              <SocialIcon url="https://mastodon.com" />
+            <SocialIcon network="mastodon" url="https://mstdn.science/@Glycoshape" />
+              {/* <SocialIcon network="twitter" url="https://twitter.com/ElisaTelisa" /> */}
+              
               <SocialIcon network="github" url="https://github.com/Ojas-Singh/GlycoShape" />
               
         {/* <Link color="white" href="#"><LinkedInIcon /><SocialIcon url="www.vimeo.com" /></Link> */}

@@ -1,7 +1,7 @@
 // eLab.tsx
 
 import React, { useState } from 'react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack  } from '@chakra-ui/react';
+import { SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack  } from '@chakra-ui/react';
 
 const ELab: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,10 +17,10 @@ const handleCloseModal = () => {
 }
 
   const members = [
-    { name: 'Elisa Fadda', role: 'Principal Investigator', image: '/img/Fadda.png', hoverImage: '/img/cat2.jpg', coolImage: '/img/elisa.jpg',bio: 'Elisa (she/her) got a BSc and MSc (Laurea 110/110 cum laude) in Chemistry from the Università degli Studi di Cagliari. She obtained her Ph.D. in theoretical chemistry at the Université de Montréal in 2004 under the supervision of Prof Dennis R. Salahub. After her Ph.D. she worked as a Postdoctoral Fellow in Molecular Structure and Function at the Hospital for Sick Children (Sickkids) Research Institute in Toronto, where she specialised in biophysics and statistical mechanics-based methods in Dr Regis Pomes’ research group. In 2008 Elisa joined Prof Rob Woods’ Computational Glycobiology Laboratory as a Senior Research Scientist in the School of Chemistry at the University of Galway. She started her independent career in 2013 in the Department of Chemistry at Maynooth University, where she is now an Associate Professor. From January 2024 Elisa will be taking a new position in the School of Biological Sciences at the University of Southampton, where she will be an Associate Professor in Pharmacology. Elisa loves cats, running (slowly), good food, nice drinks, reading and most of all travelling to visit friends and places. Her astrological sign (and favourite monosaccharide) is a-L-fucose.' },
-    { name: 'Callum Ives', role: 'Research Scientist', image: '/img/Ives.png', hoverImage: '/img/cat1.jpeg', coolImage: '/img/elisa.png' },
+    { name: 'Dr. Elisa Fadda', role: 'Principal Investigator', image: '/img/Fadda.png', hoverImage: '/img/cat2.jpg', coolImage: '/img/elisa.jpg',bio: 'Elisa (she/her) got a BSc and MSc (Laurea 110/110 cum laude) in Chemistry from the Università degli Studi di Cagliari. She obtained her Ph.D. in theoretical chemistry at the Université de Montréal in 2004 under the supervision of Prof Dennis R. Salahub. After her Ph.D. she worked as a Postdoctoral Fellow in Molecular Structure and Function at the Hospital for Sick Children (Sickkids) Research Institute in Toronto, where she specialised in biophysics and statistical mechanics-based methods in Dr Regis Pomes’ research group. In 2008 Elisa joined Prof Rob Woods’ Computational Glycobiology Laboratory as a Senior Research Scientist in the School of Chemistry at the University of Galway. She started her independent career in 2013 in the Department of Chemistry at Maynooth University, where she is now an Associate Professor. From January 2024 Elisa will be taking a new position in the School of Biological Sciences at the University of Southampton, where she will be an Associate Professor in Pharmacology. Elisa loves cats, running (slowly), good food, nice drinks, reading and most of all travelling to visit friends and places. Her astrological sign (and favourite monosaccharide) is a-L-fucose.' },
+    { name: 'Dr. Callum Ives', role: 'Postdoctoral Researcher', image: '/img/Ives.png', hoverImage: '/img/cat1.jpeg', coolImage: '/img/callum.jpg' },
     { name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg' , hoverImage: '/img/cat3.jpg', coolImage: '/img/elisa.png'},
-    { name: 'Silvia D Andrea', role: 'PhD Student', image: '/img/leg.png' , hoverImage: '/img/cat4.jpeg', coolImage: '/img/elisa.png'},
+    { name: "Silvia D'Andrea", role: 'PhD Student', image: '/img/leg.png' , hoverImage: '/img/cat4.jpeg', coolImage: '/img/elisa.png'},
     { name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg' , coolImage: '/img/elisa.png'},
     { name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png' , hoverImage: '/img/cat6.jpeg', coolImage: '/img/elisa.png'},
     { name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg' , hoverImage: '/img/cat7.jpeg', coolImage: '/img/elisa.png'},
@@ -328,10 +328,22 @@ const publications = [
       // backdropInvert='80%'
       backdropBlur='3px' />
     <ModalContent>
-    <ModalHeader alignSelf={'center'}>{selectedMember?.name}</ModalHeader>
+    <ModalHeader alignSelf={'center'}>
+    <Text 
+                        bgGradient='linear(to-l,  #B07095, #D7C9C0)'
+                        bgClip='text'
+                        fontSize={{base: "3xl",sm: "3xl", md: "4xl", lg: "4xl",xl: "4xl"}}
+                        fontWeight='bold'
+                        marginBottom="0.2em"
+                        marginLeft={'2rem'}
+                      >
+                       {selectedMember?.name}
+                      </Text>
+      </ModalHeader>
     <ModalCloseButton onClick={handleCloseModal} />
     <ModalBody>
-      <HStack>
+    <SimpleGrid  alignSelf="center" justifyItems="center" columns={[1,2]} spacing={10} paddingTop={'2rem'} paddingBottom={'2rem'}>
+
         <Image 
             // boxSize="150px"
             width="60vh"
@@ -346,11 +358,9 @@ const publications = [
                 {link.platform}
             </Link>
         ))}
-        </HStack>
+        </SimpleGrid>
     </ModalBody>
-    {/* <ModalFooter>
-        <Button onClick={handleCloseModal}>Close</Button>
-    </ModalFooter> */}
+
 </ModalContent>
 </Modal>
 

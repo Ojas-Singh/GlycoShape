@@ -4,6 +4,7 @@ import {ArrowForwardIcon } from '@chakra-ui/icons'
 import {
   Hide, Highlight, Wrap, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
   } from "@chakra-ui/react";
+import { SearchIcon} from '@chakra-ui/icons'
 import draw from './assets/draw.png';
 import bg from './assets/gly.png';
 import { Kbd } from '@chakra-ui/react'
@@ -156,8 +157,17 @@ const SearchPage = () =>{
           p="0.5rem"
           bg="white"
         >
-          <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
-            <Image src={draw} alt="Icon Description" w="24px" h="24px" />
+          <Button transform="translateY(2%)" alignContent={"center"} left={"0.5rem"} type="submit"
+            borderRadius="full" 
+            color={"#545454"}
+            backgroundColor="#F7F9E5  "
+            _hover={{
+              backgroundColor: "#E2CE69"
+            }}
+            onClick={handleImageClick}
+            
+          >
+            Draw' &nbsp; <SearchIcon />
           </Button>
           <Modal isCentered size={'90%'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalOverlay bg='none'
@@ -192,6 +202,7 @@ const SearchPage = () =>{
       </Modal>
       
           <Input 
+            // paddingLeft={"1rem"}
             value={searchString}
             onChange={(e) => setSearchString(e.target.value)}
             width={{base: "60%",sm: "80%", md: "80%", lg: "80%",xl: "80%"}}
