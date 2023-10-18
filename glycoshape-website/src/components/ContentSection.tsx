@@ -21,8 +21,6 @@ const ContentSection: React.FC = () => {
         minHeight={{ base: "60vh" }}
         
         // backgroundImage={`radial-gradient(circle, #fdfcfb 0%, #F7F9E5 60%),url(${bg})`}
-        
-
         // backgroundSize="cover" 
         // backgroundRepeat="no-repeat"
         // backgroundPosition="50% 30%"

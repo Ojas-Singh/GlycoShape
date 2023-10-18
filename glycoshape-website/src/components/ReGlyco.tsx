@@ -317,8 +317,8 @@ interface UniprotData {
 
 
   const steps = [
-    {  title: 'Choose Structure', description: 'from AlphaFold or upload your own'},
-    {  title: 'Select Glycans', description: 'N-Glycan, O-Glycans, etc ...'},
+    {  title: 'Choose Structure', description: 'from AF or upload your own'},
+    {  title: 'Select Glycans', description: 'N-Glycan, O-Glycans, etc'},
     { title: 'Download', description: 'Re-Glycosylated structure' },
   ]
   
@@ -767,7 +767,7 @@ interface UniprotData {
 
 
                               <SimpleGrid  alignSelf="center" justifyItems="center" columns={[1,2]} spacing={10} paddingTop={'2rem'} paddingBottom={'2rem'}>
-                                    <Box> <video width={'60%'} autoPlay loop muted id="bgVideo" style={ {paddingLeft:"7rem", zIndex: -1,objectFit: 'cover',position: 'relative'}}>
+                                    <Box justifyItems={"center"}> <video  width={'60%'} autoPlay loop muted id="bgVideo" >
         <source  src="/gamma_s.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video></Box>          

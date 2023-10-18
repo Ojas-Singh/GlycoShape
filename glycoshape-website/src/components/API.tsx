@@ -16,7 +16,7 @@ const API: React.FC = () => {
       <Text 
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
-          fontSize='6xl'
+          fontSize={{base: "4xl",sm: "4xl", md: "5xl", lg: "6xl",xl: "6xl"}}
           fontWeight='extrabold'
           marginBottom="0.2em"
         >

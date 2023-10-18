@@ -13,11 +13,11 @@ import {
 
 const FAQ: React.FC = () => {
   return (
-    <Box p={5} maxWidth="60%" margin="0 auto">
+    <Box p={5} maxWidth="800px" margin="0 auto">
       <Text 
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
-          fontSize='6xl'
+          fontSize={{base: "6xl",sm: "6xl", md: "6xl", lg: "6xl",xl: "6xl"}}
           fontWeight='extrabold'
           marginBottom="0.2em"
         >

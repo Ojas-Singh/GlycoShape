@@ -2,7 +2,7 @@ import  { useState, useEffect, useRef,  } from 'react';
 import { useLocation} from 'react-router';
 import {ArrowForwardIcon } from '@chakra-ui/icons'
 import {
-  Highlight, Wrap, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
+  Hide, Highlight, Wrap, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, WrapItem, VStack
   } from "@chakra-ui/react";
 import draw from './assets/draw.png';
 import bg from './assets/gly.png';
@@ -225,6 +225,7 @@ const SearchPage = () =>{
 
         <Flex direction="row" justify="space-between" width="80%" mt={2}>
           <Flex align="center">
+          <Hide below='sm'>
           <Highlight query='Browse:' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
         Browse:
        </Highlight>
@@ -263,6 +264,7 @@ const SearchPage = () =>{
             >
              GAGs
             </Button>&nbsp;
+            </Hide>
           </Flex>
           <Link href='/faq' color={"#F7FFE6"}> 
           <Highlight query='See search help' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
@@ -280,8 +282,8 @@ const SearchPage = () =>{
         <Flex direction="row" width="100%" padding="2em" paddingTop={'1em'}>
           {/* Filters on the left */}
 
-          <Box width="30%" padding="4em" paddingTop={'2rem'}>
-  <Text fontSize="2xl" marginBottom="1em">
+          <Box width="30%" paddingTop={'2rem'}>
+  <Text fontSize={{base: "xs",sm: "xs", md: "2xl", lg: "2xl",xl: "2xl"}} marginBottom="1em">
     Showing {results.length} search results for {
       isWurcsSearch 
         ? <img src={wurcsImageSrc === null ? undefined : wurcsImageSrc} alt="WURCS Image" style={{width: '200px', height: 'auto', objectFit: 'contain'}} />
@@ -310,7 +312,7 @@ const SearchPage = () =>{
               flex='1'
               
             ><VStack align={'left'}>
-              <Heading padding={'1rem'} fontSize="xl" marginRight="1em"> {glycan.length > 60 ? glycan.substring(0, 60) + '...' : glycan}  </Heading>
+              <Heading padding={'1rem'} fontSize={{base: "xs",sm: "xs", md: "xl", lg: "xl",xl: "xl"}} marginRight="1em"> {glycan.length > 60 ? glycan.substring(0, 60) + '...' : glycan}  </Heading>
               <Wrap >
 
                 
@@ -326,7 +328,7 @@ const SearchPage = () =>{
               /></Link>
               </WrapItem>
               <WrapItem>
-                <Text>Type : Free</Text>
+                {/* <Text>Type : Free</Text> */}
                 
                 </WrapItem>
               <WrapItem   alignContent={'center'}>

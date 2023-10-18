@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
-import { Hide, Link, Highlight, Input, Button, Text, Flex, Image, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
+import { Hide, Link, Highlight, Input, Button, Text, Flex, Image, Modal,ModalFooter, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
 } from "@chakra-ui/react";
-import { ArrowForwardIcon } from '@chakra-ui/icons'
 import draw from './assets/draw.png';
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
@@ -106,7 +105,7 @@ const Bar: React.FC = () => {
           <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
             <Image src={draw} alt="Icon Description" w="24px" h="24px" />
           </Button>
-          <Modal isCentered blockScrollOnMount={true} size={'10px'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <Modal isCentered motionPreset='scale' blockScrollOnMount={true} size={'10px'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalOverlay bg='none'
       backdropFilter='auto'
       // backdropInvert='80%'
@@ -118,8 +117,8 @@ const Bar: React.FC = () => {
           fontSize='3xl'
           fontWeight='bold'
           marginBottom={'-1rem'}
-        ><Highlight query='Glycan Drawer' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
-        Glycan Drawer
+        ><Highlight query='Sugar Drawer' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+        Sugar Drawer
        </Highlight>
           
         </Text></ModalHeader>
@@ -127,9 +126,11 @@ const Bar: React.FC = () => {
           <ModalBody >
               <Draw />
           </ModalBody>
-          {/* <ModalFooter>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button>
-          </ModalFooter> */}
+          <ModalFooter paddingTop={"-1"} paddingBottom={"-1"}>
+            <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+            <Link href="https://doi.org/10.3390/molecules26237149"> Tsuchiya, S., Matsubara, M., Aoki-Kinoshita, K. F. & Yamada, I. SugarDrawer: A Web-Based Database Search Tool with Editing Glycan Structures. Molecules 26, 7149 (2021) </Link>
+            </Text>
+          </ModalFooter>
         </ModalContent>
       </Modal>
       <form style={{ width: '100%', flex:"1" }} onSubmit={handleSearch} >
@@ -174,8 +175,9 @@ const Bar: React.FC = () => {
         </Flex>
         
         <Flex direction="row" justify="space-between" width="80%" mt={2}>
-        <Hide below='sm'> 
+         
           <Flex align="center">
+          <Hide below='sm'>
           <Highlight query='Browse:' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
         Browse:
        </Highlight>
@@ -206,11 +208,13 @@ const Bar: React.FC = () => {
             >
              GAGs
             </Button>&nbsp;
-          </Flex></Hide>
+            </Hide>
+          </Flex>
           <Link href='/faq' color={"#F7FFE6"}> 
           <Highlight query='See search help' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color:'#F7FFE6'}}>
-          See search help
-       </Highlight></Link>
+          See search help 
+       </Highlight>
+       </Link>
           {/* <Text color="white" cursor="pointer">See search help <ArrowForwardIcon /></Text> */}
         </Flex>
         </Flex>
