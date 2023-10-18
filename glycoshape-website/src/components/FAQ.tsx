@@ -137,87 +137,11 @@ const FAQ: React.FC = () => {
         </AccordionItem>
 
 
-        <AccordionItem>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-            <Text 
-          bgGradient='linear(to-l, #44666C, #A7C4A3)'
-          bgClip='text'
-          fontSize='2xl'
-          fontWeight='extrabold'
-          marginBottom="0.2em"
-        >
-          How it is curated?
-        </Text>
-              
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel pb={4}>
-            <Text>Description of the MD...</Text>
-            <Code>
-              {/* Sample request or response */}
-              {`{
-  "key": "value"
-}`}
-            </Code>
-          </AccordionPanel>
-        </AccordionItem>
+        
 
 
-        <AccordionItem>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-            <Text 
-          bgGradient='linear(to-l, #44666C, #A7C4A3)'
-          bgClip='text'
-          fontSize='2xl'
-          fontWeight='extrabold'
-          marginBottom="0.2em"
-        >
-          How it is curated?
-        </Text>
-              
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel pb={4}>
-            <Text>Description of the MD...</Text>
-            <Code>
-              {/* Sample request or response */}
-              {`{
-  "key": "value"
-}`}
-            </Code>
-          </AccordionPanel>
-        </AccordionItem>
 
-        <AccordionItem>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-            <Text 
-          bgGradient='linear(to-l, #44666C, #A7C4A3)'
-          bgClip='text'
-          fontSize='2xl'
-          fontWeight='extrabold'
-          marginBottom="0.2em"
-        >
-          How it is curated?
-        </Text>
-              
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel pb={4}>
-            <Text>Description of the MD...</Text>
-            <Code>
-              {/* Sample request or response */}
-              {`{
-  "key": "value"
-}`}
-            </Code>
-          </AccordionPanel>
-        </AccordionItem>
+     
 
 
 

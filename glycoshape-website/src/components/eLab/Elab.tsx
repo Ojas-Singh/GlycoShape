@@ -246,7 +246,7 @@ const publications = [
           <TabPanel>
           <Container maxWidth={{base: "100%",sm: "100%", md: "80%", lg: "80%",xl: "80%"}} > 
 
-          <Box padding="5rem">
+          <Box padding="5rem" paddingTop={"1rem"}>
             <Heading marginBottom="2rem">Research Lab Team</Heading>
 
             <Grid templateColumns={["repeat(1, 1fr)", "repeat(2, 1fr)", "repeat(3, 1fr)"]} gap={6}>

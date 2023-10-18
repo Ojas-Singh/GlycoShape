@@ -183,8 +183,10 @@ const SearchPage = () =>{
 
               <Draw />
           </ModalBody>
-          <ModalFooter>
-            {/* <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Close</Button> */}
+          <ModalFooter paddingTop={"-1"} paddingBottom={"-1"}>
+            <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+            <Link href="https://doi.org/10.3390/molecules26237149"> Tsuchiya, S., Matsubara, M., Aoki-Kinoshita, K. F. & Yamada, I. SugarDrawer: A Web-Based Database Search Tool with Editing Glycan Structures. Molecules 26, 7149 (2021) </Link>
+            </Text>
           </ModalFooter>
         </ModalContent>
       </Modal>
