@@ -1,19 +1,29 @@
 // eLab.tsx
 
 import React, { useState } from 'react';
-import { VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading  } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack  } from '@chakra-ui/react';
 
 const ELab: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<any | null>(null);
   const [hoveredMember, setHoveredMember] = useState<number | null>(null);
+  const handleOpenModal = (member: any) => {
+    setSelectedMember(member);
+    setIsOpen(true);
+}
+const handleCloseModal = () => {
+  setSelectedMember(null);
+  setIsOpen(false);
+}
 
   const members = [
-    { name: 'Elisa Fadda', role: 'Principal Investigator', image: '/img/Fadda.png', hoverImage: '/img/cat2.jpg' },
-    { name: 'Callum Ives', role: 'Research Scientist', image: '/img/Ives.png', hoverImage: '/img/cat1.jpeg' },
-    { name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg' , hoverImage: '/img/cat3.jpg'},
-    { name: 'Silvia D Andrea', role: 'PhD Student', image: '/img/leg.png' , hoverImage: '/img/cat4.jpeg'},
-    { name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg' },
-    { name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png' , hoverImage: '/img/cat6.jpeg'},
-    { name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg' , hoverImage: '/img/cat7.jpeg'},
+    { name: 'Elisa Fadda', role: 'Principal Investigator', image: '/img/Fadda.png', hoverImage: '/img/cat2.jpg', coolImage: '/img/elisa.jpg',bio: 'Elisa (she/her) got a BSc and MSc (Laurea 110/110 cum laude) in Chemistry from the Università degli Studi di Cagliari. She obtained her Ph.D. in theoretical chemistry at the Université de Montréal in 2004 under the supervision of Prof Dennis R. Salahub. After her Ph.D. she worked as a Postdoctoral Fellow in Molecular Structure and Function at the Hospital for Sick Children (Sickkids) Research Institute in Toronto, where she specialised in biophysics and statistical mechanics-based methods in Dr Regis Pomes’ research group. In 2008 Elisa joined Prof Rob Woods’ Computational Glycobiology Laboratory as a Senior Research Scientist in the School of Chemistry at the University of Galway. She started her independent career in 2013 in the Department of Chemistry at Maynooth University, where she is now an Associate Professor. From January 2024 Elisa will be taking a new position in the School of Biological Sciences at the University of Southampton, where she will be an Associate Professor in Pharmacology. Elisa loves cats, running (slowly), good food, nice drinks, reading and most of all travelling to visit friends and places. Her astrological sign (and favourite monosaccharide) is a-L-fucose.' },
+    { name: 'Callum Ives', role: 'Research Scientist', image: '/img/Ives.png', hoverImage: '/img/cat1.jpeg', coolImage: '/img/elisa.png' },
+    { name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg' , hoverImage: '/img/cat3.jpg', coolImage: '/img/elisa.png'},
+    { name: 'Silvia D Andrea', role: 'PhD Student', image: '/img/leg.png' , hoverImage: '/img/cat4.jpeg', coolImage: '/img/elisa.png'},
+    { name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg' , coolImage: '/img/elisa.png'},
+    { name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png' , hoverImage: '/img/cat6.jpeg', coolImage: '/img/elisa.png'},
+    { name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg' , hoverImage: '/img/cat7.jpeg', coolImage: '/img/elisa.png'},
 ];
 const publications = [
   {
@@ -257,7 +267,7 @@ const publications = [
                         key={idx}
                         onMouseEnter={() => setHoveredMember(idx)}
                         onMouseLeave={() => setHoveredMember(null)}
-                    >
+                    >   
                         <Image 
                             boxSize="150px"
                             objectFit="cover"
@@ -265,9 +275,11 @@ const publications = [
                             src={hoveredMember === idx ? member.hoverImage : member.image}
                             alt={member.name}
                             marginBottom="1rem"
+                            onClick={() => handleOpenModal(member)}
                         />
+                        <Link onClick={() => handleOpenModal(member)}>
                         <Heading size="md" marginBottom="0.5rem">{member.name}</Heading>
-                        <Text>{member.role}</Text>
+                        <Text>{member.role}</Text></Link>
                     </Flex>
                 ))}
             </Grid>
@@ -310,6 +322,39 @@ const publications = [
           </TabPanel>
         </TabPanels>
       </Tabs>
+      <Modal size={'10px  '} isOpen={isOpen} onClose={handleCloseModal}>
+      <ModalOverlay bg='none'
+      backdropFilter='auto'
+      // backdropInvert='80%'
+      backdropBlur='3px' />
+    <ModalContent>
+    <ModalHeader alignSelf={'center'}>{selectedMember?.name}</ModalHeader>
+    <ModalCloseButton onClick={handleCloseModal} />
+    <ModalBody>
+      <HStack>
+        <Image 
+            // boxSize="150px"
+            width="60vh"
+            objectFit="cover"
+            src={selectedMember?.coolImage}
+            alt={selectedMember?.name}
+            marginBottom="1rem"
+        />
+        <Text marginBottom="1rem">{selectedMember?.bio || "Bio information goes here."}</Text>
+        {selectedMember?.socialLinks?.map((link: any, idx: number) => (
+            <Link key={idx} href={link.url} isExternal>
+                {link.platform}
+            </Link>
+        ))}
+        </HStack>
+    </ModalBody>
+    {/* <ModalFooter>
+        <Button onClick={handleCloseModal}>Close</Button>
+    </ModalFooter> */}
+</ModalContent>
+</Modal>
+
+
     </Box>
   );
 };

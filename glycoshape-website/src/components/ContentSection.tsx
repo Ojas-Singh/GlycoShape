@@ -19,6 +19,8 @@ const ContentSection: React.FC = () => {
         justify="center" 
         flex="1" 
         padding="5rem"
+        paddingLeft={{base: "0.5rem",sm: "0.5rem", md: "5rem", lg: "5rem",xl: "5rem"}}
+        paddingRight={{base: "0.5rem",sm: "0.5rem", md: "5rem", lg: "5rem",xl: "5rem"}}
         paddingBottom={"4rem"}
         paddingTop={"6rem"}
         minHeight={{ base: "50vh" }}
@@ -69,19 +71,20 @@ const ContentSection: React.FC = () => {
         </Highlight>
         </Heading>
         
-        <Text 
+        {/* <Text 
           bgGradient='linear(to-l, #F7FFE6, #F7FFE6)' 
           bgClip='text'
           fontSize='2xl'
           fontWeight='bold'
           marginBottom="0.5em"
 
-        ><Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">
+        >
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">
           <Highlight query='Developed by elab' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
 
           Developed by elab
           </Highlight></Link>
-        </Text>
+        </Text> */}
         
         <Searchbar />
 
@@ -99,7 +102,7 @@ const ContentSection: React.FC = () => {
                       align={"center"}
                 bgGradient='linear(to-l, #44666C, #A7C4A3)'
                 bgClip='text'
-                fontSize={{base: "2xl",sm: "3xl", md: "3xl", lg: "4xl",xl: "4xl"}}
+                fontSize={{base: "xl",sm: "xl", md: "2xl", lg: "2xl",xl: "2xl"}}
                 fontWeight='bold'
                 fontFamily={'texts'}
               >

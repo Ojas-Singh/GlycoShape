@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import { Hide, Link, Highlight, Input, Button, Text, Flex, Image, Modal,ModalFooter, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
 } from "@chakra-ui/react";
+import { SearchIcon} from '@chakra-ui/icons'
 import draw from './assets/draw.png';
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
@@ -102,8 +103,21 @@ const Bar: React.FC = () => {
           p="0.5rem"
           bg="white"
         >
-          <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
+          {/* <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
             <Image src={draw} alt="Icon Description" w="24px" h="24px" />
+          </Button> */}
+
+          <Button transform="translateY(2%)" alignContent={"center"} left={"0.5rem"} type="submit"
+            borderRadius="full" 
+            color={"#545454"}
+            backgroundColor="#F7F9E5  "
+            _hover={{
+              backgroundColor: "#E2CE69"
+            }}
+            onClick={handleImageClick}
+            
+          >
+            Draw' &nbsp; <SearchIcon />
           </Button>
           <Modal isCentered motionPreset='scale' blockScrollOnMount={true} size={'10px'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalOverlay bg='none'
@@ -135,6 +149,7 @@ const Bar: React.FC = () => {
       </Modal>
       <form style={{ width: '100%', flex:"1" }} onSubmit={handleSearch} >
           <Input 
+            
             width={{base: "50%",sm: "50%", md: "80%", lg: "80%",xl: "80%"}}
             fontFamily={'texts'}
             ref={searchRef}
@@ -152,7 +167,7 @@ const Bar: React.FC = () => {
           />
           <Text 
             position="absolute" 
-            right={{base: "1rem",sm: "1rem", md: "7rem", lg: "8rem",xl: "8rem"}}
+            right={{base: "7rem",sm: "7rem", md: "7rem", lg: "8rem",xl: "8rem"}}
             top="50%" 
             transform="translateY(-50%)"
             color="gray.500"
