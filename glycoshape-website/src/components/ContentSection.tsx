@@ -5,6 +5,7 @@ import bg from './assets/gly.png';
 import cell from './assets/cell_surface.jpg';
 import dem1 from './assets/dem1.jpg';
 import hand from './assets/hand.png';
+import logo from './assets/logo_white.png';
 
 
 const ContentSection: React.FC = () => {
@@ -17,8 +18,10 @@ const ContentSection: React.FC = () => {
         align="center" 
         justify="center" 
         flex="1" 
-        padding="5em"
-        minHeight={{ base: "60vh" }}
+        padding="5rem"
+        paddingBottom={"4rem"}
+        paddingTop={"6rem"}
+        minHeight={{ base: "50vh" }}
         
         // backgroundImage={`radial-gradient(circle, #fdfcfb 0%, #F7F9E5 60%),url(${bg})`}
         // backgroundSize="cover" 
@@ -37,23 +40,41 @@ const ContentSection: React.FC = () => {
           backgroundRepeat: "no-repeat",
           backgroundPosition: "50% 30%"
         }}
-      >        
-        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "3xl",sm: "4xl", md: "5xl", lg: "5xl",xl: "6xl"}} fontWeight='bold' marginBottom="0.2em">
-        <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
-         Glycan Structure Database 
+      >              
+      
+      {/* <Image src={logo} alt="GlycoShape Logo" height="300px" marginBottom="0.2em" paddingLeft={"1.5rem"} paddingBottom={"0.5rem"} 
+      style={{
+        borderRadius: '50px', // This will give soft corners
+        backgroundColor: 'rgba(40, 54, 63, .1)', // This will give a translucent white background
+        }}
+    /> */}
+  
+        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "3xl",sm: "7xl", md: "10xl", lg: "10xl",xl: "10xl"}} fontWeight='bold' marginBottom="0em">
+        
+
+       
+
+        <Highlight query='GlycoShape' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+         GlycoShape
         </Highlight>
 
-        {/* <Highlight query='GlycoShape' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
-         GlycoShape
-        </Highlight> */}
+         
         </Heading> 
+
+        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "3xl",sm: "4xl", md: "4xl", lg: "4xl",xl: "4xl"}} fontWeight='bold' marginBottom="0em">
+
+        <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+         Glycan Structure Database 
+         
+        </Highlight>
+        </Heading>
         
         <Text 
           bgGradient='linear(to-l, #F7FFE6, #F7FFE6)' 
           bgClip='text'
           fontSize='2xl'
           fontWeight='bold'
-          marginBottom="1em"
+          marginBottom="0.5em"
 
         ><Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">
           <Highlight query='Developed by elab' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>

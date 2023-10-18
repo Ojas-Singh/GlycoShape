@@ -44,8 +44,9 @@ const Navbar: React.FC = () => {
             variant="outline"
           />
           <MenuList>
+            
+            <MenuItem as={Link} href="/search?query=all" >Database</MenuItem>
             <MenuItem as={Link} href="/reglyco" >Re-Glyco</MenuItem>
-            {/* <MenuItem as={Link} href="/af" >AF test</MenuItem> */}
             <MenuItem as={Link} href="/downloads">Downloads</MenuItem>
             <MenuItem as={Link} href="/api-docs">API</MenuItem>
             <MenuItem as={Link} href="/faq">FAQ</MenuItem>
@@ -55,8 +56,9 @@ const Navbar: React.FC = () => {
         </Menu>
       ) : (
         <Flex align="center">
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/search?query=all" marginRight="20px">Database</Link>
           <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link>
-          {/* <Link fontWeight="bold" color={"#F7FFE6"} href="/af" marginRight="20px">AF test</Link> */}
+          
           <Link fontWeight="bold" color={"#F7FFE6"} href="/downloads" marginRight="20px">Downloads</Link>
           <Box alignContent={"center"} height='40px'>
   <Divider orientation='vertical' />
@@ -66,7 +68,7 @@ const Navbar: React.FC = () => {
   <Divider orientation='vertical' />
           </Box> 
           <Link fontWeight="bold" color={"#F7FFE6"} href="/faq" marginRight="20px" marginLeft={"20px"}>FAQ</Link> 
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">Contact us</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">eLab</Link>
           
         </Flex>
       )}
