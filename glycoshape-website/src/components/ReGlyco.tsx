@@ -159,7 +159,9 @@ interface UniprotData {
 
       const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();  // Prevents the default form submission behavior
+        setIsUpload(false);
         fetchProteinData();
+
     };
     
     
@@ -460,7 +462,7 @@ interface UniprotData {
                                   backgroundColor: "#CF6385"
                               }}
                               size = {{base: "md",sm: "md", md: "md", lg: "md",xl: "md"}}
-                              onClick={(e) => (setIsUpload(false),handleSearch)}
+                              onClick={(handleSearch)}
                           >
                               Fetch
                           </Button>
