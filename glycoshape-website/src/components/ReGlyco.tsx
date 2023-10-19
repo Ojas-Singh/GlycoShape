@@ -76,6 +76,23 @@ interface UniprotData {
       const [isUploading, setIsUploading] = useState(false);
       const [error, setError] = useState<string | null>(null);
       const searchRef = useRef(null);
+      const [placeholderText, setPlaceholderText] = useState('Enter Uniprot Id');
+
+      const [selectedGlycans, setSelectedGlycans] = useState({});
+      const [outputPath, setOutputPath] = useState("");
+      const [clashValue, setClashValue] = useState(false);
+      const [boxValue, setBoxValue] = useState("");
+      const [selectedGlycanImage, setSelectedGlycanImage] = useState<{[key: number]: string}>({});
+      
+
+
+      const placeholders = [
+        "Enter Uniprot Id",
+        "Enter PDB Id",
+
+    ];
+    
+
       useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
           if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
@@ -92,6 +109,20 @@ interface UniprotData {
           window.removeEventListener('keydown', handleKeyPress);
         };
       }, []);
+
+      useEffect(() => {
+        let index = 0;
+    
+        const interval = setInterval(() => {
+            index = (index + 1) % placeholders.length;
+            setPlaceholderText(placeholders[index]);
+        }, 1500);
+    
+        // Cleanup on component unmount
+        return () => {
+            clearInterval(interval);
+        };
+    }, []);
     
       
       const trimLength = useBreakpointValue({
@@ -104,6 +135,18 @@ interface UniprotData {
       
 
       const [value, setValue] = useState<readonly ResidueOption[]>([]);
+
+      const steps = [
+        {  title: 'Choose Structure', description: 'from AF or upload your own'},
+        {  title: 'Select Glycans', description: 'N-Glycan, O-Glycans, etc'},
+        { title: 'Download', description: 'Re-Glycosylated structure' },
+      ]
+      
+        
+      const { activeStep ,setActiveStep} = useSteps({
+        index: 0,
+        count: steps.length,
+      })
 
   const onChange = (
     newValue: OnChangeValue<ResidueOption, true>,
@@ -191,24 +234,32 @@ interface UniprotData {
               setActiveStep(1);
           } catch (error) {
               if (error instanceof Error) {
-                  // toast({
-                  //     title: "Error fetching data.",
-                  //     description: error.message,
-                  //     status: "error",
-                  //     duration: 500,
-                  //     isClosable: true,
-                  // });
+                try {
+                  const response = await fetch("https://glycoshape.io/api/rcsb", {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({ uniprot: uniprotID })
+                  });
+    
+                  const data: UniprotData = await response.json();
+                  setUniprotData(data);
+                  setSelectedGlycans({});
+                  setSelectedGlycanImage({});
+                  setActiveStep(1);
+              } catch (error) {
+                  if (error instanceof Error) {
+                      setError(error.message);
+                  } else {
+                      setError("An unknown error occurred.");
+                  }
+                }
               }
           }
       }
 
-      const [selectedGlycans, setSelectedGlycans] = useState({});
-      const [outputPath, setOutputPath] = useState("");
-      const [clashValue, setClashValue] = useState(false);
-      const [boxValue, setBoxValue] = useState("");
-      const [selectedGlycanImage, setSelectedGlycanImage] = useState<{[key: number]: string}>({});
       
-
 
       const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>, residueID: string, residueTag: number) => {
         const value = event.target.value;
@@ -232,11 +283,11 @@ interface UniprotData {
     
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-      if (uniprotID) {  // or a more specific check if needed
-          fetchProteinData();
-      }
-  }, [uniprotID]);
+  //   useEffect(() => {
+  //     if (uniprotID) {  // or a more specific check if needed
+  //         fetchProteinData();
+  //     }
+  // }, [uniprotID]);
 
     const handleProcess = async () => {
       setIsLoading(true);  // Start loading
@@ -325,17 +376,7 @@ interface UniprotData {
   }, [isLoading]);
 
 
-  const steps = [
-    {  title: 'Choose Structure', description: 'from AF or upload your own'},
-    {  title: 'Select Glycans', description: 'N-Glycan, O-Glycans, etc'},
-    { title: 'Download', description: 'Re-Glycosylated structure' },
-  ]
   
-    
-      const { activeStep ,setActiveStep} = useSteps({
-        index: 0,
-        count: steps.length,
-      })
 
       return (
 
@@ -385,7 +426,7 @@ interface UniprotData {
                                   onChange={(e) => (setUniprotID(e.target.value),setIsUpload(false))}
                                   ref={searchRef}
                                   fontFamily={'texts'}
-                                  placeholder="Enter Uniprot Id"
+                                  placeholder={placeholderText}
                                   value={uniprotID}
                                   size="lg"
                                   flex="1"
@@ -483,7 +524,7 @@ interface UniprotData {
                   justify="center" 
                   flex="1" 
                   padding="2rem" paddingTop={'0rem'} direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}>
-                               <Heading  margin={"0rem"} marginLeft={"0"} marginBottom={'0rem'} as='h4'size='xl'>  {isUpload ? "File:" : `Uniprot ID: `} {UniprotData.uniprot}</Heading>
+                               <Heading  margin={"0rem"} marginLeft={"0"} marginBottom={'0rem'} as='h4'size='xl'>  {isUpload ? "File:" : `Uniprot/PDB ID: `} {UniprotData.uniprot}</Heading>
                       
                                   <Spacer />
                                     <Box >
