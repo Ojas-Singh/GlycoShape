@@ -554,7 +554,7 @@ interface GlycanData {
       <Grid templateColumns="repeat(2, 1fr)" gap={{base: "0",sm: "0", md: "4", lg: "6",xl: "6"}} padding={'1rem'}>
          {[
             { label: "Mass", value: data?.mass || "Not Available" },
-            { label: "Topological Polar Surface Area", value: data?.tpsa || "Not Available" },
+            // { label: "Topological Polar Surface Area", value: data?.tpsa || "Not Available" },
             { label: "Number of Rotatable Bonds", value: data?.rot_bonds || "Not Available" },
             { label: "Number of Hydrogen Bond Acceptors", value: data?.hbond_acceptor || "Not Available" },
             { label: "Number of Hydrogen Bond Donors", value: data?.hbond_donor || "Not Available" }

@@ -766,13 +766,24 @@ interface UniprotData {
         "Process"
       )}
     </Button>
-    {isLoading && (<Alert status='warning' > 
+    {isLoading && (<Alert status='info' > 
     <AlertIcon />
     It can take up to 5 minutes to process your request. Please wait.
   </Alert>)}
                           {outputPath &&  (
                             <Box>
-                          <iframe
+{clashValue ? (
+  <Alert status='warning'>
+    <AlertIcon />
+    Clash detected! Structure orientation for some spots are not glycan friendly.  </Alert>
+) : (
+  <Alert status='success'>
+    <AlertIcon />
+    Clash Solved! Download your glycosylated structure.
+  </Alert>
+)}
+
+               <iframe
                       // key={sequence}
                       width="100%"
                       height="400px"
