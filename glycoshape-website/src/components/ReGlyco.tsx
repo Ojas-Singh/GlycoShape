@@ -1,4 +1,5 @@
 import React, { useState, ChangeEvent, useEffect, useRef,  } from 'react';
+import { useBreakpointValue } from "@chakra-ui/react";
 import axios from 'axios';
 import { Select as ChakraSelect } from '@chakra-ui/react';
 import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
@@ -23,7 +24,8 @@ import {SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, C
   Alert,
   AlertIcon,
   AlertTitle,
-  AlertDescription,} from '@chakra-ui/react';
+  AlertDescription,
+  Menu, MenuButton, MenuItem, MenuList} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
 import Select, { ActionMeta, OnChangeValue,  } from 'react-select';
@@ -92,7 +94,14 @@ interface UniprotData {
       }, []);
     
       
-
+      const trimLength = useBreakpointValue({
+        base: 10,
+        sm: 10,
+        md: 40,
+        lg: 90,
+        xl: 90
+      }) ?? 0; // Fallback to 40 if undefined
+      
 
       const [value, setValue] = useState<readonly ResidueOption[]>([]);
 
@@ -616,7 +625,43 @@ interface UniprotData {
         {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
       </Heading>  
       
-        <ChakraSelect 
+
+
+      <Menu>
+      <MenuButton as={Button} bgColor={"#B07095"} _hover={{
+              backgroundColor: "#CF6385"
+            }} width="70%" color={"#1A202C"}>
+      {selectedGlycanImage[glycoConf.residueTag]  ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'}
+      </MenuButton>
+      <MenuList maxHeight="300px" overflowY="auto">
+        {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
+          <MenuItem
+            key={glycanIndex}
+            value={glycanID}
+            onClick={() =>
+              handleSelectChange(
+                  { target: { value: glycanID } } as any,
+                  `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                  glycoConf.residueTag
+              )
+          }
+          
+          >
+            <Image
+              src={`https://glycoshape.io/database/${glycanID}/${glycanID}.svg`}
+              alt="Glycan Image"
+              height="80px"
+              maxWidth={"90%"}
+              mr={2}
+            />
+            {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID}
+          </MenuItem>
+        ))}
+      </MenuList>
+    </Menu>
+
+
+        {/* <ChakraSelect 
           colorScheme='messenger' 
           width='70%'   
           defaultValue="none" 
@@ -625,15 +670,15 @@ interface UniprotData {
          
         >
           {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
+
+          
             
             <option key={glycanIndex} value={glycanID}>
-            
               {glycanID.length > 120 ? glycanID.substring(0, 120) + '...' : glycanID}
-            
             </option>
             
           ))}
-        </ChakraSelect>
+        </ChakraSelect> */}
         {selectedGlycanImage[glycoConf.residueTag] && (
                             <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
                             <Image
