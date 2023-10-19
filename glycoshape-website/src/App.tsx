@@ -37,17 +37,15 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<ContentSection />} />
           <Route path="/faq" element={<div><Search /><FAQ /></div>} />
-          <Route path="/api-docs" element={<div><Search /><API /></div>} />
+          <Route path="/api" element={<div><Search /><API /></div>} />
           <Route path="/downloads" element={<div><Search /> <Download /></div>} />
           <Route path="/reglyco" element={<div><ReGlyco /></div>} />
-          <Route path="/contact-us" element={<div><Search /></div>} />
           <Route path="/search" element={<SearchPage/>} />
           <Route path="/glycan" element={<div><Search /><GlycanPage/></div>} />
           <Route path="/elab" element={<div><Search /><Elab /></div>} />
           <Route path="/team" element={<div><Search /><Elab /></div>} />
           <Route path="/blog" element={<div><Search /><Elab /></div>} />
           <Route path="/publications" element={<div><Search /><Elab /></div>} />
-          <Route path="/af" element={<div><Search /><Test /></div>} />
           <Route path="/test" element={<div><Search /><Test /></div>} />
         </Routes>
         

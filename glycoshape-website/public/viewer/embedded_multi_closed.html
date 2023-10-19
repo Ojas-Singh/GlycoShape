@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link rel="icon" href="./favicon.ico" type="image/x-icon">
+        <title>Embedded Mol* Viewer</title>
+        <style>
+            #app {
+                position: absolute;
+                left: 100px;
+                top: 100px;
+                width: 800px;
+                height: 600px;
+            }
+        </style>
+        <link rel="stylesheet" type="text/css" href="molstar.css" />
+    </head>
+    <body>
+        <div id="app"></div>
+        <script type="text/javascript" src="./molstar.js"></script>
+        <script type="text/javascript">
+            const urlParams = new URLSearchParams(window.location.search);
+            const pdbUrls = urlParams.get('pdbUrls');
+            const formats = urlParams.get('formats');
+        
+            // Split the comma-separated lists into arrays
+            const pdbUrlArray = pdbUrls ? pdbUrls.split(',') : [];
+            const formatArray = formats ? formats.split(',') : [];
+        
+            molstar.Viewer.create('app', {
+                layoutIsExpanded: true,
+                layoutShowControls: false,
+                layoutShowRemoteState: false,
+                layoutShowSequence: false,
+                layoutShowLog: false,
+                layoutShowLeftPanel: false,
+        
+                viewportShowExpand: true,
+                viewportShowSelectionMode: false,
+                viewportShowAnimation: false,
+        
+                pdbProvider: 'rcsb',
+                emdbProvider: 'rcsb',
+            }).then(viewer => {
+                for (let i = 0; i < pdbUrlArray.length; i++) {
+                    const label = pdbUrlArray[i] ? pdbUrlArray[i].slice(-18) : 'Unknown';
+                    viewer.loadStructureFromUrl(pdbUrlArray[i], formatArray[i], false, {
+                        label: label
+                    });
+                }
+            });
+        </script>
+        
+    </body>
+</html>

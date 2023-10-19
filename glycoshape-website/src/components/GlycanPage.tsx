@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, } from 'react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons' ;
 import { useLocation, useNavigate } from 'react-router';
 import {
- Show, Grid,Divider, Spacer, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack
+ Show, Hide, Grid,Divider, Spacer, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack
   } from "@chakra-ui/react";
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
@@ -172,7 +172,7 @@ interface GlycanData {
     // Join the URLs into a single string with commas between them
     const clusterUrlString = clusterUrls.join(',');
   
-    return `/viewer/embedded_multi.html?pdbUrls=${clusterUrlString}&formats=${"pdb,".repeat(clusterLength).slice(0, -1)}`;
+    return `${clusterUrlString}&formats=${"pdb,".repeat(clusterLength).slice(0, -1)}`;
   };
   
   const generateDownloadUrls = (sequence: string, clusterLength: number) => {
@@ -445,7 +445,7 @@ interface GlycanData {
                     display="block" 
                     whiteSpace="pre" 
                     // width={{base: "10rem",sm: "10rem", md: "20rem", lg: "58rem",xl: "58rem"}}
-                    width={'60vw'}
+                    width={'58vw'}
                     overflowX="auto"
                     fontFamily={'mono'}
                   >
@@ -654,14 +654,23 @@ interface GlycanData {
                     <VStack>
                     
 
-
+              <Hide below='lg'>
              <iframe
                       style={{ width: '100%', height: '60vh' }}
-                      src={iframeSrc}
+                      src={"/viewer/embedded_multi.html?pdbUrls="+iframeSrc}
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
-                              /> 
+                              /> </Hide>
+              <Show below='lg'>
+              <iframe
+                      style={{ width: '100%', height: '60vh' }}
+                      src={"/viewer/embedded_multi_closed.html?pdbUrls="+iframeSrc}
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Protein Structure"
+                              />
+                </Show>
 
                 <div>
                   <HStack>
