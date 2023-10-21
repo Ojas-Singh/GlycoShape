@@ -28,6 +28,7 @@ import {SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, C
   Menu, MenuButton, MenuItem, MenuList} from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
+import uniprot_logo from './assets/uniprot.svg';
 import Select, { ActionMeta, OnChangeValue,  } from 'react-select';
 
 
@@ -615,12 +616,12 @@ interface UniprotData {
                               </AccordionPanel>
                               </AccordionItem>
                               
-
+                              {UniprotData.glycosylation_locations.glycosylations.length >0 ? (
                               <AccordionItem>
                                   <h2>
                                     <AccordionButton  margin={"1rem"} marginLeft={"0"} >
                                       <Box as="span" flex='1' textAlign='left'>
-                                      <Heading   as='h4' size='md'>Glycosylation Information</Heading> 
+                                      <HStack><Heading   as='h4' size='md'>Glycosylation Information from </Heading> &nbsp; <Image height="30px"src={uniprot_logo}/></HStack>
                                       </Box>
                                       <AccordionIcon />
                                     </AccordionButton>
@@ -638,7 +639,8 @@ interface UniprotData {
                                   
                               </Box>
                                   </AccordionPanel>
-                                </AccordionItem>
+                                </AccordionItem>) :( null)}
+                               
 
       <Heading margin={'3rem'} marginLeft={'0rem'} marginBottom={'1rem'} fontSize={{base: "1xl",sm: "1xl", md: "1xl", lg: "2xl",xl: "2xl"}} fontFamily={'texts'}>
         Select residues to glycosylate
@@ -779,7 +781,7 @@ interface UniprotData {
 ) : (
   <Alert status='success'>
     <AlertIcon />
-    Clash Solved! Download your glycosylated structure.
+    Processed!
   </Alert>
 )}
 
