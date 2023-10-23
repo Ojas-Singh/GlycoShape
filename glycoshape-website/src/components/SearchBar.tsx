@@ -11,13 +11,13 @@ import Draw from './Draw';
 
 const Bar: React.FC = () => {
   const navigate  = useNavigate();
-  const [placeholderText, setPlaceholderText] = useState('Search GLYCAM ID, IUPAC, GlycoCT, WURCS...');
+  const [placeholderText, setPlaceholderText] = useState('Search GlyTouCan...');
   const placeholders = [
     'Search by GLYCAM ID...',
     'Look up by IUPAC...',
-    'Find by GlycoCT...',
+    'Find by GlyTouCan...',
     'Query with WURCS...',
-    'Enter your search query...'
+    'Enter your search query...',
 ];
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const searchRef = useRef<HTMLInputElement>(null);

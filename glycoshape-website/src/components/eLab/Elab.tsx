@@ -48,15 +48,15 @@ break;
       { platform: 'twitter', url: 'https://twitter.com/CallumMIves' },
       
   ] },
-    { name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg' , hoverImage: '/img/cat3.jpg', coolImage: '/img/elisa.png',socialLinks: [
+    { name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg' , hoverImage: '/img/cat3.jpg', coolImage: '/img/ojas.jpg',bio:"Ojas (he/him) got his BSc and MSc in Chemistry from the Indian Institute of Science Education and Research Mohali. During his mastersunder the supervision of Dr. P. Balanarayan, he dabbled with different low level programming languages to develop code to optimize the Configuration Interaction (CI) Hamiltonian construction. Working as a research assistant for a year in the lab of Dr. Sabyasachi Rakshit, he designed a high-performance algorithm for magnetic tweezers to monitor real-time protein folding and unfolding at the millisecond temporal resolution and nanometer spatial resolution. Currently, He is pursuing a PhD in computational chemistry at Maynooth University in Ireland. In the eLab, he is building the glycoshape database and creating Re-Glyco. Outside of work, Ojas likes to playing CS, Valorant with his buddies, analysing sci-fi movies, hiding cat pics in this website.",socialLinks: [
       { platform: 'twitter', url: 'https://twitter.com/Ojas_Singh_' },
       { platform: 'github', url: 'https://github.com/Ojas-Singh' },
       
   ] },
     { name: "Silvia D'Andrea", role: 'PhD Student', image: '/img/leg.png' , hoverImage: '/img/cat4.jpeg', coolImage: '/img/elisa.png', bio:"Silvia D'Andrea holds a master's degree in Industrial Pharmacy from the University of Luigi Vanvitelli in Caserta, Italy. She is currently pursuing a PhD in computational chemistry at Maynooth University in Ireland, with a specific interest in characterizing the structure and dynamics of N/O-glycans to understand the crucial role of glycosylation in proteins. Beyond her studies and career, Silvia loves pizza and enjoys spending time with friends and family. Additionally, she is learning to play the piano to accompany Christmas songs all year round."},
-    { name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg' , coolImage: '/img/elisa.png'},
-    { name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png' , hoverImage: '/img/cat6.jpeg', coolImage: '/img/elisa.png'},
-    { name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg' , hoverImage: '/img/cat7.jpeg', coolImage: '/img/elisa.png'},
+    { name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg' , coolImage: '/img/elisa.png',bio:""},
+    { name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png' , hoverImage: '/img/cat6.jpeg', coolImage: '/img/elisa.png',bio:""},
+    { name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg' , hoverImage: '/img/cat7.jpeg', coolImage: '/img/elisa.png',bio:"Carl (he/him) is busy writing his thesis, so he doesn't have time to write a bio. He is a PhD student in the eLab."},
 ];
 const publications = [
   {
