@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Select as ChakraSelect } from '@chakra-ui/react';
 import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
-import {SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading,   Accordion,
+import {Hide,SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading,   Accordion,
   Spacer,
   CircularProgress,
   CircularProgressLabel,
@@ -138,9 +138,9 @@ interface UniprotData {
       const [value, setValue] = useState<readonly ResidueOption[]>([]);
 
       const steps = [
-        {  title: 'Choose Structure', description: 'from AF or upload your own'},
-        {  title: 'Select Glycans', description: 'N-Glycan, O-Glycans, etc'},
-        { title: 'Download', description: 'Re-Glycosylated structure' },
+        {  title: 'Choose Structure', description: 'AF, PDB or upload your own'},
+        {  title: 'Select Glycans', description: ' Choose your N- or O-glycan'},
+        { title: 'Download', description: 'Press process and download re-glyco structure!' },
       ]
       
         
@@ -544,7 +544,8 @@ interface UniprotData {
 
                                             <Box flexShrink='0'>
                                               <StepTitle>{step.title}</StepTitle>
-                                              <StepDescription>{step.description}</StepDescription>
+                                              <Hide below="lg">
+                                              <StepDescription>{step.description}</StepDescription></Hide>
                                             </Box>
 
                                             <StepSeparator />
@@ -855,7 +856,8 @@ interface UniprotData {
 
                                       <Box flexShrink='0'>
                                         <StepTitle>{step.title}</StepTitle>
-                                        <StepDescription>{step.description}</StepDescription>
+                                        <Hide below="lg">
+                                        <StepDescription>{step.description}</StepDescription></Hide>
                                       </Box>
 
                                       <StepSeparator />
