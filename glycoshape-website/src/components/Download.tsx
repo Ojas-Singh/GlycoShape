@@ -45,13 +45,14 @@ const Download: React.FC = () => {
         <Box>
           <HStack justifyContent="space-between" width="100%">
             <Text fontSize="xl" fontWeight="bold">Molecular Dynamics Simulations Trajectory Data</Text>
-            <Button colorScheme="blue" size="sm"  onClick={() => {
+            <Button colorScheme="blue" size="sm" isDisabled={true} onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = `/database/Simulation.zip`;
                                 link.setAttribute('download', `Simulation.zip`);
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
+                                
                               }}>Download</Button>
           </HStack>
           <Text mt={2}>Description for Resource 2. This is some additional text to describe what this resource is and how it can be used.</Text>

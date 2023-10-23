@@ -35,7 +35,7 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
   const [infoData, setInfoData] = useState<any | null>(null);
 
   useEffect(() => {
-    fetch(`/database/${seq}/output/info.json`)
+    fetch(`https://glycoshape.io/database/${seq}/output/info.json`)
       .then(response => {
         // First, check if the response is ok (status code in the 200-299 range)
         if (!response.ok) {

@@ -672,22 +672,28 @@ interface GlycanData {
                               />
                 </Show>
 
-                <div>
-                  <HStack>
-                  {data?.clusters ? <PieChart data={transformedClusters} /> : <div>No cluster data available</div>}
-
-                        <Text size={'md'}>Download Clusters : </Text>
-                        <ul>
+                <Box paddingTop={"2rem"} >
+                  <HStack align={"left"}>
+                    <VStack >
+                  <HStack paddingTop={"5rem"}>
+                  <Text size={'md'}>Download Clusters : </Text>
                           {downloadUrls.map((url, index) => (
                             <Button colorScheme='purple' variant='link' key={index} style={{ color: colors[index % colors.length] }}>
                               <a href={url} download>
                                 Cluster {index}&nbsp;&nbsp;&nbsp;
                               </a></Button> 
                             
-                          ))}
-                        </ul>
-                        </HStack>
-                      </div>
+                          ))}</HStack>
+                        
+                        <Spacer />
+                  {data?.clusters ? <PieChart data={transformedClusters} /> : <div>No cluster data available</div>}
+
+                  </VStack>
+                        <Spacer />
+                        <Image src={`https://glycoshape.io/database/${sequence}/output/dist.svg`} width={'40vw'} />
+                        {/* <Image src='/torsions2.svg' width='40vw' /> */}
+                        </HStack> 
+                      </Box>
                               
                               </VStack>
                             
@@ -699,17 +705,17 @@ interface GlycanData {
 
 
 
-<Box ref={contentRef7} id="Torsion_distribution" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
+{/* <Box ref={contentRef7} id="Torsion_distribution" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
    <VStack align={'left'} padding={'1rem'}>
       
    </VStack>
-</Box>
+</Box> */}
 
 
 <Box ref={contentRef8} id="Ramachandran_plot" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
    <VStack align={'left'} padding={'1rem'}>
     <HStack>
-      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Ramachandran plot</Text> <Spacer /> 
+      <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>Torsion plots</Text> <Spacer /> 
                              <Button  
                             marginLeft={'1rem'}
                              transform="translateY(0%)"
@@ -729,7 +735,7 @@ interface GlycanData {
                               }}
                               >Download torsion DATA</Button></HStack>
       <Divider />
-      <ContourPlot dataUrl={`/database/${sequence}/output/torsions.csv`} seq={`${sequence}`}/>
+      <ContourPlot dataUrl={`https://glycoshape.io/database/${sequence}/output/torsions.csv`} seq={`${sequence}`}/>
    </VStack>
 </Box>
 
