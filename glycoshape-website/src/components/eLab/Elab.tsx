@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLocation, Link as RouterLink } from 'react-router-dom';
+import { SocialIcon } from 'react-social-icons'
 
 
 
@@ -38,19 +39,21 @@ break;
   const members = [
     { name: 'Dr. Elisa Fadda', role: 'Principal Investigator', image: '/img/Fadda.png', hoverImage: '/img/cat2.jpg', coolImage: '/img/elisa.jpg',bio: 'Elisa (she/her) got a BSc and MSc (Laurea 110/110 cum laude) in Chemistry from the Università degli Studi di Cagliari. She obtained her Ph.D. in theoretical chemistry at the Université de Montréal in 2004 under the supervision of Prof Dennis R. Salahub. After her Ph.D. she worked as a Postdoctoral Fellow in Molecular Structure and Function at the Hospital for Sick Children (Sickkids) Research Institute in Toronto, where she specialised in biophysics and statistical mechanics-based methods in Dr Regis Pomes’ research group. In 2008 Elisa joined Prof Rob Woods’ Computational Glycobiology Laboratory as a Senior Research Scientist in the School of Chemistry at the University of Galway. She started her independent career in 2013 in the Department of Chemistry at Maynooth University, where she is now an Associate Professor. From January 2024 Elisa will be taking a new position in the School of Biological Sciences at the University of Southampton, where she will be an Associate Professor in Pharmacology. Elisa loves cats, running (slowly), good food, nice drinks, reading and most of all travelling to visit friends and places. Her astrological sign (and favourite monosaccharide) is a-L-fucose.' 
     ,socialLinks: [
-      { platform: 'Twitter', url: 'https://twitter.com/' },
-      { platform: 'Mastodon', url: 'https://twitter.com/' },
-      { platform: 'Github', url: 'https://twitter.com/' },
+      { platform: 'twitter', url: 'https://twitter.com/ElisaTelisa' },
+      { platform: 'mastodon', url: 'https://twitter.com/' },
+      { platform: 'github', url: 'https://twitter.com/' },
       
   ]},
     { name: 'Dr. Callum Ives', role: 'Postdoctoral Researcher', image: '/img/Ives.png', hoverImage: '/img/cat1.jpeg', coolImage: '/img/Ives.png', bio: 'Callum (he/him) obtained a BSc (Hons) in biochemistry from the University of Surrey. During this time he undertook a professional training year in the lab of Professor Martin Caffrey at Trinity College Dublin, where he conducted structure-function studies of membrane proteins using X-ray crystallography. Following on from this, he obtained a PhD with a focus on computational chemistry and biophysics from the University of Dundee under the supervision of Professor Ulrich Zachariae, where he conducted novel research on the cation selectivity mechanisms of the TRP family of ion channels. In the eLab, his current research focuses on determining the structure of glycans, and understanding how glycosylation modulates the structure and function of membrane proteins and antibodies. Outside of science, Callum enjoys watching sport, and hiking in the hills of Donegal.',socialLinks: [
-      { platform: 'Twitter', url: 'https://twitter.com/' },
-      { platform: 'Mastodon', url: 'https://twitter.com/' },
-      { platform: 'Github', url: 'https://twitter.com/' },
+      { platform: 'twitter', url: 'https://twitter.com/CallumMIves' },
       
   ] },
-    { name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg' , hoverImage: '/img/cat3.jpg', coolImage: '/img/elisa.png'},
-    { name: "Silvia D'Andrea", role: 'PhD Student', image: '/img/leg.png' , hoverImage: '/img/cat4.jpeg', coolImage: '/img/elisa.png'},
+    { name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg' , hoverImage: '/img/cat3.jpg', coolImage: '/img/elisa.png',socialLinks: [
+      { platform: 'twitter', url: 'https://twitter.com/Ojas_Singh_' },
+      { platform: 'github', url: 'https://github.com/Ojas-Singh' },
+      
+  ] },
+    { name: "Silvia D'Andrea", role: 'PhD Student', image: '/img/leg.png' , hoverImage: '/img/cat4.jpeg', coolImage: '/img/elisa.png', bio:"Silvia D'Andrea holds a master's degree in Industrial Pharmacy from the University of Luigi Vanvitelli in Caserta, Italy. She is currently pursuing a PhD in computational chemistry at Maynooth University in Ireland, with a specific interest in characterizing the structure and dynamics of N/O-glycans to understand the crucial role of glycosylation in proteins. Beyond her studies and career, Silvia loves pizza and enjoys spending time with friends and family. Additionally, she is learning to play the piano to accompany Christmas songs all year round."},
     { name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg' , coolImage: '/img/elisa.png'},
     { name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png' , hoverImage: '/img/cat6.jpeg', coolImage: '/img/elisa.png'},
     { name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg' , hoverImage: '/img/cat7.jpeg', coolImage: '/img/elisa.png'},
@@ -413,11 +416,14 @@ const publications = [
             marginBottom="1rem"
         />
         <Text marginBottom="1rem">{selectedMember?.bio || "Bio information goes here."}</Text>
+        <HStack>
         {selectedMember?.socialLinks?.map((link: any, idx: number) => (
-            <Link key={idx} href={link.url} isExternal>
-                {link.platform}
-            </Link>
-        ))}
+
+              <SocialIcon network={link.platform} url={link.url} />
+            // <Link key={idx} href={link.url} isExternal>
+            //     {link.platform}
+            // </Link>
+        ))}</HStack>
         </SimpleGrid>
     </ModalBody>
 

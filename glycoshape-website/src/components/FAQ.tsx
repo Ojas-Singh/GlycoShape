@@ -24,7 +24,7 @@ const FAQ: React.FC = () => {
           FAQs
         </Text>
 
-      <Accordion defaultIndex={[0]} allowMultiple>
+      <Accordion defaultIndex={[1]} allowMultiple>
         {/* Endpoint 1 */}
         <AccordionItem>
           <AccordionButton>
@@ -43,13 +43,8 @@ const FAQ: React.FC = () => {
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            <Text>Description of the GlycoShape...</Text>
-            <Code>
-              {/* Sample request or response */}
-              {`{
-  "key": "value"
-}`}
-            </Code>
+            <Text>GlycoShape is an OA database of glycans 3D structural data and information that can be downloaded or used with Re-Glyco to rebuild glycoproteins from the RCSB PDB or EMBL-EBI AlphaFold repositories.</Text>
+           
           </AccordionPanel>
         </AccordionItem>
 
@@ -64,20 +59,15 @@ const FAQ: React.FC = () => {
           fontWeight='extrabold'
           marginBottom="0.2em"
         >
-          How it is curated?
+          How to search?
         </Text>
               
             </Box>
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            <Text>Description of the MD...</Text>
-            <Code>
-              {/* Sample request or response */}
-              {`{
-  "key": "value"
-}`}
-            </Code>
+            <Text>You can search by GlyTouCan ID, IUPAC, GLYCAM, WURCS, SMILES or you can draw your own glycan using draw' button in search bar and search the closest match from our database.</Text>
+            
           </AccordionPanel>
         </AccordionItem>
 
@@ -92,20 +82,24 @@ const FAQ: React.FC = () => {
           fontWeight='extrabold'
           marginBottom="0.2em"
         >
-          How it is curated?
+         What is Re-Glyco?
         </Text>
               
             </Box>
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            <Text>Description of the MD...</Text>
-            <Code>
-              {/* Sample request or response */}
-              {`{
-  "key": "value"
-}`}
-            </Code>
+            <Text>Re-Glyco is a tool that facilitates the re-
+glycosylation of protein structures with 
+glycan structures from the 
+GlycoShape3D database. Glycosylation 
+can be added to uploaded PDB files, or 
+to AlphaFold2 structures via their UniProt 
+ID from the AlphaFold database9. The 
+tool is able to solve clashes between the 
+glycan and protein to optimise the 
+glycosylation at each site.</Text>
+            
           </AccordionPanel>
         </AccordionItem>
 
@@ -119,20 +113,25 @@ const FAQ: React.FC = () => {
           fontWeight='extrabold'
           marginBottom="0.2em"
         >
-          How it is curated?
+          How are clusters calculated?
         </Text>
               
             </Box>
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            <Text>Description of the MD...</Text>
-            <Code>
-              {/* Sample request or response */}
-              {`{
-  "key": "value"
-}`}
-            </Code>
+            <Text>The conformational ensembles from 
+multi-microsecond MD simulations are 
+clustered into representative 
+conformations. To do this, a principial 
+component analysis (PCA) is conducted 
+on the trajectory for dimensionality 
+reduction. Clusters from the PCA are then 
+identified using a Gaussian mixture 
+model (GMM), with representative 
+structures for each conformational cluster 
+identified from the kernel density (more details soon!). </Text>
+            
           </AccordionPanel>
         </AccordionItem>
 

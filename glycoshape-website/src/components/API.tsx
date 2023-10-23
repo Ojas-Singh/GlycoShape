@@ -22,7 +22,9 @@ const API: React.FC = () => {
         >
           API Documentation
         </Text>
-
+        <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+            Not stabliized yet. Please contact us if you have any questions.
+            </Text>
       <Accordion defaultIndex={[0]} allowMultiple>
         {/* Endpoint 1 */}
         <AccordionItem>

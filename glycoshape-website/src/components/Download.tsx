@@ -6,7 +6,8 @@ import {
   VStack,
   HStack,
   Text,
-  Divider
+  Divider,
+  Spacer
 } from "@chakra-ui/react";
 
 const Download: React.FC = () => {
@@ -36,7 +37,7 @@ const Download: React.FC = () => {
                                 document.body.removeChild(link);
                               }}>Download</Button>
           </HStack>
-          <Text mt={2}>Description for Resource 1. This is some additional text to describe what this resource is and how it can be used.</Text>
+          <Text mt={2}> The cluster centroids in PDB file format of every glycan in our database in one zipped file! &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</Text>
         </Box>
 
         <Divider />
@@ -45,6 +46,7 @@ const Download: React.FC = () => {
         <Box>
           <HStack justifyContent="space-between" width="100%">
             <Text fontSize="xl" fontWeight="bold">Molecular Dynamics Simulations Trajectory Data</Text>
+            
             <Button colorScheme="blue" size="sm" isDisabled={true} onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = `/database/Simulation.zip`;
@@ -55,7 +57,10 @@ const Download: React.FC = () => {
                                 
                               }}>Download</Button>
           </HStack>
-          <Text mt={2}>Description for Resource 2. This is some additional text to describe what this resource is and how it can be used.</Text>
+          <Text mt={2}>Our collection of glycan simulation trajectories (Simulations are 
+conducted using the GLYCAM force 
+field2, and either the GROMACS3 or 
+AMBER4 MD packages). </Text>
         </Box>
 
         <Divider />

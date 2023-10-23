@@ -47,25 +47,6 @@ const Navbar: React.FC = () => {
 
       {isMobile ? (
         
-        // <Menu>
-        //   <MenuButton
-        //     as={IconButton}
-        //     aria-label="Options"
-        //     icon={<HamburgerIcon color={"#F7FFE6"}/>}
-        //     variant="outline"
-        //   />
-        //   <MenuList>
-            
-        //     <MenuItem as={Link} href="/search?query=all" >Database</MenuItem>
-        //     <MenuItem as={Link} href="/reglyco" >Re-Glyco</MenuItem>
-        //     <MenuItem as={Link} href="/downloads">Downloads</MenuItem>
-        //     <MenuItem as={Link} href="/api-docs">API</MenuItem>
-        //     <MenuItem as={Link} href="/faq">FAQ</MenuItem>
-        //     <MenuItem as={Link} href="/elab">eLab</MenuItem>
-            
-        //   </MenuList>
-        // </Menu>
-
 
         <>
           <IconButton
@@ -103,7 +84,7 @@ const Navbar: React.FC = () => {
             }} as={Link} href="/downloads" w="100%" onClick={onClose} mb={4}>Downloads</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={Link} href="/api" w="100%" onClick={onClose} mb={4}>API</Button>
+            }} as={Link} href="/api-docs" w="100%" onClick={onClose} mb={4}>API</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={Link} href="/faq" w="100%" onClick={onClose} mb={4}>FAQ</Button>
@@ -124,7 +105,7 @@ const Navbar: React.FC = () => {
           <Box alignContent={"center"} height='40px'>
   <Divider orientation='vertical' />
           </Box>
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/api" marginRight="20px" marginLeft={"20px"}>API</Link>
+          <Link fontWeight="bold" color={"#F7FFE6"} href="/api-docs" marginRight="20px" marginLeft={"20px"}>API</Link>
           <Box alignContent={"center"} height='40px'>
   <Divider orientation='vertical' />
           </Box> 

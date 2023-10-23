@@ -885,11 +885,10 @@ interface UniprotData {
                       >
                         About
                       </Text>
-                                        <Text paddingTop= "10rem" padding={"1rem"} justifySelf="center" align={'center'} fontSize={'lg'}>Re-glyco is a powerful tool designed to restore the missing glycosylation in AlphaFold structures or user-uploaded protein structures.
+                                        <Text fontFamily={'texts'} color='#B195A2'paddingTop= "10rem" padding={"0rem"} justifySelf="left" align={'left'} fontSize={'lg'}>
+                                          
+                                        Re-Glyco is a tool we designed to restore the missing glycosylation on glycoproteins deposited in the RCSB PDB or in the EBI-EMBL AlphaFold protein structure database. To get started, upload your protein structure file or choose a pre-existing AlphaFold or PDB structure, and let Re-Glyco do the rest! Below are some example of UniProt IDs to get you started:
 
-To get started, upload your protein structure file or choose a pre-existing AlphaFold structure, and let re-glyco do the rest!
-
-here are some example UniProt IDs to get you started:
 
 </Text>
 
@@ -900,7 +899,23 @@ here are some example UniProt IDs to get you started:
 <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P27918</Button>
 <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>B0YJ81</Button>
 
-</Text></Box>
+</Text>
+<Text fontFamily={'texts'} paddingTop="0rem" color='#B195A2' alignSelf={"left"} fontSize={'lg'}>
+  and press fetch!</Text>
+
+<Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
+  Currenlty supported function includes :<br/>
+N-GlcNAcsylation<br/>
+O-GalNAcsylation<br/>
+O-GlcNAcsylation<br/>
+O-Fucosylation<br/>
+O-Mannosylation<br/>
+O-Glusosylation<br/>
+O-Xylosylation<br/>
+C-Mannosylation</Text>
+    
+  
+</Box>
                                     
                                     </SimpleGrid>
 

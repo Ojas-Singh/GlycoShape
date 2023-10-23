@@ -7,6 +7,7 @@ import dem1 from './assets/dem1.jpg';
 import hand from './assets/handnew2.png';
 import logo from './assets/logo_white.png';
 import fold from './assets/fold.png'
+import fuzzy from './assets/fuzzy.png'
 
 
 const ContentSection: React.FC = () => {
@@ -136,10 +137,11 @@ const ContentSection: React.FC = () => {
             </Text></VStack>
                   </Box>
                   <Box >
-                    <VStack><Image maxHeight={"25rem"} width={'auto'} padding={'2rem'} src={dem1} alt="Importance Image" />
-                  <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+                    <VStack><Image maxHeight={"25rem"} width={'auto'} padding={'0rem'} src={fuzzy} alt="Importance Image" />
+                  {/* <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
             <Link href="https://www.ncbi.nlm.nih.gov/books/NBK579927/figure/CSHLP5087CH01F3/?report=objectonly">Source: Essentials of Glycobiology [Internet]. 4th edition.</Link>
-            </Text></VStack>
+            </Text> */}
+            </VStack>
                   </Box>
   <Box ><Text
                 align={"center"}
@@ -172,7 +174,7 @@ const ContentSection: React.FC = () => {
             </Text>
             </VStack></Box>
 
-            <VStack><Image maxHeight={"25rem"} width={'auto'} padding={'2rem'} src={fold} alt="Description Image" />
+            <VStack><Image maxHeight={"25rem"} width={'auto'} padding={'0rem'} src={fold} alt="Description Image" />
             <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
             <Link href="https://openai.com/dall-e-3">Source: Dalle-3 </Link>
             </Text></VStack>
