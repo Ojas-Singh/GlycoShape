@@ -911,7 +911,7 @@ O-GalNAcylation<br/>
 O-GlcNAcylation<br/>
 O-Fucosylation<br/>
 O-Mannosylation<br/>
-O-Gluosylation<br/>
+O-Glucosylation<br/>
 O-Xylosylation<br/>
 C-Mannosylation</Text>
     
