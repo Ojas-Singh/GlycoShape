@@ -254,6 +254,7 @@ interface UniprotData {
               } catch (error) {
                   if (error instanceof Error) {
                       setError(error.message);
+                      setError("wrong uniprot id or pdb id");
                   } else {
                       setError("An unknown error occurred.");
                   }
@@ -904,13 +905,13 @@ interface UniprotData {
   and press fetch!</Text>
 
 <Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
-  Currenlty supported function includes :<br/>
-N-GlcNAcsylation<br/>
-O-GalNAcsylation<br/>
-O-GlcNAcsylation<br/>
+  Currently supported function includes :<br/>
+N-GlcNAcylation<br/>
+O-GalNAcylation<br/>
+O-GlcNAcylation<br/>
 O-Fucosylation<br/>
 O-Mannosylation<br/>
-O-Glusosylation<br/>
+O-Gluosylation<br/>
 O-Xylosylation<br/>
 C-Mannosylation</Text>
     
