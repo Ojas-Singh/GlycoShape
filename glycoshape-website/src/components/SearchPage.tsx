@@ -287,6 +287,14 @@ const SearchPage = () =>{
             >
              GAGs
             </Button>&nbsp;
+            <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+              onClick={url => window.location.replace('/search?query=Oligomannose')}
+            >
+             Oligomannose
+            </Button>&nbsp;
             </Hide>
           </Flex>
           <Link href='/faq' color={"#F7FFE6"}> 
