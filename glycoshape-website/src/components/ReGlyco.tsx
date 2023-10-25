@@ -38,20 +38,53 @@ interface ResidueOption {
 }
 
 
+// interface Glycosylation {
+//   glycosylations: {
+//     begin: string;
+//     category: string;
+//     description: string;
+//     end: string;
+//     // evidences: { code: string }[];
+//     evidences: string[];
+//     ftId: string;
+//     molecule: string;
+//     type: string;
+//   }[];
+//   sequence: string;
+//   sequenceLength: number;
+// }
+
+
+
 interface Glycosylation {
-  glycosylations: {
-    begin: string;
-    category: string;
-    description: string;
-    end: string;
-    evidences: { code: string }[];
-    ftId: string;
-    molecule: string;
-    type: string;
-  }[];
+  begin: string;
+  category: string;
+  description: string;
+  end: string;
+  evidences: Evidence[];
+  ftId: string;
+  molecule: string;
+  type: string;
+}
+
+interface Evidence {
+  code: string;
+  source: Source;
+}
+
+interface Source {
+  alternativeUrl: string;
+  id: string;
+  name: string;
+  url: string;
+}
+
+interface GlycosylationData {
+  glycosylations: Glycosylation[];
   sequence: string;
   sequenceLength: number;
 }
+
 
 interface GlycoConf {
   residueTag: number;
@@ -62,7 +95,7 @@ interface GlycoConf {
 }
 
 interface UniprotData {
-  glycosylation_locations: Glycosylation;
+  glycosylation_locations: GlycosylationData;
   uniprot: string;
   requestURL: string;
   configuration: [GlycoConf];
@@ -618,30 +651,86 @@ interface UniprotData {
                               </AccordionPanel>
                               </AccordionItem>
                               
-                              {UniprotData.glycosylation_locations.glycosylations.length >0 ? (
-                              <AccordionItem>
+                              {!isUpload && UniprotData.glycosylation_locations.glycosylations.length >0  ? (
+                                <div>
+                              <AccordionItem color='#CF6385'>
                                   <h2>
-                                    <AccordionButton  margin={"1rem"} marginLeft={"0"} >
-                                      <Box as="span" flex='1' textAlign='left'>
-                                      <HStack><Heading   as='h4' size='md'>Glycosylation Information from </Heading> &nbsp; <Image height="30px"src={uniprot_logo}/></HStack>
+                                    <AccordionButton  margin={"0.5rem"} marginLeft={"0"} >
+                                      <Box as="span" flex='1' textAlign='left' >
+                                      <HStack> <Heading   as='h4' size='md'>Build using glycosylation information from </Heading> &nbsp;<Image height="30px"src={uniprot_logo}/> 
+                                      
+                                      </HStack>
                                       </Box>
                                       <AccordionIcon />
                                     </AccordionButton>
                                   </h2>
                                   <AccordionPanel pb={4}>
-                                  <Box mt={4}>
-                                  <Text fontWeight="bold">Sequence:</Text>
+                                  <Box marginLeft={'1rem'}>
+                                  {/* <Text fontWeight="bold">Sequence:</Text>
                                   <Code width={"70rem"}>{JSON.stringify(UniprotData.glycosylation_locations.sequence, null, 2)}</Code>
+                                  <br/><br/><br/> */}
+
+
+                
                                   <Text fontWeight="bold">Glycosylations</Text>
-                                  <JsonView data={UniprotData.glycosylation_locations.glycosylations} shouldExpandNode={allExpanded} style={defaultStyles} />
-                                  {/* <Code width={"70rem"}>{JSON.stringify(UniprotData.glycosylation_locations.glycosylations, null, 2)}</Code> */}
-                                  {/* <Text fontWeight="bold">Configuration</Text>
-                                  <JsonView data={UniprotData.configuration} shouldExpandNode={allExpanded} style={defaultStyles} /> */}
-                                  {/* <Code width={"70rem"}>{JSON.stringify(UniprotData.configuration, null, 2)}</Code> */}
-                                  
+                                  {/* <JsonView data={UniprotData.glycosylation_locations.glycosylations}  shouldExpandNode={( level) => level <= 1}  style={defaultStyles} /> */}
+                                  <ul>
+        {UniprotData.glycosylation_locations.glycosylations.map((glyco, index) => (
+          <li key={index} >
+            <Text color="black" fontSize='xs'><strong >Residue: </strong> {glyco.begin} &nbsp;
+             {glyco.description} </Text>
+            
+            
+      
+          </li>
+        ))}
+      </ul>
+
+      &nbsp;&nbsp;<br/>
+                                      <Button
+      position={"relative"}
+      margin={'0rem'}
+      borderRadius="full"
+      backgroundColor="#B07095"
+      _hover={{ backgroundColor: "#CF6385" }}
+      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+      onClick={isUpload ? handleProcessCustom : handleProcess}
+      isDisabled= {true}
+      // isDisabled={isLoading} // Disable the button while processing
+    >
+      {isLoading ? (
+        <Box  position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+          <CircularProgress
+            position="absolute"
+            color="#B07095"
+            size="50px"
+            thickness="5px"
+            isIndeterminate 
+            marginLeft={"15rem"}
+            capIsRound
+          >
+            <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+          </CircularProgress>
+          Processing...
+          
+          
+        </Box>
+      ) : (
+        "Process"
+      )}
+    </Button>
+    {isLoading && (<Alert status='info' > 
+    <AlertIcon />
+    It can take up to 5 minutes to process your request. Please wait.
+  </Alert>)}
+      
                               </Box>
                                   </AccordionPanel>
-                                </AccordionItem>) :( null)}
+                                </AccordionItem>
+<br/>
+                              
+                                </div>
+                                ) :( null)}
                                
 
       <Heading margin={'3rem'} marginLeft={'0rem'} marginBottom={'1rem'} fontSize={{base: "1xl",sm: "1xl", md: "1xl", lg: "2xl",xl: "2xl"}} fontFamily={'texts'}>
@@ -870,12 +959,12 @@ interface UniprotData {
                               </Flex>
 
 
-                              <SimpleGrid  alignSelf="center" justifyItems="center" columns={[1,2]} spacing={10} paddingTop={'2rem'} paddingBottom={'2rem'}>
-                                    <Box justifyItems={"center"}> <video  width={'60%'} autoPlay loop muted id="bgVideo" >
+                              <SimpleGrid  alignSelf="center" justifyItems="center" columns={[1,2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+                                     <video  width={'60%'} autoPlay loop muted id="bgVideo" >
         <source  src="/gamma_s.mp4" type="video/mp4" />
         Your browser does not support the video tag.
-      </video></Box>          
-                                      <Box padding={"2rem"}><Text 
+      </video>          
+                                      <Box padding={"2rem"} paddingTop={"0rem"}><Text 
                         bgGradient='linear(to-l,  #B07095, #C39CAA)'
                         bgClip='text'
                         fontSize={{base: "3xl",sm: "3xl", md: "4xl", lg: "5xl",xl: "5xl"}}
