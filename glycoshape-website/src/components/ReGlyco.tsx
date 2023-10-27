@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Select as ChakraSelect } from '@chakra-ui/react';
 import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
-import {Hide,SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading,   Accordion,
+import {useToast ,Hide,SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading,   Accordion,
   Spacer,
   CircularProgress,
   CircularProgressLabel,
@@ -117,7 +117,7 @@ interface UniprotData {
       const [clashValue, setClashValue] = useState(false);
       const [boxValue, setBoxValue] = useState("");
       const [selectedGlycanImage, setSelectedGlycanImage] = useState<{[key: number]: string}>({});
-      
+      const toast = useToast()
 
 
       const placeholders = [
@@ -251,7 +251,7 @@ interface UniprotData {
 
     
 
-  
+
 
       const fetchProteinData = async () => {
           try {
@@ -270,6 +270,7 @@ interface UniprotData {
               setActiveStep(1);
           } catch (error) {
               if (error instanceof Error) {
+                
                 try {
                   const response = await fetch("https://glycoshape.io/api/rcsb", {
                       method: 'POST',
@@ -286,8 +287,15 @@ interface UniprotData {
                   setActiveStep(1);
               } catch (error) {
                   if (error instanceof Error) {
-                      setError(error.message);
-                      setError("wrong uniprot id or pdb id");
+                      // setError(error.message);
+                      // setError("wrong uniprot id or pdb id");
+                      toast({
+                        title: 'Wrong uniprot id or pdb id',
+                        description: "Please check your input and try again.",
+                        status: 'error',
+                        duration: 4000,
+                        isClosable: true,
+                      })
                   } else {
                       setError("An unknown error occurred.");
                   }
@@ -399,6 +407,44 @@ interface UniprotData {
       setIsLoading(false);  // End loading regardless of success or failure
   }
 }
+
+
+const handleProcessOne = async () => {
+  setIsLoading(true);  // Start loading
+  setActiveStep(2); 
+  const payload = {
+      selectedGlycans: selectedGlycans,
+      uniprotID : uniprotID
+  };
+
+  try {
+      const response = await fetch('https://glycoshape.io/api/one_uniprot', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+          const responseData = await response.json();
+            setOutputPath(responseData.output);
+            setClashValue(responseData.clash);
+            setBoxValue(responseData.box)
+            setActiveStep(3);  // Move to the 'Download' step after processing
+            setElapsedTime(0);
+          console.log(responseData);
+          // Handle the response data as needed
+      } else {
+          console.error("Failed to post data.");
+      }
+  } catch (error) {
+      console.error("Error occurred:", error);
+  }finally {
+    setIsLoading(false);  // End loading regardless of success or failure
+}
+}
+
   const [elapsedTime, setElapsedTime] = useState(0);
   useEffect(() => {
     let timer: NodeJS.Timeout; 
@@ -694,9 +740,9 @@ interface UniprotData {
       backgroundColor="#B07095"
       _hover={{ backgroundColor: "#CF6385" }}
       size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-      onClick={isUpload ? handleProcessCustom : handleProcess}
-      isDisabled= {true}
-      // isDisabled={isLoading} // Disable the button while processing
+      onClick={handleProcessOne}
+      // isDisabled= {true}
+      isDisabled={isLoading} // Disable the button while processing
     >
       {isLoading ? (
         <Box  position="relative" display="inline-flex" alignItems="center" justifyContent="center">
@@ -896,7 +942,7 @@ interface UniprotData {
                               }}
      size = {{base: "md",sm: "md", md: "md", lg: "lg",xl: "lg"}}>
        
-        Download PDB File
+        Download Re-glycosylated Structure PDB File
     </Button></a> <Text fontWeight="bold">Processing log:</Text><Code>
   {boxValue.split('\n').map((line, index) => (
     <React.Fragment key={index}>
