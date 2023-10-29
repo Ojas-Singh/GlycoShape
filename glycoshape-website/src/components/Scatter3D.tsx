@@ -42,23 +42,34 @@ const Scatter3D: React.FC<Scatter3DProps> = ({ dataUrl }) => {
     mode: 'markers' as const,  // Note the "as const" here.
     type: 'scatter3d' as const,
     marker: {
+      line: {
+        width: 0.01,  // Width of the outline
+        color: 'rgba(0, 0, 0, 1)'  // Color of the outline with alpha value (here, it's semi-transparent black)
+      },
       size: 3,
       color: data.map(d => clusterToColorMap[d.cluster]),
-      opacity: 0.8
+      opacity: 1,
+      
     }
   };
 
   const layout = {
     autosize: true,
     margin: {
-      l: 0  ,
+      l: 0,
       r: 0,
       b: 0,
       t: 0
+    },
+    scene: {
+      camera: {
+        eye: { x: .8, y: .8, z: 1 } // Adjust these values to control the zoom and orientation
+      }
     }
   };
+  
 
-  return <Plot data={[trace]} layout={layout} useResizeHandler={true} style={{ width: "60vw", height: "50vh" }} />;
+  return <Plot data={[trace]} layout={layout} useResizeHandler={true} style={{ width: "100%", height: "50vh" }} />;
 };
 
 export default Scatter3D;

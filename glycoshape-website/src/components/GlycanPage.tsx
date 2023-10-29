@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, } from 'react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons' ;
 import { useLocation, useNavigate } from 'react-router';
 import {
- Show, Hide, Grid,Divider, Spacer, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack
+ Show, Hide, Grid,Divider, Spacer, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack, SimpleGrid
   } from "@chakra-ui/react";
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
@@ -210,21 +210,7 @@ interface GlycanData {
     
     <Box >
       
-      {/* <Flex 
-        direction="column" 
-        align="center" 
-        justify="center" 
-        flex="1" 
-        padding="1rem"
-        paddingTop="2rem"
-        minHeight={{ base: "15vh" }}
-        backgroundImage={`url(${bg})`} 
-        backgroundSize="cover" 
-        backgroundRepeat="no-repeat"  
-      >
-       <Searchbar />
-      </Flex> */}
-
+      
       {sequence && (
         <Flex>
         
@@ -233,15 +219,18 @@ interface GlycanData {
           <TabList  display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" marginRight={'2rem'} >
             <HStack >
             <Image
-              src={`/database/${sequence}/${sequence}.svg`} 
+              src={`https://glycoshape.io/database/${sequence}/${sequence}.svg`} 
               alt="Glycan Image"
               height="5rem"
+              maxWidth={'200px'}
               // marginRight="1rem"
             />
-             
+             <Show above='lg'>
             <Text fontSize={{base: "0",sm: "1xl", md: "3xl", lg: "3xl",xl: "3xl"}} >
             {sequence.length > 30 ? sequence.substring(0, 60) + '...' : sequence}
-            </Text></HStack>
+            </Text>
+            </Show>
+            </HStack>
             <Spacer />
           <Tab>Information</Tab>
           <Tab>Structure</Tab>
@@ -280,7 +269,7 @@ interface GlycanData {
                         color={activeSection === 'Nomenclature' ? 'white' : '#1A202C'}
                         fontStyle={'medium'}
                         _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
+                          bg: '#E2CE69', // replace with the color you want on hover
                         }}
                         borderRadius="0" // Sharp rectangular edges
                     >
@@ -293,7 +282,7 @@ interface GlycanData {
                         color={activeSection === 'Glycan_information' ? 'white' : '#1A202C'}
                         fontStyle={'medium'}
                         _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
+                          bg: '#E2CE69', // replace with the color you want on hover
                         }}
                         borderRadius="0" // Sharp rectangular edges
                     >
@@ -306,7 +295,7 @@ interface GlycanData {
                         color={activeSection === 'Chemical_information' ? 'white' : '#1A202C'}
                         fontStyle={'medium'}
                         _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
+                          bg: '#E2CE69', // replace with the color you want on hover
                         }}
                         // fontFamily={'thin'}
                         borderRadius="0" // Sharp rectangular edges
@@ -320,7 +309,7 @@ interface GlycanData {
                         color={activeSection === 'Biological_information' ? 'white' : '#1A202C'}
                         fontStyle={'medium'}
                         _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
+                          bg: '#E2CE69', // replace with the color you want on hover
                         }}
                         // fontFamily={'thin'}
                         borderRadius="0" // Sharp rectangular edges
@@ -333,7 +322,7 @@ interface GlycanData {
                         color={activeSection === 'Simulation_information' ? 'white' : '#1A202C'}
                         fontStyle={'medium'}
                         _hover={{
-                          bg: '#51BF9D', // replace with the color you want on hover
+                          bg: '#E2CE69', // replace with the color you want on hover
                         }}
                         // fontFamily={'thin'}
                         borderRadius="0" // Sharp rectangular edges
@@ -347,7 +336,7 @@ interface GlycanData {
             {/* Main Content */}
             <Box flex="1"  p={{base: "-2rem",sm: "0rem", md: "2rem", lg: "2rem",xl: "2rem"}} >
             
-                <Box ref={contentRef1}  id="Nomenclature" pb={'4rem'}
+                <Box ref={contentRef1} flex='1'  id="Nomenclature" pb={'4rem'}
                     boxShadow="md"
                     marginBottom="1em"
                     backgroundColor="white"
@@ -361,23 +350,34 @@ interface GlycanData {
                       
                       {/* <WrapItem alignContent={'left'}> */}
                       <Text fontFamily={'texts'}>SNFG</Text>
+                      <SimpleGrid  alignSelf="center" justifyItems="center" alignItems={"center "} columns={[1,2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+
                     <Image
-              src={`/database/${sequence}/${sequence}.svg`} 
+              src={`https://glycoshape.io/database/${sequence}/${sequence}.svg`} 
               alt="Glycan Image"
-              height={{base: "10rem",sm: "10rem", md: "20rem", lg: "25rem",xl: "25rem"}}
-              width={'30vw'}
+              // height={{base: "10rem",sm: "10rem", md: "20rem", lg: "25rem",xl: "25rem"}}
+              width={{base:'100%',lg:'30vw'}}
               // marginRight="1rem"
             />      
-            {/* </WrapItem> */}
-            {/* <WrapItem alignContent={'left'}>  */}
-            <Spacer />
+            
+            <Hide below='lg'>
              <iframe
                       style={{ width: '35vw', height: '50vh' }}
                       src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
+                              /> </Hide>
+            <Show below='lg'>
+            <iframe
+                      style={{ width: '100%', height: '50vh' }}
+                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Protein Structure"
                               /> 
+              </Show>
+                              </SimpleGrid>
                               {/* </WrapItem> */}
                               <VStack align={'left'} padding={'1rem'}>
             <Box alignItems={'center'} alignContent={'center'} justifyContent={'center'} justifyItems={'center'}>
@@ -644,7 +644,7 @@ interface GlycanData {
             {/* Main Content */}
             <Box flex="1"  p={{base: "-2rem",sm: "0rem", md: "2rem", lg: "2rem",xl: "2rem"}} marginTop={'-2.5rem'} >
             
-                <Box ref={contentRef6}  id="clusters"p={'2rem'} pb={'4rem'} paddingTop={'1rem'}
+                <Box ref={contentRef6}  id="clusters"p={'1rem'} pb={'4rem'} paddingTop={'1rem'}
                     boxShadow="md"
                     marginBottom="1em"
                     backgroundColor="white"
@@ -673,7 +673,8 @@ interface GlycanData {
                 </Show>
 
                 <Box paddingTop={"2rem"} >
-                  <HStack align={"left"}>
+                <SimpleGrid  alignSelf="center" justifyItems="center" columns={[1,2]} spacing={0} paddingTop={'0rem'} paddingBottom={'2rem'}>
+                  
                     <VStack >
                   <HStack paddingTop={"5rem"}>
                   <Text size={'md'}>Download Clusters : </Text>
@@ -685,14 +686,15 @@ interface GlycanData {
                             
                           ))}</HStack>
                         
-                        <Spacer />
+                        
                   {data?.clusters ? <PieChart data={transformedClusters} /> : <div>No cluster data available</div>}
 
                   </VStack>
-                        <Spacer />
-                        <Image src={`https://glycoshape.io/database/${sequence}/output/dist.svg`} width={'40vw'} />
+                        
+                        <Image src={`https://glycoshape.io/database/${sequence}/output/dist.svg`} width={{base:'100%',lg:'40vw'}} />
                         {/* <Image src='/torsions2.svg' width='40vw' /> */}
-                        </HStack> 
+                        {/* </HStack>  */}
+                        </SimpleGrid>
                       </Box>
                               
                               </VStack>
@@ -745,13 +747,14 @@ interface GlycanData {
    <VStack align={'left'} padding={'1rem'}>
       <Text fontSize="2xl" color={"#2D5E6B"}  mb={2}>PCA details</Text>
       <Divider />
-      <HStack>
-      <Scatter3D dataUrl={`/database/${sequence}/output/pca.csv`} />
-      <Spacer />
+      <SimpleGrid  alignSelf="center" justifyItems="center" columns={[1,2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+
+      <Scatter3D dataUrl={`https://glycoshape.io/database/${sequence}/output/pca.csv`} />
+      
       <VStack>
-        <Image width='25vw' src={`https://glycoshape.io/database/${sequence}/output/PCA_variance.png`} />
-      <Image width='25vw' src={`https://glycoshape.io/database/${sequence}/output/Silhouette_Score.png`} /></VStack>
-      </HStack>
+        <Image width={{base:'100%',lg:'25vw'}} src={`https://glycoshape.io/database/${sequence}/output/PCA_variance.png`} />
+      <Image width={{base:'100%',lg:'25vw'}} src={`https://glycoshape.io/database/${sequence}/output/Silhouette_Score.png`} /></VStack>
+      </SimpleGrid> 
    </VStack>
 
 </Box>

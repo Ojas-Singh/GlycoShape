@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import * as d3 from 'd3';
 import { contourDensity } from 'd3-contour';
-import { HStack, Heading, Spacer, Flex, Box, VStack } from '@chakra-ui/react';
+import {SimpleGrid, HStack, Heading, Spacer, Flex, Box, VStack } from '@chakra-ui/react';
 
 type CSVData = {
   [key: string]: string;
@@ -77,7 +77,9 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
   const renderStatisticsTable = (selectedColumn: string) => (
     
     <Box flex='1'>
+      
       <VStack>
+
       <Heading size={'1xl'} marginLeft={'20px'} style={{ textAlign: 'center' }}>Statistics for {selectedColumn}</Heading>
 
       <table style={{ 
@@ -250,6 +252,7 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
     return (
       <div>
         <div>
+
           <label >
             X Axis: &nbsp;&nbsp;
             <select
@@ -282,14 +285,17 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
             </select>
           </label>
         </div>
-        <HStack>
+        {/* <HStack> */}
+        <SimpleGrid  alignSelf="center" justifyItems="center" alignItems={"center "} templateColumns={{ base: '1fr', lg: '30% 70%' }}  spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+
         {renderStatisticsTable(selectedColumns['x'])}
         {/* <Spacer /> */}
         
-        <svg ref={ref} width="40vw" height="500px" />
-        </HStack>
+        <svg ref={ref} width="100vh" height="500px" />
+        </SimpleGrid>
+        {/* </HStack> */}
       
-  
+ 
  
       </div>
     );

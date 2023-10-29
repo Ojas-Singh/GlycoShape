@@ -650,11 +650,13 @@ const handleProcessOne = async () => {
                                   </h2>
                                   <AccordionPanel>
                                   
-                                  <Flex w="100%" 
+                                  {/* <Flex w="100%" 
                   align="center" 
                   justify="center" 
                   flex="1" 
-                  padding="2rem" paddingTop={'0rem'} direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}>
+                  padding="2rem" paddingTop={'0rem'} direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}> */}
+                                        <SimpleGrid  alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '30% 70%' }} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+
                                 <Box borderWidth="1px" borderRadius="md" padding={4} width="300px">
                                     <Text fontSize="lg" fontWeight="bold" mb={3}>
                                       3D Viewer
@@ -682,9 +684,9 @@ const handleProcessOne = async () => {
                                       AlphaFold produces a per-residue confidence score (pLDDT) between 0 and 100. Some regions below 50 pLDDT may be unstructured in isolation.
                                     </Text>
                                   </Box>
-                                  <iframe
+                                  <iframe 
                                   key={isUpload ? "uploaded" : UniprotData.requestURL}
-                                  width="90%"
+                                  width="100%"
                                   height="400px"
 
                                   src={isUpload ? 
@@ -693,7 +695,7 @@ const handleProcessOne = async () => {
                                 }                                  
                                   allowFullScreen
                                   title="Protein Structure"
-                              /></Flex> 
+                              /></SimpleGrid>
                               </AccordionPanel>
                               </AccordionItem>
                               
