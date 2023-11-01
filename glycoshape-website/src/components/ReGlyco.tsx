@@ -125,7 +125,26 @@ interface UniprotData {
         "Enter PDB Id",
 
     ];
-    
+
+    useEffect(() => {
+      fetch("https://glycoshape.io/database/GlcNAc_scan.json")
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.N) {
+            setGlycanOptions(data.N); // assuming data.N is an array of the desired structure
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching glycan options:", error);
+        });
+    }, []);
+
+    const [glycanOptions, setGlycanOptions] = useState<
+    string[]
+  >([]);
+  
+  const [selectedGlycanOption, setSelectedGlycanOption] = useState<string | null>(null);
+
 
       useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
@@ -412,13 +431,23 @@ interface UniprotData {
 const handleProcessOne = async () => {
   setIsLoading(true);  // Start loading
   setActiveStep(2); 
+
   const payload = {
       selectedGlycans: selectedGlycans,
-      uniprotID : uniprotID
+      uniprotID : uniprotID,
+      filename : UniprotData?.uniprot,
+      selectedGlycanOption: isUpload ? selectedGlycanOption : null
   };
 
+  let endpoint = 'https://glycoshape.io/api/one_uniprot'; // default endpoint
+
+  // If isUpload is true, change the endpoint to /screen_pdb
+  if(isUpload) {
+    endpoint = 'https://glycoshape.io/api/scanner_pdb';
+  }
+
   try {
-      const response = await fetch('https://glycoshape.io/api/one_uniprot', {
+      const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json'
@@ -440,10 +469,11 @@ const handleProcessOne = async () => {
       }
   } catch (error) {
       console.error("Error occurred:", error);
-  }finally {
+  } finally {
     setIsLoading(false);  // End loading regardless of success or failure
+  }
 }
-}
+
 
   const [elapsedTime, setElapsedTime] = useState(0);
   useEffect(() => {
@@ -643,19 +673,14 @@ const handleProcessOne = async () => {
                                 <h2>
                                     <AccordionButton  margin={"1rem"} marginLeft={"0"} >
                                       <Box as="span" flex='1' textAlign='left'>
-                                      <Heading   as='h4' size='md'>Structure Information</Heading> 
+                                      <Heading   as='h4' size='md' color={"#B07095"}>Structure Information</Heading> 
                                       </Box>
                                       <AccordionIcon />
                                     </AccordionButton>
                                   </h2>
                                   <AccordionPanel>
-                                  
-                                  {/* <Flex w="100%" 
-                  align="center" 
-                  justify="center" 
-                  flex="1" 
-                  padding="2rem" paddingTop={'0rem'} direction={{base: "column",sm: "column", md: "row", lg: "row",xl: "row"}}> */}
-                                        <SimpleGrid  alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '30% 70%' }} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+                                  {!isUpload ? (
+                                  <SimpleGrid  alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '30% 70%' }} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
 
                                 <Box borderWidth="1px" borderRadius="md" padding={4} width="300px">
                                     <Text fontSize="lg" fontWeight="bold" mb={3}>
@@ -696,16 +721,33 @@ const handleProcessOne = async () => {
                                   allowFullScreen
                                   title="Protein Structure"
                               /></SimpleGrid>
+
+                              ) :(<SimpleGrid  alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '100% 0%' }} spacing={0} paddingTop={'0rem'} paddingBottom={'2rem'}>
+
+                              
+                                <iframe 
+                                key={isUpload ? "uploaded" : UniprotData.requestURL}
+                                width="100%"
+                                height="400px"
+
+                                src={isUpload ? 
+                                  `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` : 
+                                  `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=mmcif`
+                              }                                  
+                                allowFullScreen
+                                title="Protein Structure"
+                            /></SimpleGrid>)}
+
                               </AccordionPanel>
                               </AccordionItem>
                               
                               {!isUpload && UniprotData.glycosylation_locations.glycosylations.length >0  ? (
                                 <div>
-                              <AccordionItem color='#CF6385'>
+                              <AccordionItem color='#B07095'>
                                   <h2>
                                     <AccordionButton  margin={"0.5rem"} marginLeft={"0"} >
                                       <Box as="span" flex='1' textAlign='left' >
-                                      <HStack> <Heading   as='h4' size='md'>Build using glycosylation information from </Heading> &nbsp;<Image height="30px"src={uniprot_logo}/> 
+                                      <HStack> <Heading  as='h4' size='md'>Build using glycosylation information from </Heading> &nbsp;<Image height="30px"src={uniprot_logo}/> 
                                       
                                       </HStack>
                                       </Box>
@@ -778,7 +820,100 @@ const handleProcessOne = async () => {
 <br/>
                               
                                 </div>
-                                ) :( null)}
+                                ) :( 
+                                  <div>
+                              <AccordionItem color='#B07095'>
+                                  <h2>
+                                    <AccordionButton  margin={"0.5rem"} marginLeft={"0"} >
+                                      <Box as="span" flex='1' textAlign='left' >
+                                       <Heading   as='h4' size='md'>One Shot N-Glycosylation</Heading></Box>
+                                      <AccordionIcon />
+                                    </AccordionButton>
+                                  </h2>
+                                  <AccordionPanel pb={4}>
+                                  <Box marginLeft={'1rem'}>
+                                  {/* <Text fontWeight="bold">Glycosylations</Text> */}
+      
+      <div>
+      {/* Existing code ... */}
+      <HStack>
+      <Heading fontSize={"sm"}>All NXS/T sequons : &nbsp;</Heading>
+      <Menu>
+        <MenuButton 
+          as={Button} 
+          bgColor={"#B07095"} 
+          _hover={{ backgroundColor: "#CF6385" }}
+          width="70%" 
+          color={"#1A202C"}
+        >
+          {selectedGlycanOption || 'Select Glycan Option'}
+        </MenuButton>
+        <MenuList maxHeight="300px" overflowY="auto">
+          {glycanOptions.map((option, index) => (
+            <MenuItem
+              key={index}
+              onClick={() => {
+                setSelectedGlycanOption(option);
+              }}
+            ><Image
+            src={`https://glycoshape.io/database/${option}/${option}.svg`}
+            alt="Glycan Image"
+            height="80px"
+            maxWidth={"90%"}
+            mr={2}
+          />
+              {option.length > 40 ? option.substring(0, trimLength) + "..." : option}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Menu>
+      
+      
+      {selectedGlycanOption && (
+        <Image
+          src={`https://glycoshape.io/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
+          alt="Selected Glycan Image"
+          height="80px"
+          maxWidth={"90%"}
+          ml={2}
+        />
+      )}
+      </HStack>
+    </div>
+                                      <Button
+      position={"relative"}
+      margin={'0rem'}
+      borderRadius="full"
+      backgroundColor="#B07095"
+      _hover={{ backgroundColor: "#CF6385" }}
+      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+      onClick={handleProcessOne}
+      isDisabled={isLoading}
+    >
+      {isLoading ? (
+        <Box  position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+          <CircularProgress
+            position="absolute"
+            color="#B07095"
+            size="50px"
+            thickness="5px"
+            isIndeterminate 
+            marginLeft={"15rem"}
+            capIsRound
+          >
+            <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+          </CircularProgress>
+          Processing...
+        </Box>
+      ) : (
+        "Process"
+      )}
+    </Button>
+    {isLoading && (<Alert status='info' > 
+    <AlertIcon />
+    It can take up to 5 minutes to process your request. Please wait.
+  </Alert>)}</Box></AccordionPanel></AccordionItem>
+<br/></div>)}
                                
 
       <Heading margin={'3rem'} marginLeft={'0rem'} marginBottom={'1rem'} fontSize={{base: "1xl",sm: "1xl", md: "1xl", lg: "2xl",xl: "2xl"}} fontFamily={'texts'}>
