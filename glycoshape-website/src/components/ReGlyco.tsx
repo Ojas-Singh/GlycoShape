@@ -991,7 +991,7 @@ const handleProcessOne = async () => {
                                   <h2>
                                     <AccordionButton  margin={"0.5rem"} marginLeft={"0"} >
                                       <Box as="span" flex='1' textAlign='left' >
-                                       <Heading   as='h4' size='md'>One Shot N-Glycosylation</Heading></Box>
+                                       <Heading   as='h4' size='md'>One shot <Text as="i">N-glycosylation</Text></Heading></Box>
                                       <AccordionIcon />
                                     </AccordionButton>
                                   </h2>
@@ -1081,7 +1081,7 @@ const handleProcessOne = async () => {
                                   <h2>
                                     <AccordionButton  margin={"0.5rem"} marginLeft={"0"} >
                                       <Box as="span" flex='1' textAlign='left' >
-                                      <HStack> <Heading  as='h4' size='md'>Predict N-glycosylation location using </Heading> &nbsp;<Image height="38px"src={Scanner}/>&nbsp; <Heading  as='h4' size='md'>GlcNAc Scanner </Heading>
+                                      <HStack> <Heading  as='h4' size='md'>Predict <Text as="i">N-glycosylation</Text> location using </Heading> &nbsp;<Image height="38px"src={Scanner}/>&nbsp; <Heading  as='h4' size='md'>GlcNAc Scanner </Heading>
                                       
                                       </HStack>
                                       </Box>
