@@ -6,6 +6,7 @@ import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import {useToast ,Hide,SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading,   Accordion,
   Spacer,
+  UnorderedList, ListItem ,
   CircularProgress,
   CircularProgressLabel,
   AccordionItem,
@@ -29,8 +30,26 @@ import {useToast ,Hide,SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack
 import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
 import uniprot_logo from './assets/uniprot.svg';
+import Scanner from './assets/Scanner.png';
 import Select, { ActionMeta, OnChangeValue,  } from 'react-select';
 
+// Define an interface for the result items
+interface ResultItem {
+  clash_solved: boolean;
+  cluster: number;
+  glycan: string;
+  phi: number;
+  psi: number;
+  residue: string;
+}
+
+// Define an interface for the scan results
+interface ScanResults {
+  box: string;
+  clash: boolean;
+  output: string;
+  results: ResultItem[];
+}
 
 interface ResidueOption {
   label: string;
@@ -126,6 +145,8 @@ interface UniprotData {
 
     ];
 
+    
+
     useEffect(() => {
       fetch("https://glycoshape.io/database/GlcNAc_scan.json")
         .then((response) => response.json())
@@ -217,7 +238,55 @@ interface UniprotData {
 
     };
     
+    const [scanResults, setScanResults] = useState<ScanResults | null>({
+      box: '',
+      clash: false,
+      output: '',
+      results: [] // Empty results array as initial value
+    });
+    const handleProcessOne_scan = async () => {
+      setIsLoading(true);  // Start loading
+      setActiveStep(2); 
     
+      const payload = {
+          customPDB : isUpload,
+          selectedGlycans: selectedGlycans,
+          uniprotID : uniprotID,
+          filename : UniprotData?.uniprot,
+          selectedGlycanOption: isUpload ? selectedGlycanOption : null
+      };
+    
+      let endpoint = 'https://glycoshape.io/api/scan'; // default endpoint
+    
+     
+      try {
+          const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+          });
+    
+          if (response.ok) {
+              const responseData = await response.json();
+                setOutputPath(responseData.output);
+                setClashValue(responseData.clash);
+                setBoxValue(responseData.box)
+                setScanResults(responseData);
+                setActiveStep(3);  // Move to the 'Download' step after processing
+                setElapsedTime(0);
+              console.log(responseData);
+              // Handle the response data as needed
+          } else {
+              console.error("Failed to post data.");
+          }
+      } catch (error) {
+          console.error("Error occurred:", error);
+      } finally {
+        setIsLoading(false);  // End loading regardless of success or failure
+      }
+    }
     
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -817,6 +886,102 @@ const handleProcessOne = async () => {
                               </Box>
                                   </AccordionPanel>
                                 </AccordionItem>
+
+
+
+                                <AccordionItem color='#B07095'>
+                                  <h2>
+                                    <AccordionButton  margin={"0.5rem"} marginLeft={"0"} >
+                                      <Box as="span" flex='1' textAlign='left' >
+                                      <HStack> <Heading  as='h4' size='md'>Predict N-glycosylation location using </Heading> &nbsp;<Image height="38px"src={Scanner}/>&nbsp; <Heading  as='h4' size='md'>GlcNAc Scanner </Heading>
+                                      
+                                      </HStack>
+                                      </Box>
+                                      <AccordionIcon />
+                                    </AccordionButton>
+                                  </h2>
+                                  <AccordionPanel pb={4}>
+                                  <Box marginLeft={'1rem'}>
+                                 
+
+                
+                                  {/* <Text fontWeight="bold">Scanning information</Text> */}
+                                  {scanResults ? (
+        <>
+          {/* <div>Calculation Box: <pre>{scanResults.box}</pre></div> */}
+          {/* <div>Clash: {scanResults.clash ? 'Yes' : 'No'}</div> */}
+          {/* <div>Output File: {scanResults.output}</div> */}
+          {scanResults.results ? (
+            <div>
+              <strong >Scanning information:</strong>
+
+              
+              <UnorderedList styleType="none" m={3}>
+              { scanResults.results.length == 0 && scanResults.box.length >0 ?  (<div>No <Text as="i">N-glycosylation</Text> possible</div>): (<div></div>)}
+    {scanResults.results.map((result: ResultItem, index: number) => (
+      <ListItem key={index} mb={2} display="flex" alignItems="center">
+        <Text as="span" fontWeight="bold">Residue:</Text>
+        <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
+          {result.residue}
+        </Box>
+        <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
+        <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
+      </ListItem>
+    ))}
+  </UnorderedList>
+            </div>
+          ) : <div>No <Text as="i">N-glycosylation</Text> location found.</div>}
+        </>
+      ) : (
+        <div>Loading results...</div>
+      )}
+
+
+
+
+      &nbsp;&nbsp;<br/>
+      <Button
+      position={"relative"}
+      margin={'0rem'}
+      borderRadius="full"
+      backgroundColor="#B07095"
+      _hover={{ backgroundColor: "#CF6385" }}
+      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+      onClick={handleProcessOne_scan}
+      isDisabled={isLoading}
+    >
+      {isLoading ? (
+        <Box  position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+          <CircularProgress
+            position="absolute"
+            color="#B07095"
+            size="50px"
+            thickness="5px"
+            isIndeterminate 
+            marginLeft={"15rem"}
+            capIsRound
+          >
+            <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+          </CircularProgress>
+          Scanning...
+        </Box>
+      ) : (
+        "Scan"
+      )}
+    </Button>
+    {isLoading && (<Alert status='info' > 
+    <AlertIcon />
+    It can take up to 5 minutes to process your request. Please wait.
+  </Alert>)}
+      
+                              </Box>
+                                  </AccordionPanel>
+                                </AccordionItem>
+
+
+
+
+
 <br/>
                               
                                 </div>
@@ -832,10 +997,8 @@ const handleProcessOne = async () => {
                                   </h2>
                                   <AccordionPanel pb={4}>
                                   <Box marginLeft={'1rem'}>
-                                  {/* <Text fontWeight="bold">Glycosylations</Text> */}
       
       <div>
-      {/* Existing code ... */}
       <HStack>
       <Heading fontSize={"sm"}>All NXS/T sequons : &nbsp;</Heading>
       <Menu>
@@ -913,6 +1076,96 @@ const handleProcessOne = async () => {
     <AlertIcon />
     It can take up to 5 minutes to process your request. Please wait.
   </Alert>)}</Box></AccordionPanel></AccordionItem>
+
+  <AccordionItem color='#B07095'>
+                                  <h2>
+                                    <AccordionButton  margin={"0.5rem"} marginLeft={"0"} >
+                                      <Box as="span" flex='1' textAlign='left' >
+                                      <HStack> <Heading  as='h4' size='md'>Predict N-glycosylation location using </Heading> &nbsp;<Image height="38px"src={Scanner}/>&nbsp; <Heading  as='h4' size='md'>GlcNAc Scanner </Heading>
+                                      
+                                      </HStack>
+                                      </Box>
+                                      <AccordionIcon />
+                                    </AccordionButton>
+                                  </h2>
+                                  <AccordionPanel pb={4}>
+                                  <Box marginLeft={'1rem'}>
+                                 
+
+                
+                                  {/* <Text fontWeight="bold">Scanning information</Text> */}
+                                  {scanResults ? (
+        <>
+          {/* <div>Calculation Box: <pre>{scanResults.box}</pre></div> */}
+          {/* <div>Clash: {scanResults.clash ? 'Yes' : 'No'}</div> */}
+          {/* <div>Output File: {scanResults.output}</div> */}
+          {scanResults.results ? (
+            <div>
+              <strong >Scanning information:</strong>
+
+              
+              <UnorderedList styleType="none" m={3}>
+              { scanResults.results.length == 0 && scanResults.box.length >0 ?  (<div>No <Text as="i">N-glycosylation</Text> possible</div>): (<div></div>)}
+    {scanResults.results.map((result: ResultItem, index: number) => (
+      <ListItem key={index} mb={2} display="flex" alignItems="center">
+        <Text as="span" fontWeight="bold">Residue:</Text>
+        <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
+          {result.residue}
+        </Box>
+        <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
+        <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
+      </ListItem>
+    ))}
+  </UnorderedList>
+            </div>
+          ) : <div>No <Text as="i">N-glycosylation</Text> location found.</div>}
+        </>
+      ) : (
+        <div>Loading results...</div>
+      )}
+
+
+
+
+      &nbsp;&nbsp;<br/>
+      <Button
+      position={"relative"}
+      margin={'0rem'}
+      borderRadius="full"
+      backgroundColor="#B07095"
+      _hover={{ backgroundColor: "#CF6385" }}
+      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+      onClick={handleProcessOne_scan}
+      isDisabled={isLoading}
+    >
+      {isLoading ? (
+        <Box  position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+          <CircularProgress
+            position="absolute"
+            color="#B07095"
+            size="50px"
+            thickness="5px"
+            isIndeterminate 
+            marginLeft={"15rem"}
+            capIsRound
+          >
+            <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+          </CircularProgress>
+          Scanning...
+        </Box>
+      ) : (
+        "Scan"
+      )}
+    </Button>
+    {isLoading && (<Alert status='info' > 
+    <AlertIcon />
+    It can take up to 5 minutes to process your request. Please wait.
+  </Alert>)}
+      
+                              </Box>
+                                  </AccordionPanel>
+                                </AccordionItem>
+
 <br/></div>)}
                                
 
