@@ -2,8 +2,8 @@ import React, { useState, ChangeEvent, useEffect, useRef,  } from 'react';
 import { useBreakpointValue } from "@chakra-ui/react";
 import axios from 'axios';
 import { Select as ChakraSelect } from '@chakra-ui/react';
-import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
-import 'react-json-view-lite/dist/index.css';
+// import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
+// import 'react-json-view-lite/dist/index.css';
 import {useToast ,Hide,SimpleGrid,Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading,   Accordion,
   Spacer,
   UnorderedList, ListItem ,
@@ -31,7 +31,7 @@ import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
 import uniprot_logo from './assets/uniprot.svg';
 import Scanner from './assets/Scanner.png';
-import Select, { ActionMeta, OnChangeValue,  } from 'react-select';
+import Select, {SingleValue,  ActionMeta, OnChangeValue,  } from 'react-select';
 
 // Define an interface for the result items
 interface ResultItem {
@@ -55,6 +55,7 @@ interface ResidueOption {
   label: string;
   value: number;
 }
+
 
 
 // interface Glycosylation {
@@ -222,6 +223,66 @@ interface UniprotData {
         count: steps.length,
       })
 
+      const [maturationResults, setMaturationResults] = useState<ScanResults | null>({
+        box: '',
+        clash: false,
+        output: '',
+        results: [] // Empty results array as initial value
+      });
+      const [selectedResidueMaturation, setSelectedResidueMaturation] = useState<ResidueOption |null>({
+        value: 0,
+        label: 'Choose a residue'
+      });
+
+  const handleResidueChangeMaturation = (newValue: SingleValue<ResidueOption>, actionMeta: ActionMeta<ResidueOption>) => {
+    
+      setSelectedResidueMaturation(newValue);
+     
+  };
+  
+  const handleProcessMaturation = async () => {
+    setIsLoading(true);  // Start loading
+    setActiveStep(2); 
+  
+    const payload = {
+        customPDB : isUpload,
+        selectedResidueMaturation: selectedResidueMaturation,
+        uniprotID : uniprotID,
+        filename : UniprotData?.uniprot,
+    };
+  
+    let endpoint = 'https://glycoshape.io/api/maturation'; // default endpoint
+  
+   
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+  
+        if (response.ok) {
+            const responseData = await response.json();
+              setOutputPath(responseData.output);
+              setClashValue(responseData.clash);
+              setBoxValue(responseData.box)
+              setMaturationResults(responseData);
+              setActiveStep(3);  // Move to the 'Download' step after processing
+              setElapsedTime(0);
+            console.log(responseData);
+            // Handle the response data as needed
+        } else {
+            console.error("Failed to post data.");
+        }
+    } catch (error) {
+        console.error("Error occurred:", error);
+    } finally {
+      setIsLoading(false);  // End loading regardless of success or failure
+    }
+  }
+
   const onChange = (
     newValue: OnChangeValue<ResidueOption, true>,
     actionMeta: ActionMeta<ResidueOption>
@@ -237,6 +298,23 @@ interface UniprotData {
         fetchProteinData();
 
     };
+
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          // Assuming you want to fetch data when upload is not in progress and uniprotID is set
+          if (!isUpload && uniprotID) {
+            await fetchProteinData();
+          }
+        } catch (error) {
+          // Handle or log error
+          console.error("Error fetching protein data:", error);
+        }
+      };
+    
+      fetchData();
+    }, [isUpload, uniprotID]);
+    
     
     const [scanResults, setScanResults] = useState<ScanResults | null>({
       box: '',
@@ -244,6 +322,8 @@ interface UniprotData {
       output: '',
       results: [] // Empty results array as initial value
     });
+
+    
     const handleProcessOne_scan = async () => {
       setIsLoading(true);  // Start loading
       setActiveStep(2); 
@@ -979,6 +1059,108 @@ const handleProcessOne = async () => {
                                 </AccordionItem>
 
 
+                                <AccordionItem color='#B07095'>
+                                  <h2>
+                                    <AccordionButton  margin={"0.5rem"} marginLeft={"0"} >
+                                      <Box as="span" flex='1' textAlign='left' >
+                                      <HStack> <Heading  as='h4' size='md'>Predict Glycan type using glycan maturation test</Heading>
+                                      
+                                      </HStack>
+                                      </Box>
+                                      <AccordionIcon />
+                                    </AccordionButton>
+                                  </h2>
+                                  <AccordionPanel pb={4}>
+                                  <Box marginLeft={'1rem'}>
+                                 
+
+                
+                                  {/* <Text fontWeight="bold">Scanning information</Text> */}
+                                  {maturationResults ? (
+        <>
+          {/* <div>Calculation Box: <pre>{scanResults.box}</pre></div> */}
+          {/* <div>Clash: {scanResults.clash ? 'Yes' : 'No'}</div> */}
+          {/* <div>Output File: {scanResults.output}</div> */}
+          {maturationResults.results ? (
+            <div>
+              <strong >Select Residue :</strong>
+              <Select
+      value={selectedResidueMaturation}
+      name="residues"
+      // className="basic-multi-select"
+      // classNamePrefix="select"
+      onChange={handleResidueChangeMaturation}
+      // onSelectResetsInput = {false}
+      closeMenuOnSelect = {true}
+
+      options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
+        value: glycoConf.residueTag,
+        label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
+      }))}
+    />
+              
+              <UnorderedList styleType="none" m={3}>
+              { maturationResults.results.length == 0 && maturationResults.box.length >0 ?  (<div>No <Text as="i">N-glycosylation</Text> possible</div>): (<div></div>)}
+    {maturationResults.results.map((result: ResultItem, index: number) => (
+      <ListItem key={index} mb={2} display="flex" alignItems="center">
+        <Text as="span" fontWeight="bold">Residue:</Text>
+        <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
+          {result.residue}
+        </Box>
+        <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
+        <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
+      </ListItem>
+    ))}
+  </UnorderedList>
+            </div>
+          ) : <div>No <Text as="i">N-glycosylation</Text> location found.</div>}
+        </>
+      ) : (
+        <div>Loading results...</div>
+      )}
+
+
+
+
+      &nbsp;&nbsp;<br/>
+      <Button
+      position={"relative"}
+      margin={'0rem'}
+      borderRadius="full"
+      backgroundColor="#B07095"
+      _hover={{ backgroundColor: "#CF6385" }}
+      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+      onClick={handleProcessOne_scan}
+      // isDisabled={isLoading}
+      isDisabled={true}
+    >
+      {isLoading ? (
+        <Box  position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+          <CircularProgress
+            position="absolute"
+            color="#B07095"
+            size="50px"
+            thickness="5px"
+            isIndeterminate 
+            marginLeft={"15rem"}
+            capIsRound
+          >
+            <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+          </CircularProgress>
+          Testing...
+        </Box>
+      ) : (
+        "Coming soon!"
+      )}
+    </Button>
+    {isLoading && (<Alert status='info' > 
+    <AlertIcon />
+    It can take up to 5 minutes to process your request. Please wait.
+  </Alert>)}
+      
+                              </Box>
+                                  </AccordionPanel>
+                                </AccordionItem>
 
 
 
@@ -1419,7 +1601,14 @@ const handleProcessOne = async () => {
 </Text>
 
 <Text fontFamily={'texts'}>
-<Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
+<Button 
+  margin='0rem' 
+  onClick={async (e) => {
+    setUniprotID("Q9BXJ4");
+    setIsUpload(false);
+    
+    await fetchProteinData();
+  }} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>Q9BXJ4</Button>
 <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P29016</Button>
 <Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>O15552</Button>
 <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{base: "md", sm: "md", md: "md", lg: "lg", xl: "lg"}}>P27918</Button>

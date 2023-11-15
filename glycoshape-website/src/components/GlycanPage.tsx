@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef, } from 'react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons' ;
 import { useLocation, useNavigate } from 'react-router';
 import {
- Show, Hide, Grid,Divider, Spacer, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack, SimpleGrid
+  keyframes ,Show, Hide, Grid,Divider, Spacer, Wrap, WrapItem, Code , HStack,Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack, SimpleGrid
   } from "@chakra-ui/react";
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
 import PieChart from './Pie';
-
+import { css } from '@emotion/react';
 
 
 
@@ -18,7 +18,11 @@ const GlycanPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [sequence, setsequence] = useState<string>(queryParams.get('IUPAC') || '');
     
- 
+    const backgroundPulseAnimation = keyframes`
+  0% { background-color: transparent; }
+  95% { background-color: #F7F9E5; } /* Example highlight color */
+  100% { background-color: transparent; }
+`;
     
 
     const [hasCopied, setHasCopied] = useState(false);
@@ -233,7 +237,11 @@ interface GlycanData {
             </HStack>
             <Spacer />
           <Tab>Information</Tab>
-          <Tab>Structure</Tab>
+          <Tab css={css`
+              animation: ${backgroundPulseAnimation} 1s ease-in-out 5;
+            `}>
+          Structure
+        </Tab>
                             <Button  
                             marginLeft={'1rem'}
                              transform="translateY(50%)"
@@ -691,7 +699,7 @@ interface GlycanData {
 
                   </VStack>
                         
-                        <Image src={`https://glycoshape.io/database/${sequence}/output/dist.svg`} width={{base:'100%',lg:'40vw'}} />
+                        <Image src={`https://glycoshape.io/database/${sequence}/output/dist.svg`} alt="No distribution plot available for this glycan!" width={{base:'100%',lg:'40vw'}} />
                         {/* <Image src='/torsions2.svg' width='40vw' /> */}
                         {/* </HStack>  */}
                         </SimpleGrid>
