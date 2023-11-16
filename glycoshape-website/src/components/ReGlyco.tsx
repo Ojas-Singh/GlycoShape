@@ -960,20 +960,24 @@ const ReGlyco = () => {
                 <div>
                   <Tabs 
                   colorScheme='pink'
-                  isFitted variant='enclosed'
+                  isFitted 
+                  variant='enclosed-colored'
+                  
+                  
                   //  variant='enclosed'
                    align={"start"} 
     // alignItems={"start"}
     maxWidth="100%" 
     padding={"0rem"} 
     paddingTop={"1rem"} 
+   
     // variant='soft-rounded' 
     // colorScheme='green'
     >
       <TabList>
-        <Tab>Build using &nbsp;<Image height="30px" src={uniprot_logo} />&nbsp;</Tab>
-        <Tab>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
-        <Tab>Advanced &nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
+        <Tab border= '1px solid' borderTopRadius= 'xl'>Build using &nbsp;<Image height="30px" src={uniprot_logo} />&nbsp;</Tab>
+        <Tab border= '1px solid' borderTopRadius= 'xl'>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
+        <Tab border= '1px solid' borderTopRadius= 'xl'> Advanced (Site-by-Site) Glycosylation &nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
       </TabList>
       <TabPanels>
       <TabPanel>
@@ -1304,7 +1308,8 @@ const ReGlyco = () => {
                 <div>
                   <Tabs 
                   colorScheme='pink'
-                  isFitted variant='enclosed'
+                  isFitted 
+                  variant='enclosed-colored'
                   //  variant='enclosed'
                    align={"start"} 
     // alignItems={"start"}
@@ -1315,13 +1320,13 @@ const ReGlyco = () => {
     // colorScheme='green'
     >
       <TabList>
-        <Tab>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
-        <Tab>Advanced &nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
+        <Tab border= '1px solid' borderTopRadius= 'xl'>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
+        <Tab border= '1px solid' borderTopRadius= 'xl'>Advanced (Site-by-Site) Glycosylation&nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
       </TabList>
       <TabPanels>
       
 
-        <TabPanel> 
+        <TabPanel > 
         {scanResults ? ( 
         <Box margin={'1rem'}>
         
