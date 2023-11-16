@@ -962,7 +962,7 @@ const ReGlyco = () => {
                   colorScheme='pink'
                   isFitted variant='enclosed'
                   //  variant='enclosed'
-                   align={"end"} 
+                   align={"start"} 
     // alignItems={"start"}
     maxWidth="100%" 
     padding={"0rem"} 
@@ -1306,7 +1306,7 @@ const ReGlyco = () => {
                   colorScheme='pink'
                   isFitted variant='enclosed'
                   //  variant='enclosed'
-                   align={"end"} 
+                   align={"start"} 
     // alignItems={"start"}
     maxWidth="100%" 
     padding={"0rem"} 
