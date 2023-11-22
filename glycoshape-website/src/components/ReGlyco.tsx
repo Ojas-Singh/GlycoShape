@@ -326,7 +326,7 @@ const ReGlyco = () => {
             output: '',
             results: [] // Empty results array as initial value
           })
-          
+
         }
       } catch (error) {
         // Handle or log error
@@ -345,7 +345,7 @@ const ReGlyco = () => {
     results: [] // Empty results array as initial value
   });
 
-  
+
   const handleProcessOne_scan = async () => {
     setIsLoading(true);  // Start loading
     setActiveStep(2);
@@ -481,7 +481,7 @@ const ReGlyco = () => {
           setSelectedGlycans({});
           setSelectedGlycanImage({});
           setActiveStep(1);
-          
+
         } catch (error) {
           if (error instanceof Error) {
             // setError(error.message);
@@ -662,7 +662,7 @@ const ReGlyco = () => {
       uniprotID: uniprotID,
       filename: UniprotData?.uniprot,
       result: scanResults?.results,
-      selectedGlycanOption:  selectedGlycanOption 
+      selectedGlycanOption: selectedGlycanOption
     };
 
     let endpoint = 'https://glycoshape.io/api/oneshot_pdb'; // default endpoint
@@ -958,653 +958,653 @@ const ReGlyco = () => {
 
               {!isUpload && UniprotData.glycosylation_locations.glycosylations.length > 0 ? (
                 <div>
-                  <Tabs 
-                  colorScheme='pink'
-                  isFitted 
-                  variant='enclosed-colored'
-                  
-                  
-                  //  variant='enclosed'
-                   align={"start"} 
-    // alignItems={"start"}
-    maxWidth="100%" 
-    padding={"0rem"} 
-    paddingTop={"1rem"} 
-   
-    // variant='soft-rounded' 
-    // colorScheme='green'
-    >
-      <TabList>
-        <Tab border= '1px solid' borderTopRadius= 'xl'>Build using &nbsp;<Image height="30px" src={uniprot_logo} />&nbsp;</Tab>
-        <Tab border= '1px solid' borderTopRadius= 'xl'>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
-        <Tab border= '1px solid' borderTopRadius= 'xl'> Advanced (Site-by-Site) Glycosylation &nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
-      </TabList>
-      <TabPanels>
-      <TabPanel>
-      <Box margin={'1rem'}>
-            <Text fontWeight="bold" fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}>Glycosylations</Text>
-            <UnorderedList m={3}>
-              {UniprotData.glycosylation_locations.glycosylations.map((glyco, index) => (
-                <ListItem key={index} mb={2} display="flex" alignItems="center" >
-                  
-                    <HStack>
-                    <Text fontWeight={"bold"}>Residue: </Text> <Text color="black" fontSize='xs'>{glyco.begin} &nbsp;
-                    {glyco.description}</Text>
-                    </HStack>
-                  
-                </ListItem>
-              ))}
-            </UnorderedList>
+                  <Tabs
+                    colorScheme='pink'
+                    isFitted
+                    variant='enclosed-colored'
 
-            <Button
-              position={"relative"}
-              margin={'1rem'}
-              borderRadius="full"
-              backgroundColor="#B07095"
-              _hover={{ backgroundColor: "#CF6385" }}
-              size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-              onClick={handleProcessOne}
-              isDisabled={isLoading}
-            >
-              {isLoading ? (
-                <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                  <CircularProgress
-                    position="absolute"
-                    color="#B07095"
-                    size="50px"
-                    thickness="5px"
-                    isIndeterminate
-                    marginLeft={"15rem"}
-                    capIsRound
+
+                    //  variant='enclosed'
+                    align={"start"}
+                    // alignItems={"start"}
+                    maxWidth="100%"
+                    padding={"0rem"}
+                    paddingTop={"1rem"}
+
+                  // variant='soft-rounded' 
+                  // colorScheme='green'
                   >
-                    <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                  </CircularProgress>
-                  Processing...
-                </Box>
-              ) : (
-                "Process"
-              )}
-            </Button>
-            {isLoading && (
-              <Alert status='info'>
-                <AlertIcon />
-                It can take up to 5 minutes to process your request. Please wait.
-              </Alert>
-            )}
-          </Box>
-        </TabPanel>
+                    <TabList>
+                      <Tab border='1px solid' borderTopRadius='xl'>Build using &nbsp;<Image height="30px" src={uniprot_logo} />&nbsp;</Tab>
+                      <Tab border='1px solid' borderTopRadius='xl'>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
+                      <Tab border='1px solid' borderTopRadius='xl'> Advanced (Site-by-Site) Glycosylation &nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
+                    </TabList>
+                    <TabPanels>
+                      <TabPanel>
+                        <Box margin={'1rem'}>
+                          <Text fontWeight="bold" fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}>Glycosylations</Text>
+                          <UnorderedList m={3}>
+                            {UniprotData.glycosylation_locations.glycosylations.map((glyco, index) => (
+                              <ListItem key={index} mb={2} display="flex" alignItems="center" >
 
-        <TabPanel> 
-        {scanResults ? ( 
-        <Box margin={'1rem'}>
-        
-            {scanResults.results ? (
-              <div>
-                <Text fontWeight="bold" fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}>Scanning information:</Text>
-                <UnorderedList styleType="none" m={3}>
-                {scanResults.results.map((result, index) => (
-                    <ListItem key={index} mb={2} display="flex" alignItems="center">
-                      <Text as="span" fontWeight="bold">Residue:</Text>
-                      <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
-                        {result.residue}
-                      </Box>
-                      <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
-                      <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
-                    </ListItem>
-                  ))}
-                  {scanResults.results.length === 0 && scanResults.box.length > 0 ? (
-                    <div>No <Text as="i">N-glycosylation</Text> possible</div>
-                  ) : ( null)}
-                  {scanResults.results.length > 0  ? (
-                   <Box marginLeft={'0rem'} marginTop={'1rem'} marginBottom={'1rem'}>
+                                <HStack>
+                                  <Text fontWeight={"bold"}>Residue: </Text> <Text color="black" fontSize='xs'>{glyco.begin} &nbsp;
+                                    {glyco.description}</Text>
+                                </HStack>
 
-                   <div>
-                     <HStack>
-                       <Heading m={1} fontSize={"sm"}>On all predicted sequons : &nbsp;</Heading>
-                       <Menu>
-                         <MenuButton
-                           as={Button}
-                           bgColor={"#B07095"}
-                           _hover={{ backgroundColor: "#CF6385" }}
-                           width="70%"
-                           color={"#1A202C"}
-                         >
-                           {selectedGlycanOption || 'Select Glycan Option'}
-                         </MenuButton>
-                         <MenuList maxHeight="300px" overflowY="auto">
-                           {glycanOptions.map((option, index) => (
-                             <MenuItem
-                               key={index}
-                               onClick={() => {
-                                 setSelectedGlycanOption(option);
-                               }}
-                             ><Image
-                                 src={`https://glycoshape.io/database/${option}/${option}.svg`}
-                                 alt="Glycan Image"
-                                 height="80px"
-                                 maxWidth={"90%"}
-                                 mr={2}
-                               />
-                               {option.length > 40 ? option.substring(0, trimLength) + "..." : option}
-                             </MenuItem>
-                           ))}
-                         </MenuList>
-                       </Menu>
-                   
-                   
-                       {selectedGlycanOption && (
-                         <Image
-                           src={`https://glycoshape.io/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
-                           alt="Selected Glycan Image"
-                           height="80px"
-                           maxWidth={"90%"}
-                           ml={2}
-                         />
-                       )}
-                     </HStack>
-                   </div>
-                   <Button
-                     position={"relative"}
-                     margin={'1rem'}
-                     borderRadius="full"
-                     backgroundColor="#B07095"
-                     _hover={{ backgroundColor: "#CF6385" }}
-                     size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                     onClick={handleProcessShot}
-                     isDisabled={isLoading}
-                   >
-                     {isLoading ? (
-                       <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                         <CircularProgress
-                           position="absolute"
-                           color="#B07095"
-                           size="50px"
-                           thickness="5px"
-                           isIndeterminate
-                           marginLeft={"15rem"}
-                           capIsRound
-                         >
-                           <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                         </CircularProgress>
-                         Processing...
-                       </Box>
-                     ) : (
-                       "Process"
-                     )}
-                   </Button>
-                   {isLoading && (<Alert status='info' >
-                     <AlertIcon />
-                     It can take up to 5 minutes to process your request. Please wait.
-                   </Alert>)}</Box>
-                  ) : ( null)}
-                </UnorderedList>
-                
-               
+                              </ListItem>
+                            ))}
+                          </UnorderedList>
 
-              </div>
-            ) : (
-             <div>No <Text as="i">N-glycosylation</Text> location found.</div>
-            )}
-            
-            {scanResults.box.length == 0  ? (
-              <div>
-            <Button
-              position={"relative"}
-              margin={'1rem'}
-              borderRadius="full"
-              backgroundColor="#B07095"
-              _hover={{ backgroundColor: "#CF6385" }}
-              size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-              onClick={handleProcessOne_scan}
-              isDisabled={isLoading}
-            >
-              {isLoading ? (
-                <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                  <CircularProgress
-                    position="absolute"
-                    color="#B07095"
-                    size="50px"
-                    thickness="5px"
-                    isIndeterminate
-                    marginLeft={"15rem"}
-                    capIsRound
-                  >
-                    <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                  </CircularProgress>
-                  Scanning...
-                </Box>
-              ) : (
-                "Scan"
-              )}
-            </Button>
-            {isLoading && (
-              <Alert status='info'>
-                <AlertIcon />
-                It can take up to 5 minutes to process your request. Please wait.
-              </Alert>
-            )}</div>):(<div></div>)}
-          </Box> ):(<div></div>)}
-        </TabPanel>
-        <TabPanel>
-        <Heading margin={'1rem'}  marginBottom={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
-                Select residues to glycosylate
-              </Heading>
-              <Select
-                value={value}
-                isMulti
-                name="residues"
-                className="basic-multi-select"
-                classNamePrefix="select"
-                onChange={onChange}
-                // onSelectResetsInput = {false}
-                closeMenuOnSelect={false}
+                          <Button
+                            position={"relative"}
+                            margin={'1rem'}
+                            borderRadius="full"
+                            backgroundColor="#B07095"
+                            _hover={{ backgroundColor: "#CF6385" }}
+                            size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                            onClick={handleProcessOne}
+                            isDisabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                <CircularProgress
+                                  position="absolute"
+                                  color="#B07095"
+                                  size="50px"
+                                  thickness="5px"
+                                  isIndeterminate
+                                  marginLeft={"15rem"}
+                                  capIsRound
+                                >
+                                  <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                </CircularProgress>
+                                Processing...
+                              </Box>
+                            ) : (
+                              "Process"
+                            )}
+                          </Button>
+                          {isLoading && (
+                            <Alert status='info'>
+                              <AlertIcon />
+                              It can take up to 5 minutes to process your request. Please wait.
+                            </Alert>
+                          )}
+                        </Box>
+                      </TabPanel>
 
-                options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
-                  value: glycoConf.residueTag,
-                  label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
-                }))}
-              />
+                      <TabPanel>
+                        {scanResults ? (
+                          <Box margin={'1rem'}>
 
-              {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
-                const isSelected = value.find(option => option.value === glycoConf.residueTag);
-                return isSelected ? (
-                  <div key={index}>
-                    <HStack>
-                      <Heading margin={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} id={`glycan-${index}`} fontFamily={'texts'}>
-                        {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
-                      </Heading>
+                            {scanResults.results ? (
+                              <div>
+                                <Text fontWeight="bold" fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}>Scanning information:</Text>
+                                <UnorderedList styleType="none" m={3}>
+                                  {scanResults.results.map((result, index) => (
+                                    <ListItem key={index} mb={2} display="flex" alignItems="center">
+                                      <Text as="span" fontWeight="bold">Residue:</Text>
+                                      <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
+                                        {result.residue}
+                                      </Box>
+                                      <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
+                                      <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
+                                    </ListItem>
+                                  ))}
+                                  {scanResults.results.length === 0 && scanResults.box.length > 0 ? (
+                                    <div>No <Text as="i">N-glycosylation</Text> possible</div>
+                                  ) : (null)}
+                                  {scanResults.results.length > 0 ? (
+                                    <Box marginLeft={'0rem'} marginTop={'1rem'} marginBottom={'1rem'}>
+
+                                      <div>
+                                        <HStack>
+                                          <Heading m={1} fontSize={"sm"}>On all predicted sequons : &nbsp;</Heading>
+                                          <Menu>
+                                            <MenuButton
+                                              as={Button}
+                                              bgColor={"#B07095"}
+                                              _hover={{ backgroundColor: "#CF6385" }}
+                                              width="70%"
+                                              color={"#1A202C"}
+                                            >
+                                              {selectedGlycanOption || 'Select Glycan Option'}
+                                            </MenuButton>
+                                            <MenuList maxHeight="300px" overflowY="auto">
+                                              {glycanOptions.map((option, index) => (
+                                                <MenuItem
+                                                  key={index}
+                                                  onClick={() => {
+                                                    setSelectedGlycanOption(option);
+                                                  }}
+                                                ><Image
+                                                    src={`https://glycoshape.io/database/${option}/${option}.svg`}
+                                                    alt="Glycan Image"
+                                                    height="80px"
+                                                    maxWidth={"90%"}
+                                                    mr={2}
+                                                  />
+                                                  {option.length > 40 ? option.substring(0, trimLength) + "..." : option}
+                                                </MenuItem>
+                                              ))}
+                                            </MenuList>
+                                          </Menu>
+
+
+                                          {selectedGlycanOption && (
+                                            <Image
+                                              src={`https://glycoshape.io/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
+                                              alt="Selected Glycan Image"
+                                              height="80px"
+                                              maxWidth={"90%"}
+                                              ml={2}
+                                            />
+                                          )}
+                                        </HStack>
+                                      </div>
+                                      <Button
+                                        position={"relative"}
+                                        margin={'1rem'}
+                                        borderRadius="full"
+                                        backgroundColor="#B07095"
+                                        _hover={{ backgroundColor: "#CF6385" }}
+                                        size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                                        onClick={handleProcessShot}
+                                        isDisabled={isLoading}
+                                      >
+                                        {isLoading ? (
+                                          <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                            <CircularProgress
+                                              position="absolute"
+                                              color="#B07095"
+                                              size="50px"
+                                              thickness="5px"
+                                              isIndeterminate
+                                              marginLeft={"15rem"}
+                                              capIsRound
+                                            >
+                                              <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                            </CircularProgress>
+                                            Processing...
+                                          </Box>
+                                        ) : (
+                                          "Process"
+                                        )}
+                                      </Button>
+                                      {isLoading && (<Alert status='info' >
+                                        <AlertIcon />
+                                        It can take up to 5 minutes to process your request. Please wait.
+                                      </Alert>)}</Box>
+                                  ) : (null)}
+                                </UnorderedList>
 
 
 
-                      <Menu>
-                        <MenuButton as={Button} bgColor={"#B07095"} _hover={{
-                          backgroundColor: "#CF6385"
-                        }} width="70%" color={"#1A202C"}>
-                          {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'}
-                        </MenuButton>
-                        <MenuList maxHeight="300px" overflowY="auto">
-                          {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
-                            <MenuItem
-                              key={glycanIndex}
-                              value={glycanID}
-                              onClick={() =>
-                                handleSelectChange(
-                                  { target: { value: glycanID } } as any,
-                                  `${glycoConf.residueID}_${glycoConf.residueChain}`,
-                                  glycoConf.residueTag
-                                )
-                              }
+                              </div>
+                            ) : (
+                              <div>No <Text as="i">N-glycosylation</Text> location found.</div>
+                            )}
 
-                            >
-                              <Image
-                                src={`https://glycoshape.io/database/${glycanID}/${glycanID}.svg`}
-                                alt="Glycan Image"
-                                height="80px"
-                                maxWidth={"90%"}
-                                mr={2}
-                              />
-                              {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID}
-                            </MenuItem>
-                          ))}
-                        </MenuList>
-                      </Menu>
+                            {scanResults.box.length == 0 ? (
+                              <div>
+                                <Button
+                                  position={"relative"}
+                                  margin={'1rem'}
+                                  borderRadius="full"
+                                  backgroundColor="#B07095"
+                                  _hover={{ backgroundColor: "#CF6385" }}
+                                  size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                                  onClick={handleProcessOne_scan}
+                                  isDisabled={isLoading}
+                                >
+                                  {isLoading ? (
+                                    <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                      <CircularProgress
+                                        position="absolute"
+                                        color="#B07095"
+                                        size="50px"
+                                        thickness="5px"
+                                        isIndeterminate
+                                        marginLeft={"15rem"}
+                                        capIsRound
+                                      >
+                                        <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                      </CircularProgress>
+                                      Scanning...
+                                    </Box>
+                                  ) : (
+                                    "Scan"
+                                  )}
+                                </Button>
+                                {isLoading && (
+                                  <Alert status='info'>
+                                    <AlertIcon />
+                                    It can take up to 5 minutes to process your request. Please wait.
+                                  </Alert>
+                                )}</div>) : (<div></div>)}
+                          </Box>) : (<div></div>)}
+                      </TabPanel>
+                      <TabPanel>
+                        <Heading margin={'1rem'} marginBottom={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
+                          Select residues to glycosylate
+                        </Heading>
+                        <Select
+                          value={value}
+                          isMulti
+                          name="residues"
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                          onChange={onChange}
+                          // onSelectResetsInput = {false}
+                          closeMenuOnSelect={false}
 
-                      {selectedGlycanImage[glycoConf.residueTag] && (
-                        <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
-                          <Image
-                            src={`https://glycoshape.io/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
-                            alt="Glycan Image"
-                            width="150px"
-                          /></Link>
-                      )}
-                    </HStack>
-                  </div>
-                ) : null;
-              })}
+                          options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
+                            value: glycoConf.residueTag,
+                            label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
+                          }))}
+                        />
 
-              <Button
-                position={"relative"}
-                margin={'1rem'}
-                borderRadius="full"
-                backgroundColor="#B07095"
-                _hover={{ backgroundColor: "#CF6385" }}
-                size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                onClick={isUpload ? handleProcessCustom : handleProcess}
-                isDisabled={isLoading} // Disable the button while processing
-              >
-                {isLoading ? (
-                  <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                    <CircularProgress
-                      position="absolute"
-                      color="#B07095"
-                      size="50px"
-                      thickness="5px"
-                      isIndeterminate
-                      marginLeft={"15rem"}
-                      capIsRound
-                    >
-                      <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                    </CircularProgress>
-                    Processing...
+                        {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
+                          const isSelected = value.find(option => option.value === glycoConf.residueTag);
+                          return isSelected ? (
+                            <div key={index}>
+                              <HStack>
+                                <Heading margin={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} id={`glycan-${index}`} fontFamily={'texts'}>
+                                  {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
+                                </Heading>
 
 
-                  </Box>
-                ) : (
-                  "Process"
-                )}
-              </Button>
-              {isLoading && (<Alert status='info' >
-                <AlertIcon />
-                It can take up to 5 minutes to process your request. Please wait.
-              </Alert>)}
 
-        </TabPanel>
+                                <Menu>
+                                  <MenuButton as={Button} bgColor={"#B07095"} _hover={{
+                                    backgroundColor: "#CF6385"
+                                  }} width="70%" color={"#1A202C"}>
+                                    {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'}
+                                  </MenuButton>
+                                  <MenuList maxHeight="300px" overflowY="auto">
+                                    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
+                                      <MenuItem
+                                        key={glycanIndex}
+                                        value={glycanID}
+                                        onClick={() =>
+                                          handleSelectChange(
+                                            { target: { value: glycanID } } as any,
+                                            `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                                            glycoConf.residueTag
+                                          )
+                                        }
 
-      </TabPanels>
+                                      >
+                                        <Image
+                                          src={`https://glycoshape.io/database/${glycanID}/${glycanID}.svg`}
+                                          alt="Glycan Image"
+                                          height="80px"
+                                          maxWidth={"90%"}
+                                          mr={2}
+                                        />
+                                        {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID}
+                                      </MenuItem>
+                                    ))}
+                                  </MenuList>
+                                </Menu>
 
-      </Tabs>
+                                {selectedGlycanImage[glycoConf.residueTag] && (
+                                  <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
+                                    <Image
+                                      src={`https://glycoshape.io/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
+                                      alt="Glycan Image"
+                                      width="150px"
+                                    /></Link>
+                                )}
+                              </HStack>
+                            </div>
+                          ) : null;
+                        })}
+
+                        <Button
+                          position={"relative"}
+                          margin={'1rem'}
+                          borderRadius="full"
+                          backgroundColor="#B07095"
+                          _hover={{ backgroundColor: "#CF6385" }}
+                          size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                          onClick={isUpload ? handleProcessCustom : handleProcess}
+                          isDisabled={isLoading} // Disable the button while processing
+                        >
+                          {isLoading ? (
+                            <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                              <CircularProgress
+                                position="absolute"
+                                color="#B07095"
+                                size="50px"
+                                thickness="5px"
+                                isIndeterminate
+                                marginLeft={"15rem"}
+                                capIsRound
+                              >
+                                <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                              </CircularProgress>
+                              Processing...
+
+
+                            </Box>
+                          ) : (
+                            "Process"
+                          )}
+                        </Button>
+                        {isLoading && (<Alert status='info' >
+                          <AlertIcon />
+                          It can take up to 5 minutes to process your request. Please wait.
+                        </Alert>)}
+
+                      </TabPanel>
+
+                    </TabPanels>
+
+                  </Tabs>
                 </div>
               ) : (
                 <div>
-                  <Tabs 
-                  colorScheme='pink'
-                  isFitted 
-                  variant='enclosed-colored'
-                  //  variant='enclosed'
-                   align={"start"} 
-    // alignItems={"start"}
-    maxWidth="100%" 
-    padding={"0rem"} 
-    paddingTop={"1rem"} 
-    // variant='soft-rounded' 
-    // colorScheme='green'
-    >
-      <TabList>
-        <Tab border= '1px solid' borderTopRadius= 'xl'>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
-        <Tab border= '1px solid' borderTopRadius= 'xl'>Advanced (Site-by-Site) Glycosylation&nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
-      </TabList>
-      <TabPanels>
-      
-
-        <TabPanel > 
-        {scanResults ? ( 
-        <Box margin={'1rem'}>
-        
-            {scanResults.results ? (
-              <div>
-                <Text fontWeight="bold" fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}>Scanning information:</Text>
-                <UnorderedList styleType="none" m={3}>
-                {scanResults.results.map((result, index) => (
-                    <ListItem key={index} mb={2} display="flex" alignItems="center">
-                      <Text as="span" fontWeight="bold">Residue:</Text>
-                      <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
-                        {result.residue}
-                      </Box>
-                      <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
-                      <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
-                    </ListItem>
-                  ))}
-                  {scanResults.results.length === 0 && scanResults.box.length > 0 ? (
-                    <div>No <Text as="i">N-glycosylation</Text> possible</div>
-                  ) : ( null)}
-                  {scanResults.results.length > 0  ? (
-                   <Box marginLeft={'0rem'} marginTop={'1rem'} marginBottom={'1rem'}>
-
-                   <div>
-                     <HStack>
-                       <Heading m={1} fontSize={"sm"}>On all predicted sequons : &nbsp;</Heading>
-                       <Menu>
-                         <MenuButton
-                           as={Button}
-                           bgColor={"#B07095"}
-                           _hover={{ backgroundColor: "#CF6385" }}
-                           width="70%"
-                           color={"#1A202C"}
-                         >
-                           {selectedGlycanOption || 'Select Glycan Option'}
-                         </MenuButton>
-                         <MenuList maxHeight="300px" overflowY="auto">
-                           {glycanOptions.map((option, index) => (
-                             <MenuItem
-                               key={index}
-                               onClick={() => {
-                                 setSelectedGlycanOption(option);
-                               }}
-                             ><Image
-                                 src={`https://glycoshape.io/database/${option}/${option}.svg`}
-                                 alt="Glycan Image"
-                                 height="80px"
-                                 maxWidth={"90%"}
-                                 mr={2}
-                               />
-                               {option.length > 40 ? option.substring(0, trimLength) + "..." : option}
-                             </MenuItem>
-                           ))}
-                         </MenuList>
-                       </Menu>
-                   
-                   
-                       {selectedGlycanOption && (
-                         <Image
-                           src={`https://glycoshape.io/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
-                           alt="Selected Glycan Image"
-                           height="80px"
-                           maxWidth={"90%"}
-                           ml={2}
-                         />
-                       )}
-                     </HStack>
-                   </div>
-                   <Button
-                     position={"relative"}
-                     margin={'1rem'}
-                     borderRadius="full"
-                     backgroundColor="#B07095"
-                     _hover={{ backgroundColor: "#CF6385" }}
-                     size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                     onClick={handleProcessShot}
-                     isDisabled={isLoading}
-                   >
-                     {isLoading ? (
-                       <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                         <CircularProgress
-                           position="absolute"
-                           color="#B07095"
-                           size="50px"
-                           thickness="5px"
-                           isIndeterminate
-                           marginLeft={"15rem"}
-                           capIsRound
-                         >
-                           <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                         </CircularProgress>
-                         Processing...
-                       </Box>
-                     ) : (
-                       "Process"
-                     )}
-                   </Button>
-                   {isLoading && (<Alert status='info' >
-                     <AlertIcon />
-                     It can take up to 5 minutes to process your request. Please wait.
-                   </Alert>)}</Box>
-                  ) : ( null)}
-                </UnorderedList>
-                
-               
-
-              </div>
-            ) : (
-             <div>No <Text as="i">N-glycosylation</Text> location found.</div>
-            )}
-            
-            {scanResults.box.length == 0  ? (
-              <div>
-            <Button
-              position={"relative"}
-              margin={'1rem'}
-              borderRadius="full"
-              backgroundColor="#B07095"
-              _hover={{ backgroundColor: "#CF6385" }}
-              size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-              onClick={handleProcessOne_scan}
-              isDisabled={isLoading}
-            >
-              {isLoading ? (
-                <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                  <CircularProgress
-                    position="absolute"
-                    color="#B07095"
-                    size="50px"
-                    thickness="5px"
-                    isIndeterminate
-                    marginLeft={"15rem"}
-                    capIsRound
+                  <Tabs
+                    colorScheme='pink'
+                    isFitted
+                    variant='enclosed-colored'
+                    //  variant='enclosed'
+                    align={"start"}
+                    // alignItems={"start"}
+                    maxWidth="100%"
+                    padding={"0rem"}
+                    paddingTop={"1rem"}
+                  // variant='soft-rounded' 
+                  // colorScheme='green'
                   >
-                    <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                  </CircularProgress>
-                  Scanning...
-                </Box>
-              ) : (
-                "Scan"
-              )}
-            </Button>
-            {isLoading && (
-              <Alert status='info'>
-                <AlertIcon />
-                It can take up to 5 minutes to process your request. Please wait.
-              </Alert>
-            )}</div>):(<div></div>)}
-          </Box> ):(<div></div>)}
-        </TabPanel>
-        <TabPanel>
-        <Heading margin={'1rem'}  marginBottom={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
-                Select residues to glycosylate
-              </Heading>
-              <Select
-                value={value}
-                isMulti
-                name="residues"
-                className="basic-multi-select"
-                classNamePrefix="select"
-                onChange={onChange}
-                // onSelectResetsInput = {false}
-                closeMenuOnSelect={false}
-
-                options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
-                  value: glycoConf.residueTag,
-                  label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
-                }))}
-              />
-
-              {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
-                const isSelected = value.find(option => option.value === glycoConf.residueTag);
-                return isSelected ? (
-                  <div key={index}>
-                    <HStack>
-                      <Heading margin={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} id={`glycan-${index}`} fontFamily={'texts'}>
-                        {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
-                      </Heading>
+                    <TabList>
+                      <Tab border='1px solid' borderTopRadius='xl'>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
+                      <Tab border='1px solid' borderTopRadius='xl'>Advanced (Site-by-Site) Glycosylation&nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
+                    </TabList>
+                    <TabPanels>
 
 
+                      <TabPanel >
+                        {scanResults ? (
+                          <Box margin={'1rem'}>
 
-                      <Menu>
-                        <MenuButton as={Button} bgColor={"#B07095"} _hover={{
-                          backgroundColor: "#CF6385"
-                        }} width="70%" color={"#1A202C"}>
-                          {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'}
-                        </MenuButton>
-                        <MenuList maxHeight="300px" overflowY="auto">
-                          {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
-                            <MenuItem
-                              key={glycanIndex}
-                              value={glycanID}
-                              onClick={() =>
-                                handleSelectChange(
-                                  { target: { value: glycanID } } as any,
-                                  `${glycoConf.residueID}_${glycoConf.residueChain}`,
-                                  glycoConf.residueTag
-                                )
-                              }
+                            {scanResults.results ? (
+                              <div>
+                                <Text fontWeight="bold" fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}>Scanning information:</Text>
+                                <UnorderedList styleType="none" m={3}>
+                                  {scanResults.results.map((result, index) => (
+                                    <ListItem key={index} mb={2} display="flex" alignItems="center">
+                                      <Text as="span" fontWeight="bold">Residue:</Text>
+                                      <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
+                                        {result.residue}
+                                      </Box>
+                                      <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
+                                      <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
+                                    </ListItem>
+                                  ))}
+                                  {scanResults.results.length === 0 && scanResults.box.length > 0 ? (
+                                    <div>No <Text as="i">N-glycosylation</Text> possible</div>
+                                  ) : (null)}
+                                  {scanResults.results.length > 0 ? (
+                                    <Box marginLeft={'0rem'} marginTop={'1rem'} marginBottom={'1rem'}>
 
-                            >
-                              <Image
-                                src={`https://glycoshape.io/database/${glycanID}/${glycanID}.svg`}
-                                alt="Glycan Image"
-                                height="80px"
-                                maxWidth={"90%"}
-                                mr={2}
-                              />
-                              {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID}
-                            </MenuItem>
-                          ))}
-                        </MenuList>
-                      </Menu>
-
-                      {selectedGlycanImage[glycoConf.residueTag] && (
-                        <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
-                          <Image
-                            src={`https://glycoshape.io/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
-                            alt="Glycan Image"
-                            width="150px"
-                          /></Link>
-                      )}
-                    </HStack>
-                  </div>
-                ) : null;
-              })}
-
-              <Button
-                position={"relative"}
-                margin={'1rem'}
-                borderRadius="full"
-                backgroundColor="#B07095"
-                _hover={{ backgroundColor: "#CF6385" }}
-                size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                onClick={isUpload ? handleProcessCustom : handleProcess}
-                isDisabled={isLoading} // Disable the button while processing
-              >
-                {isLoading ? (
-                  <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                    <CircularProgress
-                      position="absolute"
-                      color="#B07095"
-                      size="50px"
-                      thickness="5px"
-                      isIndeterminate
-                      marginLeft={"15rem"}
-                      capIsRound
-                    >
-                      <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                    </CircularProgress>
-                    Processing...
+                                      <div>
+                                        <HStack>
+                                          <Heading m={1} fontSize={"sm"}>On all predicted sequons : &nbsp;</Heading>
+                                          <Menu>
+                                            <MenuButton
+                                              as={Button}
+                                              bgColor={"#B07095"}
+                                              _hover={{ backgroundColor: "#CF6385" }}
+                                              width="70%"
+                                              color={"#1A202C"}
+                                            >
+                                              {selectedGlycanOption || 'Select Glycan Option'}
+                                            </MenuButton>
+                                            <MenuList maxHeight="300px" overflowY="auto">
+                                              {glycanOptions.map((option, index) => (
+                                                <MenuItem
+                                                  key={index}
+                                                  onClick={() => {
+                                                    setSelectedGlycanOption(option);
+                                                  }}
+                                                ><Image
+                                                    src={`https://glycoshape.io/database/${option}/${option}.svg`}
+                                                    alt="Glycan Image"
+                                                    height="80px"
+                                                    maxWidth={"90%"}
+                                                    mr={2}
+                                                  />
+                                                  {option.length > 40 ? option.substring(0, trimLength) + "..." : option}
+                                                </MenuItem>
+                                              ))}
+                                            </MenuList>
+                                          </Menu>
 
 
-                  </Box>
-                ) : (
-                  "Process"
-                )}
-              </Button>
-              {isLoading && (<Alert status='info' >
-                <AlertIcon />
-                It can take up to 5 minutes to process your request. Please wait.
-              </Alert>)}
+                                          {selectedGlycanOption && (
+                                            <Image
+                                              src={`https://glycoshape.io/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
+                                              alt="Selected Glycan Image"
+                                              height="80px"
+                                              maxWidth={"90%"}
+                                              ml={2}
+                                            />
+                                          )}
+                                        </HStack>
+                                      </div>
+                                      <Button
+                                        position={"relative"}
+                                        margin={'1rem'}
+                                        borderRadius="full"
+                                        backgroundColor="#B07095"
+                                        _hover={{ backgroundColor: "#CF6385" }}
+                                        size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                                        onClick={handleProcessShot}
+                                        isDisabled={isLoading}
+                                      >
+                                        {isLoading ? (
+                                          <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                            <CircularProgress
+                                              position="absolute"
+                                              color="#B07095"
+                                              size="50px"
+                                              thickness="5px"
+                                              isIndeterminate
+                                              marginLeft={"15rem"}
+                                              capIsRound
+                                            >
+                                              <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                            </CircularProgress>
+                                            Processing...
+                                          </Box>
+                                        ) : (
+                                          "Process"
+                                        )}
+                                      </Button>
+                                      {isLoading && (<Alert status='info' >
+                                        <AlertIcon />
+                                        It can take up to 5 minutes to process your request. Please wait.
+                                      </Alert>)}</Box>
+                                  ) : (null)}
+                                </UnorderedList>
 
-        </TabPanel>
 
-      </TabPanels>
 
-      </Tabs>
+                              </div>
+                            ) : (
+                              <div>No <Text as="i">N-glycosylation</Text> location found.</div>
+                            )}
 
-                  
+                            {scanResults.box.length == 0 ? (
+                              <div>
+                                <Button
+                                  position={"relative"}
+                                  margin={'1rem'}
+                                  borderRadius="full"
+                                  backgroundColor="#B07095"
+                                  _hover={{ backgroundColor: "#CF6385" }}
+                                  size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                                  onClick={handleProcessOne_scan}
+                                  isDisabled={isLoading}
+                                >
+                                  {isLoading ? (
+                                    <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                      <CircularProgress
+                                        position="absolute"
+                                        color="#B07095"
+                                        size="50px"
+                                        thickness="5px"
+                                        isIndeterminate
+                                        marginLeft={"15rem"}
+                                        capIsRound
+                                      >
+                                        <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                      </CircularProgress>
+                                      Scanning...
+                                    </Box>
+                                  ) : (
+                                    "Scan"
+                                  )}
+                                </Button>
+                                {isLoading && (
+                                  <Alert status='info'>
+                                    <AlertIcon />
+                                    It can take up to 5 minutes to process your request. Please wait.
+                                  </Alert>
+                                )}</div>) : (<div></div>)}
+                          </Box>) : (<div></div>)}
+                      </TabPanel>
+                      <TabPanel>
+                        <Heading margin={'1rem'} marginBottom={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
+                          Select residues to glycosylate
+                        </Heading>
+                        <Select
+                          value={value}
+                          isMulti
+                          name="residues"
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                          onChange={onChange}
+                          // onSelectResetsInput = {false}
+                          closeMenuOnSelect={false}
+
+                          options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
+                            value: glycoConf.residueTag,
+                            label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
+                          }))}
+                        />
+
+                        {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
+                          const isSelected = value.find(option => option.value === glycoConf.residueTag);
+                          return isSelected ? (
+                            <div key={index}>
+                              <HStack>
+                                <Heading margin={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} id={`glycan-${index}`} fontFamily={'texts'}>
+                                  {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
+                                </Heading>
+
+
+
+                                <Menu>
+                                  <MenuButton as={Button} bgColor={"#B07095"} _hover={{
+                                    backgroundColor: "#CF6385"
+                                  }} width="70%" color={"#1A202C"}>
+                                    {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'}
+                                  </MenuButton>
+                                  <MenuList maxHeight="300px" overflowY="auto">
+                                    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
+                                      <MenuItem
+                                        key={glycanIndex}
+                                        value={glycanID}
+                                        onClick={() =>
+                                          handleSelectChange(
+                                            { target: { value: glycanID } } as any,
+                                            `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                                            glycoConf.residueTag
+                                          )
+                                        }
+
+                                      >
+                                        <Image
+                                          src={`https://glycoshape.io/database/${glycanID}/${glycanID}.svg`}
+                                          alt="Glycan Image"
+                                          height="80px"
+                                          maxWidth={"90%"}
+                                          mr={2}
+                                        />
+                                        {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID}
+                                      </MenuItem>
+                                    ))}
+                                  </MenuList>
+                                </Menu>
+
+                                {selectedGlycanImage[glycoConf.residueTag] && (
+                                  <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
+                                    <Image
+                                      src={`https://glycoshape.io/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
+                                      alt="Glycan Image"
+                                      width="150px"
+                                    /></Link>
+                                )}
+                              </HStack>
+                            </div>
+                          ) : null;
+                        })}
+
+                        <Button
+                          position={"relative"}
+                          margin={'1rem'}
+                          borderRadius="full"
+                          backgroundColor="#B07095"
+                          _hover={{ backgroundColor: "#CF6385" }}
+                          size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                          onClick={isUpload ? handleProcessCustom : handleProcess}
+                          isDisabled={isLoading} // Disable the button while processing
+                        >
+                          {isLoading ? (
+                            <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                              <CircularProgress
+                                position="absolute"
+                                color="#B07095"
+                                size="50px"
+                                thickness="5px"
+                                isIndeterminate
+                                marginLeft={"15rem"}
+                                capIsRound
+                              >
+                                <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                              </CircularProgress>
+                              Processing...
+
+
+                            </Box>
+                          ) : (
+                            "Process"
+                          )}
+                        </Button>
+                        {isLoading && (<Alert status='info' >
+                          <AlertIcon />
+                          It can take up to 5 minutes to process your request. Please wait.
+                        </Alert>)}
+
+                      </TabPanel>
+
+                    </TabPanels>
+
+                  </Tabs>
+
+
 
                   <br /></div>)}
 
 
-                  
+
 
               {outputPath && (
-                <Box  ref={scrollToRef}>
+                <Box ref={scrollToRef}>
                   {clashValue ? (
                     <Alert status='warning'>
                       <AlertIcon />
@@ -1723,14 +1723,7 @@ const ReGlyco = () => {
                 </Text>
 
                 <Text fontFamily={'texts'}>
-                  <Button
-                    margin='0rem'
-                    onClick={async (e) => {
-                      setUniprotID("Q9BXJ4");
-                      setIsUpload(false);
-
-                      await fetchProteinData();
-                    }} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>Q9BXJ4</Button>
+                  <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>Q9BXJ4</Button>
                   <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P29016</Button>
                   <Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>O15552</Button>
                   <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P27918</Button>

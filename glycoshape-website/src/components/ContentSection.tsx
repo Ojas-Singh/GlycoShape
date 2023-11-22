@@ -36,7 +36,7 @@ const ContentSection: React.FC = () => {
           backgroundImage: `
       radial-gradient(
         circle, 
-        rgba(253, 252, 251, 0.2) 0%, 
+        rgba(253, 252, 251, 0.05) 0%, 
         rgba(247, 249, 229, 0.6) 100%
       ), 
       url(${bg})`,
@@ -58,16 +58,18 @@ const ContentSection: React.FC = () => {
 
        
 
-        <Highlight query='GlycoShape' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+        <Highlight query='GlycoShape' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .45)', color:'#F7FFE6'}}>
          GlycoShape
         </Highlight>
+
+
 
          
         </Heading> 
 
         <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{base: "3xl",sm: "4xl", md: "4xl", lg: "4xl",xl: "4xl"}} fontWeight='bold' marginBottom="0em">
 
-        <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
+        <Highlight query='Glycan Structure Database' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .45)', color:'#F7FFE6'}}>
          Glycan Structure Database 
          
         </Highlight>
