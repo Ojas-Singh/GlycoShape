@@ -56,6 +56,7 @@ const ELab: React.FC = () => {
       name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg', hoverImage: '/img/cat3.jpg', coolImage: '/img/ojas.jpg', bio: "Ojas (he/him) got his BSc and MSc in Chemistry from the Indian Institute of Science Education and Research Mohali. During his masters under the supervision of Dr. P. Balanarayan, he dabbled with different low level programming languages to develop code to optimize the Configuration Interaction (CI) Hamiltonian construction. Working as a research assistant for a year in the lab of Dr. Sabyasachi Rakshit, he designed a high-performance algorithm for magnetic tweezers to monitor real-time protein folding and unfolding at the millisecond temporal resolution and nanometer spatial resolution. Currently, He is pursuing a PhD in computational chemistry at Maynooth University in Ireland. In the eLab, he is building the glycoshape database and creating Re-Glyco. Outside of work, Ojas likes to playing CS, Valorant with his buddies, analysing sci-fi movies, hiding cat pics in this website.", socialLinks: [
         { platform: 'twitter', url: 'https://twitter.com/Ojas_Singh_' },
         { platform: 'github', url: 'https://github.com/Ojas-Singh' },
+        { platform: 'linkedin', url: 'https://www.linkedin.com/in/ojas-singh-192477200/' }
 
       ]
     },
@@ -63,9 +64,18 @@ const ELab: React.FC = () => {
       name: "Silvia D'Andrea", role: 'PhD Student', image: '/img/leg.png', hoverImage: '/img/cat4.jpeg', coolImage: '/img/silvia.jpg', bio: "Silvia D'Andrea holds a master's degree in Industrial Pharmacy from the University of Luigi Vanvitelli in Caserta, Italy. She is currently pursuing a PhD in computational chemistry at Maynooth University in Ireland, with a specific interest in characterizing the structure and dynamics of N/O-glycans to understand the crucial role of glycosylation in proteins. Beyond her studies and career, Silvia loves pizza and enjoys spending time with friends and family. Additionally, she is learning to play the piano to accompany Christmas songs all year round.", socialLinks: [
         { platgorm: 'linkedin', url: 'https://www.linkedin.com/in/silvia-d-andrea-8b2b10187/' }]
     },
-    { name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg', coolImage: '/img/akash.jpg', bio: "" },
-    { name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png', hoverImage: '/img/cat6.jpeg', coolImage: '/img/bea.jpg', bio: "" },
-    { name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg', hoverImage: '/img/cat7.jpeg', coolImage: '/img/elisa.png', bio: "Carl (he/him) is busy writing his thesis, so he doesn't have time to write a bio. He is a PhD student in the eLab." },
+    { name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg', coolImage: '/img/akash.jpg', bio: "Akash Satheesan (he/him) earned his BSc in Pharmaceutical and Biomedical Chemistry in Maynooth University during which he completed an industrial placement where he conducted solid phase peptide synthesis of peptide therapeutics coupled with comprehensive analysis utilizing HPLC and UPLC techniques. Currently, he is pursuing a PhD in Computational Chemistry in Maynooth University. His research is mainly focused on the characterisation of characterising glycan interactions in the context of bacterial infection. Outside of research, Akash enjoys playing basketball, kick-boxing and picking up injuries all year round.", socialLinks: [
+      
+      { platform: 'linkedin', url: 'https://www.linkedin.com/in/akash-s-471435124/' }
+    
+    ] },
+    { name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png', hoverImage: '/img/cat6.jpeg', coolImage: '/img/bea.jpg', bio: "Beatrice is from Italy, and her interests and background span across medicinal chemistry, life sciences, and data science. With a Master’s degree in Medicinal Chemistry from 'La Sapienza' University of Rome, she discovered her passion for computational chemistry. While working at the 'Policlinico A. Gemelli' hospital in Rome, she combined her expertise in computational chemistry with data science. Now, as a PhD student at eLab, her focus is on understanding the selectivity of the N-glycosylation process. She not only loves sugars but also has a passion for cats, astronomy, and travelling." , socialLinks: [
+      {platform : 'twitter', url: 'https://twitter.com/beatrice_tropea'},
+      { platform: 'linkedin', url: 'http://linkedin.com/in/beatrice-tropea-8b9524182' }
+    ] },
+    { name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg', hoverImage: '/img/cat7.jpeg', coolImage: '/img/Fogarty.jpeg', bio: "Carl Fogarty earned a BSc in Chemistry and Statistics from Maynooth University, Beginning In E-lab during his BSc his 4th year project involved iminosuggar derivatives and their 𝛼 ‑ Glucosidase activity. Continuing in the group under the Government of Ireland Postgraduate Scholarship he worked on Characterisation of structure to function relationships in glycans and glycosylated proteins by computer simulation techniques which he created structural models from oligomannose glycan to the SARS-CoV-2 S protein. Currently finishing writing his thesis with the same name. Outside of science Carl is working on getting himself into some semblance of fitness.", socialLinks: [
+      { platform: 'twitter', url: 'https://twitter.com/2016Carl' },
+    ] },
   ];
   const publications = [
     {
