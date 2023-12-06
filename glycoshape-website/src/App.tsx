@@ -18,6 +18,7 @@ import SearchPage from './components/SearchPage';
 import GlycanPage from './components/GlycanPage';
 import theme from './components/Theme';
 import Test from './components/Af';
+import Cite from './components/Cite';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -53,7 +54,7 @@ const App: React.FC = () => {
       
     
       </Flex>
-
+      <Cite />
       {/* Footer */}
       <Footer />
     </Flex>

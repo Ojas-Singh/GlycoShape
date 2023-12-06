@@ -1,7 +1,7 @@
 import React from 'react';
 import {SimpleGrid , Wrap, Highlight, Text, Flex, Box, Image, Heading, Container, Link,  WrapItem, VStack} from "@chakra-ui/react";
 import Searchbar from './SearchBar';
-import bg from './assets/gly.png';
+import bg from './assets/ne.png';
 import cell from './assets/cell_surface.jpg';
 import dem1 from './assets/dem1.jpg';
 import hand from './assets/handnew2.png';
@@ -34,15 +34,20 @@ const ContentSection: React.FC = () => {
 
         sx={{
           backgroundImage: `
+          radial-gradient(
+            circle, 
+            rgba(253, 252, 251, 0.3) 20%, 
+            rgba(247, 249, 229, 0.6) 100%
+          ),
+          url(${bg}),
       radial-gradient(
         circle, 
-        rgba(253, 252, 251, 0.05) 0%, 
-        rgba(247, 249, 229, 0.6) 100%
-      ), 
-      url(${bg})`,
-          backgroundSize: "cover",
+        rgba(253, 252, 251, 0.5) 0%, 
+        rgba(247, 249, 229, 0.8) 100%
+      )`,
+          backgroundSize: "Cover",
           backgroundRepeat: "no-repeat",
-          backgroundPosition: "50% 30%"
+          backgroundPosition: "50% 40%"
         }}
       >              
       
