@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
           <Link color="white" href="/reglyco">Re-Glyco</Link>
           {/* <Link color="white" href="#">Pridiction</Link> */}
           <Link color="white" href="/viewer/index.html">Mol * Viewer</Link>
-          {/* <Link color="white" href="#">Sequence search</Link> */}
+          <Link color="white" href="/swap">ND2 and OD1 Swap</Link>
           
         </VStack>
         {/* <VStack align="start">

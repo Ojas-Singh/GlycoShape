@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import axios from 'axios';
+
 import {
   Button,
   Stack,Badge,
@@ -28,6 +30,17 @@ import { HamburgerIcon } from '@chakra-ui/icons';
 const Navbar: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, md: false });
+
+  useEffect(() => {
+    axios.get('https://glycoshape.io/api/log', { withCredentials: true })
+      .then(response => {
+        // Handle the response if needed
+      })
+      .catch(error => {
+        console.error('Error logging visit:', error);
+      });
+  }, []); // Empty dependency array
+  
 
   return (
     // <Flex as="nav" position="sticky" top="0" zIndex="1000" bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">

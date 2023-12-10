@@ -13,6 +13,7 @@ import Search from './components/SearchTop';
 import API from './components/API';
 import Download from './components/Download';
 import ReGlyco from './components/ReGlyco';
+import Swap from './components/Swap';
 import Elab from './components/eLab/Elab';
 import SearchPage from './components/SearchPage';
 import GlycanPage from './components/GlycanPage';
@@ -47,7 +48,7 @@ const App: React.FC = () => {
           <Route path="/team" element={<div><Search /><Elab /></div>} />
           <Route path="/blog" element={<div><Search /><Elab /></div>} />
           <Route path="/publications" element={<div><Search /><Elab /></div>} />
-          <Route path="/test" element={<div><Search /><Test /></div>} />
+          <Route path="/swap" element={<div><Swap /></div>} />
         </Routes>
         
       
