@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import axios from 'axios';
 
 import {
+  Image,
   Button,
   Stack,Badge,
   Flex,
@@ -25,7 +26,7 @@ import {
   useDisclosure
 } from "@chakra-ui/react";
 import { HamburgerIcon } from '@chakra-ui/icons';
-// import logo from './assets/logo.png';
+import logo from './assets/logo_white.png';
 
 const Navbar: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -50,10 +51,10 @@ const Navbar: React.FC = () => {
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
         <Stack direction='row'>
   
-          <Text top="50%" fontFamily={'texts'} 
-            transform="translateY(20%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Beta</Badge>   </Text>
-
-        <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} href="/" >GlycoShape</Link> 
+          {/* <Text top="50%" fontFamily={'texts'} 
+            transform="translateY(20%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Beta</Badge>   </Text> */}
+          <Image src={logo} transform="translateY(5%)"  alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} />
+        <Link fontWeight="bold" fontSize={"3xl"} transform="translateY(8%)" color={"#F7FFE6"} href="/" >GlycoShape</Link> 
         {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
         </Stack>
       </Box>

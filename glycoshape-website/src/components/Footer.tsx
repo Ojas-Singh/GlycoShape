@@ -8,8 +8,6 @@ import 'react-social-icons/vimeo'
 import ReactDOM from 'react-dom'
 // Placeholder for social media icons. Replace with actual icons.
 const TwitterIcon = <SocialIcon url="https://twitter.com" />
-// const TwitterIcon = () => <Icon viewBox="0 0 24 24">/* SVG content for Twitter */</Icon>;
-const LinkedInIcon = () => <Icon viewBox="0 0 24 24">/* SVG content for LinkedIn */</Icon>;
 
 const Footer: React.FC = () => {
   return (
@@ -18,7 +16,7 @@ const Footer: React.FC = () => {
         <Box>
           <Image src={logo} alt="GlycoShape Logo" height="200px" marginBottom="0.2em" paddingLeft={"1.5rem"} paddingBottom={"0.5rem"}/>
           <Text alignSelf="center" color="lightblue">© GlycoShape</Text>
-          <Link color="white" >Legal Disclaimer | Privacy Notice</Link>
+          <Link color="white" href='/Glycoshape_Legal_Disclaimer_and_Privacy_Policy.pdf' >Legal Disclaimer | Privacy Notice</Link>
           
         </Box>
         <VStack align="start">
@@ -28,13 +26,13 @@ const Footer: React.FC = () => {
           <Link color="white" href="/search?query=O-Glycans">O linked Glycans</Link>
           <Link color="white" href="/search?query=GAGs">Glycosaminoglycans </Link>
         </VStack>
-        <VStack align="start">
+        {/* <VStack align="start">
           <Text color="white" fontWeight="bold">Supporting Data</Text>
           <Divider />
           <Link color="white" href="#">Literature citations</Link>
           <Link color="white" href="#">Keywords</Link>
           <Link color="white" href="#">Cross-referenced databases</Link>
-        </VStack>
+        </VStack> */}
         <VStack align="start">
           <Text color="white" fontWeight="bold">Tools</Text>
           <Divider />
