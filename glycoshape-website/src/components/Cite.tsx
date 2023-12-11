@@ -25,9 +25,7 @@ const Cite = () => {
        
       <Text pl={4} mt={5} mb={4} fontFamily={'texts'} fontSize={{base: "1xl",sm: "1xl", md: "2xl", lg: "lg",xl: "lg"}}>
         All of the data provided is freely available for academic use under
-        Creative Commons Attribution 4.0 <Link color={'#B07095'} href="https://creativecommons.org/licenses/by/4.0/">(CC-BY 4.0)</Link> licence terms. Please contact us at <Link color={'#33588B'} href="mailto:elisa.fadda@mu.ie">elisa.fadda@mu.ie</Link> for Commercial licence. <br/>
-        If you use this resource, 
-        please cite the following papers:
+        Creative Commons Attribution 4.0 <Link color={'#B07095'} href="https://creativecommons.org/licenses/by-nc-nd/4.0/">(CC BY-NC-ND 4.0 Deed)</Link> licence terms. Please contact us at <Link color={'#33588B'} href="mailto:elisa.fadda@mu.ie">elisa.fadda@mu.ie</Link> for Commercial licence. If you use this resource, please cite the following papers:
       </Text>
       
       
