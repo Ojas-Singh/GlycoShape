@@ -2,7 +2,7 @@
 
 This repository contain the codebase for GlycoShape website along with the data used for analysis in the paper.
 
-Re-Glyco repository at https://github.com/Ojas-Singh/Re-Glyco
+Re-Glyco repository at https://github.com/Ojas-Singh/Re-Glyco and 
 GlycanAnalysisPipeline (GAP) at https://github.com/Ojas-Singh/GlycanAnalysisPipeline
 
 # Setup
