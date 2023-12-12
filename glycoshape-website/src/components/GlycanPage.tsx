@@ -168,10 +168,10 @@ interface GlycanData {
   console.log("transformed clusters:", transformedClusters);
 
   const generateIframeSrc = (sequence: string, clusterLength: number) => {
-    const baseClusterURL = `https://glycoshape.io/database/${sequence}/${sequence}_cluster`;
+    const baseClusterURL = `https://glycoshape.io/database/${sequence}/PDB_format_HETATM/${sequence}_cluster`;
   
     // Generate an array of cluster URLs based on the clusterLength
-    const clusterUrls = Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.pdb`);
+    const clusterUrls = Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.PDB.pdb`);
   
     // Join the URLs into a single string with commas between them
     const clusterUrlString = clusterUrls.join(',');
@@ -180,10 +180,10 @@ interface GlycanData {
   };
   
   const generateDownloadUrls = (sequence: string, clusterLength: number) => {
-    const baseClusterURL = `https://glycoshape.io/database/${sequence}/${sequence}_cluster`;
+    const baseClusterURL = `https://glycoshape.io/database/${sequence}/PDB_format_HETATM/${sequence}_cluster`;
   
     // Generate an array of cluster URLs based on the clusterLength
-    return Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.pdb`);
+    return Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.PDB.pdb`);
   };
   
   const downloadUrls = generateDownloadUrls(sequence, clusterLength);
@@ -371,7 +371,7 @@ interface GlycanData {
             <Hide below='lg'>
              <iframe
                       style={{ width: '35vw', height: '50vh' }}
-                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
+                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}//PDB_format_HETATM/${sequence}_cluster0_alpha.PDB.pdb&format=pdb`}    
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
@@ -379,7 +379,7 @@ interface GlycanData {
             <Show below='lg'>
             <iframe
                       style={{ width: '100%', height: '50vh' }}
-                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/${sequence}_cluster0_alpha.pdb&format=pdb`}    
+                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/PDB_format_HETATM/${sequence}_cluster0_alpha.PDB.pdb&format=pdb`}    
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
