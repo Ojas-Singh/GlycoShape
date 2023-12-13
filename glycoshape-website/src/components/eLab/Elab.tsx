@@ -81,6 +81,16 @@ const ELab: React.FC = () => {
     {
       type: "Research Articles in Glycobiology",
       entries: [
+        {title:"Restoring Protein Glycosylation with GlycoShape",
+        authors:"Callum M Ives*, Ojas Singh*, Silvia D’Andrea, Carl A Fogarty, Aoife M Harbison, Akash Satheesan, Beatrice Tropea, Elisa Fadda",
+        source: "bioRxiv (2023)",
+        doi:"https://doi.org/10.1101/2023.12.11.571101"
+        },
+        {title:"#GotGlycans: Role of N343 Glycosylation on the SARS-CoV-2 S RBD Structure and Co-Receptor Binding Across Variants of Concern",
+        authors:"Callum M Ives, Linh Nguyen, Carl A. Fogarty, Aoife M Harbison, Yves Durocher, John S. Klassen, Elisa Fadda",
+        source: "bioRxiv (2023)",
+        doi:"https://doi.org/10.1101/2023.12.05.570076"
+        },
         {
           title: "Variations within the Glycan Shield of SARS-CoV-2 Impact Viral Spike Dynamics",
           authors: "Newby ML, Fogarty CA, Allen JD, Butler J, Fadda E, Crispin M",

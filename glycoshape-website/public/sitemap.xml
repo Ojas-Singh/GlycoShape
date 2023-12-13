@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://glycoshape.org/</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/reglyco</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/search?query=all</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/downloads</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/api-docs</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/faq</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/elab</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/team</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/publications</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/blog</loc>
+    </url>
+    <url>
+        <loc>https://glycoshape.org/swap</loc>
+    </url>
+</urlset>
