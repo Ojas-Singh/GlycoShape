@@ -164,7 +164,7 @@ const ReGlyco = () => {
 
 
   useEffect(() => {
-    fetch("https://glycoshape.io/database/GlcNAc_scan.json")
+    fetch("https://glycoshape.io/database/GLYCAN_TYPE.json")
       .then((response) => response.json())
       .then((data) => {
         if (data.N) {

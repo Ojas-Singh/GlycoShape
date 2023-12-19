@@ -9,10 +9,151 @@ import {
   Text,
   Code
 } from "@chakra-ui/react";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+interface CodeDisplayProps {
+  code: string;
+}
+
+const pythonCode = `
+#demo code for uploading pdb file and downloading processed pdb file
+
+import requests
+import os
+import json
+from datetime import datetime
+
+# Constants
+API_BASE_URL = "https://glycoshape.org" #GlycoShape API URL
+UPLOAD_ENDPOINT = "/api/upload_pdb"
+PROCESS_ENDPOINT = "/api/process_pdb"
+UPLOAD_DIR = "output"  # Local directory to save downloaded PDB files
+
+# Ensure upload directory exists
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+
+def upload_pdb(file_path):
+    """Uploads a PDB file and gets glycosylation configurations."""
+    with open(file_path, 'rb') as file:
+        files = {'pdbFile': file}
+        response = requests.post(API_BASE_URL + UPLOAD_ENDPOINT, files=files)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Error uploading PDB file: {response.json()}")
+
+def process_pdb(uniprot_id, glycan_configurations):
+    """Processes a PDB file with given glycan configurations."""
+    data = {
+        'uniprotID': uniprot_id,
+        'selectedGlycans': glycan_configurations
+    }
+    response = requests.post(API_BASE_URL + PROCESS_ENDPOINT, json=data)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Error processing PDB file: {response.json()}")
+
+def download_processed_pdb(file_name):
+    """Downloads the processed PDB file."""
+    response = requests.get(f"{API_BASE_URL}/output/{file_name}")
+    if response.status_code == 200:
+        with open(os.path.join(UPLOAD_DIR, file_name), 'wb') as file:
+            file.write(response.content)
+    else:
+        raise Exception("Error downloading processed PDB file")
+
+def main():
+    # Example usage
+    pdb_file_path = 'AF-P63279-F1-model_v4.pdb'  # Replace with actual PDB file path
+    upload_response = upload_pdb(pdb_file_path)
+
+
+#       Response layout of upload_pdb
+#     {
+#     "configuration": [     -----> This is the glycan_configurations we use for the next step
+#         {
+#             "glycanIDs": [
+#                 "Fuc(a1-3)[Gal(b1-4)]GlcNAc(b1-3)Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-4)Glc",
+#                 "GlcNAc(b1-6)GalNAc",
+#                 "GlcNAc"
+#             ],
+#             "residueChain": "A",
+#             "residueID": 2,
+#             "residueName": "SER",
+#             "residueTag": 2
+#         },
+#         {
+#             "glycanIDs": [
+#                 "GlcNAc(b1-6)GalNAc",
+#                 "GlcNAc(a1-4)Gal(b1-4)GlcNAc(b1-6)[GlcNAc(a1-4)Gal(b1-3)]GalNAc",
+#                 "Neu5Ac(a2-3)Gal(b1-4)GlcNAc(b1-3)GalNAc",
+#                 "GlcNAc"
+#             ],
+#             "residueChain": "A",
+#             "residueID": 135,
+#             "residueName": "THR",
+#             "residueTag": 135
+#         }
+#     ],
+#     "glycosylation_locations": {   -----> This is the glycosylation_locations not relevant here
+#         "glycosylations": [
+#             [
+#                 2,
+#                 2,
+#                 "A"
+#             ],
+#             [
+#                 135,
+#                 135,
+#                 "A"
+#             ]
+#         ],
+#         "sequence": "MSGIALSRLAQERKAWRKDHPFGFVAVPTKNPDGTMNLMNWECAIPGKKGTPWEGGLFKLRMLFKDDYPSSPPKCKFEPPLFHPNVYPSGTVCLSILEEDKDWRPAITIKQILLGIQELLNEPNIQDPAQAEAYTIYCQNRVEYEKRVRAQAKKFAPS",
+#         "sequenceLength": 158
+#     },
+#     "requestURL": "https://glycoshape.io/output/AF-P63279-F1-model_v4.pdb",    -----> This is the URL of the uploaded pdb file
+#     "uniprot": "AF-P63279-F1-model_v4.pdb"  ---> This is the fileid we use for the next step (its key is uniprot but it is actually the filename of uploaded pdb file)
+# }
+
+
+    glycan_configurations = {
+        '135_A': "GlcNAc",   # ---> residueID_residueChain :  glycanID (glycanID of choice from corresponding configurations)
+        '2_A': "Fuc(a1-3)[Gal(b1-4)]GlcNAc(b1-3)Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-4)Glc"
+    }
+
+
+    file_id = upload_response['uniprot']
+    print(f"Uploaded PDB file: {pdb_file_path}")
+    process_response = process_pdb(file_id, glycan_configurations)
+    output_file_name = process_response['output']
+    download_processed_pdb(output_file_name)
+    print(f"Processed PDB file downloaded: {output_file_name}")
+
+#       Response layout of process_pdb
+#     {
+#     "box": "Calculation started\nResidue : 135A\n GlcNAc ..... ---> Processing log
+#     "clash": true,    ----> Overall clash status
+#     "output": "AF-P63279-F1-model_v4_reglyco_202312190141.pdb",   ----> This is the filename of the processed pdb file with reglyco_YYYYMMDDHHMMSS in the end
+# }
+
+if __name__ == "__main__":
+    main()
+
+`;
 
 const API: React.FC = () => {
   return (
+    <div>
     <Box p={5} maxWidth="800px" margin="0 auto">
+      {/* <iframe
+                src={`https://gist.github.com/Ojas-Singh/d112d260d41eb1875528376d84a4de9c`}
+                style={{ width: '100%', overflow: 'hidden' }}
+                scrolling="no"
+                frameBorder="0"
+            ></iframe> */}
       <Text 
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
@@ -43,57 +184,6 @@ const API: React.FC = () => {
           </AccordionPanel>
         </AccordionItem>
 
-        {/* Endpoint 2 */}
-        <AccordionItem>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-              POST /api/search
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel pb={4}>
-            <Text>Function: search</Text>
-            <Text>Description: This endpoint accepts a search string in the request body and returns a list of results based on the search string. If the search string is empty, it returns a random list of results from a specified directory.</Text>
-            <Code>
-              {`curl -X POST https://glycoshape.io/api/search -H "Content-Type: application/json" -d "{\\"search_string\\": \\"your_search_string_here\\"}"`}
-            </Code>
-          </AccordionPanel>
-        </AccordionItem>
-
-        {/* Endpoint 3 */}
-        <AccordionItem>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-              POST /api/uniprot
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel pb={4}>
-            <Text>Function: uniprot</Text>
-            <Text>Description: This endpoint accepts a UniProt ID in the request body and fetches the corresponding protein data from the AlphaFold database and the UniProt API, returning detailed information including the sequence, glycosylation sites, and available glycans.</Text>
-            <Code>
-  {`curl -X POST https://glycoshape.io/api/uniprot -H "Content-Type: application/json" -d "{\\"uniprot\\": \\"your_uniprot_id_here\\"}"`}
-</Code>
-
-          </AccordionPanel>
-        </AccordionItem>
-
-        {/* Endpoint 4 */}
-        <AccordionItem>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-              POST /api/process_uniprot
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel pb={4}>
-            <Text>Function: process_uniprot</Text>
-            <Text>Description: This endpoint processes data related to a UniProt ID. It accepts a JSON payload containing the UniProt ID and selected glycans, then returns information about the processed data.</Text>
-            <Code>
-              {`curl -X POST https://glycoshape.io/api/process_uniprot -H "Content-Type: application/json" -d "{\\"uniprotID\\": \\"your_uniprot_id_here\\", \\"selectedGlycans\\": {\\"glycan1\\": \\"value1\\", \\"glycan2\\": \\"value2\\"}}\\"`}
-            </Code>
-          </AccordionPanel>
-        </AccordionItem>
 
         {/* Endpoint 5 */}
         <AccordionItem>
@@ -128,8 +218,21 @@ const API: React.FC = () => {
             </Code>
           </AccordionPanel>
         </AccordionItem>
+
+
+
       </Accordion>
+      <Box p="4" borderWidth="1px" borderRadius="lg" maxWidth="1000px"  overflow="hidden">
+            <SyntaxHighlighter language="python" style={tomorrow}>
+                {pythonCode}
+            </SyntaxHighlighter>
+        </Box>
+      
+     
     </Box>
+
+    </div>
+    
   );
 }
 
