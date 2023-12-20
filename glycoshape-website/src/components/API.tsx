@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Link,
   Box,
   Accordion,
   AccordionItem,
@@ -164,9 +165,23 @@ const API: React.FC = () => {
           API Documentation
         </Text>
         <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-            Not stabliized yet. Please contact us if you have any questions.
+            Not stabliized yet. Please contact us <Link href="mailto:OJAS.SINGH.2023@mumail.ie">here</Link> if you have any questions.
             </Text>
-      <Accordion defaultIndex={[0]} allowMultiple>
+
+            <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize={{base: "3xl",sm: "3xl", md: "3xl", lg: "3xl",xl: "3xl"}}
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          GlycoShape APIs
+        </Text>
+      <Accordion 
+      // defaultIndex={[0]}
+       allowMultiple>
+
+      
         {/* Endpoint 1 */}
         <AccordionItem>
           <AccordionButton>
@@ -183,6 +198,71 @@ const API: React.FC = () => {
             </Code>
           </AccordionPanel>
         </AccordionItem>
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+            GET /api/fetch_glytoucan
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+            <Text>Function: fetch_glytoucan</Text>
+            <Text>Description: This endpoint returns a JSON containing information about the queried glycan.</Text>
+            <Code>
+              {`curl "https://glycoshape.org/api/fetch_glytoucan?id=GS00180"`}
+            </Code>
+          </AccordionPanel>
+        </AccordionItem>
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+            Access PDB structure
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+            <Text>All the database files can be accessed at <Link color='#B195A2' href="https://glycoshape.org/database">https://glycoshape.org/database</Link></Text>
+            <Text>example: for glycan <Code>IUPAC_name</Code> and cluster <Code>i</Code> </Text>
+            <Code p="1">
+              
+              {`curl "https://glycoshape.org/database/{IUAPC_name}/PDB_format_HETATM/{IUPAC_name}_cluster{i}_alpha.PDB.pdb"`}
+            </Code>
+            <Text>This will fetch cluster pdb of cluster <Code>i</Code></Text>
+             Please check the database folder for other formats and more information.
+          </AccordionPanel>
+        </AccordionItem>
+
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+            Database Information JSON 
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+            <Text>Database information can be accessed at <Link color='#B195A2' href="https://glycoshape.org/database/GLYCOSHAPE.json">https://glycoshape.org/database/GLYCOSHAPE.json</Link></Text>
+            
+          </AccordionPanel>
+        </AccordionItem>
+
+
+        
+
+
+      </Accordion>
+
+      <Text 
+          bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize={{base: "3xl",sm: "3xl", md: "3xl", lg: "3xl",xl: "3xl"}}
+          fontWeight='extrabold'
+          marginBottom="0.2em"
+        >
+          Re-Glyco APIs
+        </Text>
+        <Accordion  allowMultiple>
+        {/* Endpoint 1 */}
+        
 
 
         {/* Endpoint 5 */}
@@ -220,13 +300,25 @@ const API: React.FC = () => {
         </AccordionItem>
 
 
-
-      </Accordion>
-      <Box p="4" borderWidth="1px" borderRadius="lg" maxWidth="1000px"  overflow="hidden">
+        <AccordionItem>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+              Python code example
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel pb={4}>
+          <Box p="4" borderWidth="1px" borderRadius="lg" maxWidth="1000px"  overflow="hidden">
             <SyntaxHighlighter language="python" style={tomorrow}>
                 {pythonCode}
             </SyntaxHighlighter>
         </Box>
+          </AccordionPanel>
+        </AccordionItem>
+        
+
+      </Accordion>
+      
       
      
     </Box>
