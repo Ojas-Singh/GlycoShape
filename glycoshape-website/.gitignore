@@ -12,6 +12,7 @@
 /build
 /build_dev
 /build_prod
+.env
 /public/database
 
 # misc

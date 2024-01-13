@@ -108,7 +108,7 @@ interface UniprotData {
 const ReGlyco = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = process.env.REACT_APP_BUILD_DEV;
 
   const [uniprotID, setUniprotID] = useState<string>("");
   const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);

@@ -1,3 +1,5 @@
 REACT_APP_API_URL=https://glycoshape.org
 REACT_APP_BUILD_DIR=build_prod
+REACT_APP_BUILD_DEV=False
+
 ```
