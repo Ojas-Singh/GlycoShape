@@ -17,6 +17,7 @@ interface CodeDisplayProps {
   code: string;
 }
 
+const apiUrl = process.env.REACT_APP_API_URL;
 const pythonCode = `
 #demo code for uploading pdb file and downloading processed pdb file
 
@@ -194,7 +195,7 @@ const API: React.FC = () => {
             <Text>Function: list_glycans</Text>
             <Text>Description: This endpoint returns a list of available glycans from a specified directory in the server.</Text>
             <Code>
-              {`curl -X GET https://glycoshape.io/api/available_glycans`}
+              {`curl -X GET ${apiUrl}/api/available_glycans`}
             </Code>
           </AccordionPanel>
         </AccordionItem>
@@ -209,7 +210,7 @@ const API: React.FC = () => {
             <Text>Function: fetch_glytoucan</Text>
             <Text>Description: This endpoint returns a JSON containing information about the queried glycan.</Text>
             <Code>
-              {`curl "https://glycoshape.org/api/fetch_glytoucan?id=GS00180"`}
+              {`curl "${apiUrl}/api/fetch_glytoucan?id=GS00180"`}
             </Code>
           </AccordionPanel>
         </AccordionItem>
@@ -221,11 +222,11 @@ const API: React.FC = () => {
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            <Text>All the database files can be accessed at <Link color='#B195A2' href="https://glycoshape.org/database">https://glycoshape.org/database</Link></Text>
+            <Text>All the database files can be accessed at <Link color='#B195A2' href={`${apiUrl}/database`}>{apiUrl}/database</Link></Text>
             <Text>example: for glycan <Code>IUPAC_name</Code> and cluster <Code>i</Code> </Text>
             <Code p="1">
               
-              {`curl "https://glycoshape.org/database/{IUAPC_name}/PDB_format_HETATM/{IUPAC_name}_cluster{i}_alpha.PDB.pdb"`}
+              {`curl "${apiUrl}/database/{IUAPC_name}/PDB_format_HETATM/{IUPAC_name}_cluster{i}_alpha.PDB.pdb"`}
             </Code>
             <Text>This will fetch cluster pdb of cluster <Code>i</Code></Text>
              Please check the database folder for other formats and more information.
@@ -240,7 +241,7 @@ const API: React.FC = () => {
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            <Text>Database information can be accessed at <Link color='#B195A2' href="https://glycoshape.org/database/GLYCOSHAPE.json">https://glycoshape.org/database/GLYCOSHAPE.json</Link></Text>
+            <Text>Database information can be accessed at <Link color='#B195A2' href={`${apiUrl}/database/GLYCOSHAPE.json`}>{apiUrl}/database/GLYCOSHAPE.json</Link></Text>
             
           </AccordionPanel>
         </AccordionItem>
@@ -277,7 +278,7 @@ const API: React.FC = () => {
             <Text>Function: upload_pdb</Text>
             <Text>Description: This endpoint allows for the uploading of a PDB file to the server. It saves the uploaded file in a specified directory on the server.</Text>
             <Code>
-              {`curl -X POST https://glycoshape.io/api/upload_pdb -F "pdbFile=@path_to_your_pdb_file_here"`}
+              {`curl -X POST ${apiUrl}/api/upload_pdb -F "pdbFile=@path_to_your_pdb_file_here"`}
             </Code>
           </AccordionPanel>
         </AccordionItem>
@@ -294,7 +295,7 @@ const API: React.FC = () => {
             <Text>Function: process_pdb</Text>
             <Text>Description: This endpoint processes a PDB file. It accepts a JSON payload containing a UniProt ID and a list of selected glycans, then attaches the glycans to the protein structure and returns a new PDB file with the modifications.</Text>
             <Code>
-              {`curl -X POST https://glycoshape.io/api/process_pdb -H "Content-Type: application/json" -d '{"uniprotID": "your_uniprot_id_here", "selectedGlycans": {"location1": "glycan1", "location2": "glycan2"}}'`}
+              {`curl -X POST ${apiUrl}/api/process_pdb -H "Content-Type: application/json" -d '{"uniprotID": "your_uniprot_id_here", "selectedGlycans": {"location1": "glycan1", "location2": "glycan2"}}'`}
             </Code>
           </AccordionPanel>
         </AccordionItem>

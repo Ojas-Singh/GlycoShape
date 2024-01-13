@@ -12,6 +12,9 @@ import { css } from '@emotion/react';
 
 
 const GlycanPage: React.FC = () => {
+
+    const apiUrl = process.env.REACT_APP_API_URL;
+
     const navigate  = useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
@@ -168,7 +171,7 @@ interface GlycanData {
   console.log("transformed clusters:", transformedClusters);
 
   const generateIframeSrc = (sequence: string, clusterLength: number) => {
-    const baseClusterURL = `https://glycoshape.io/database/${sequence}/PDB_format_HETATM/${sequence}_cluster`;
+    const baseClusterURL = `${apiUrl}/database/${sequence}/PDB_format_HETATM/${sequence}_cluster`;
   
     // Generate an array of cluster URLs based on the clusterLength
     const clusterUrls = Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.PDB.pdb`);
@@ -180,7 +183,7 @@ interface GlycanData {
   };
   
   const generateDownloadUrls = (sequence: string, clusterLength: number) => {
-    const baseClusterURL = `https://glycoshape.io/database/${sequence}/PDB_format_HETATM/${sequence}_cluster`;
+    const baseClusterURL = `${apiUrl}/database/${sequence}/PDB_format_HETATM/${sequence}_cluster`;
   
     // Generate an array of cluster URLs based on the clusterLength
     return Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.PDB.pdb`);
@@ -191,7 +194,7 @@ interface GlycanData {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`https://glycoshape.io/database/${sequence}/${sequence}.json`);
+        const response = await fetch(`${apiUrl}/database/${sequence}/${sequence}.json`);
         if (!response.ok) {
           throw new Error('Network response was not ok ' + response.statusText);
         }
@@ -223,7 +226,7 @@ interface GlycanData {
           <TabList  display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" marginRight={'2rem'} >
             <HStack >
             <Image
-              src={`https://glycoshape.io/database/${sequence}/${sequence}.svg`} 
+              src={`${apiUrl}/database/${sequence}/${sequence}.svg`} 
               alt="Glycan Image"
               height="5rem"
               maxWidth={'200px'}
@@ -361,7 +364,7 @@ interface GlycanData {
                       <SimpleGrid  alignSelf="center" justifyItems="center" alignItems={"center "} columns={[1,2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
 
                     <Image
-              src={`https://glycoshape.io/database/${sequence}/${sequence}.svg`} 
+              src={`${apiUrl}/database/${sequence}/${sequence}.svg`} 
               alt="Glycan Image"
               // height={{base: "10rem",sm: "10rem", md: "20rem", lg: "25rem",xl: "25rem"}}
               width={{base:'100%',lg:'30vw'}}
@@ -371,7 +374,7 @@ interface GlycanData {
             <Hide below='lg'>
              <iframe
                       style={{ width: '35vw', height: '50vh' }}
-                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}//PDB_format_HETATM/${sequence}_cluster0_alpha.PDB.pdb&format=pdb`}    
+                      src={`/viewer/embedded.html?pdbUrl=${apiUrl}/database/${sequence}//PDB_format_HETATM/${sequence}_cluster0_alpha.PDB.pdb&format=pdb`}    
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
@@ -379,7 +382,7 @@ interface GlycanData {
             <Show below='lg'>
             <iframe
                       style={{ width: '100%', height: '50vh' }}
-                      src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/database/${sequence}/PDB_format_HETATM/${sequence}_cluster0_alpha.PDB.pdb&format=pdb`}    
+                      src={`/viewer/embedded.html?pdbUrl=${apiUrl}/database/${sequence}/PDB_format_HETATM/${sequence}_cluster0_alpha.PDB.pdb&format=pdb`}    
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title="Protein Structure"
@@ -699,7 +702,7 @@ interface GlycanData {
 
                   </VStack>
                         
-                        <Image src={`https://glycoshape.io/database/${sequence}/output/dist.svg`} alt="No distribution plot available for this glycan!" width={{base:'100%',lg:'40vw'}} />
+                        <Image src={`${apiUrl}/database/${sequence}/output/dist.svg`} alt="No distribution plot available for this glycan!" width={{base:'100%',lg:'40vw'}} />
                         {/* <Image src='/torsions2.svg' width='40vw' /> */}
                         {/* </HStack>  */}
                         </SimpleGrid>
@@ -745,7 +748,7 @@ interface GlycanData {
                               }}
                               >Download torsion DATA</Button></HStack>
       <Divider />
-      <ContourPlot dataUrl={`https://glycoshape.io/database/${sequence}/output/torsions.csv`} seq={`${sequence}`}/>
+      <ContourPlot dataUrl={`${apiUrl}/database/${sequence}/output/torsions.csv`} seq={`${sequence}`}/>
    </VStack>
 </Box>
 
@@ -757,11 +760,11 @@ interface GlycanData {
       <Divider />
       <SimpleGrid  alignSelf="center" justifyItems="center" columns={[1,2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
 
-      <Scatter3D dataUrl={`https://glycoshape.io/database/${sequence}/output/pca.csv`} />
+      <Scatter3D dataUrl={`${apiUrl}/database/${sequence}/output/pca.csv`} />
       
       <VStack>
-        <Image width={{base:'100%',lg:'25vw'}} src={`https://glycoshape.io/database/${sequence}/output/PCA_variance.png`} />
-      <Image width={{base:'100%',lg:'25vw'}} src={`https://glycoshape.io/database/${sequence}/output/Silhouette_Score.png`} /></VStack>
+        <Image width={{base:'100%',lg:'25vw'}} src={`${apiUrl}/database/${sequence}/output/PCA_variance.png`} />
+      <Image width={{base:'100%',lg:'25vw'}} src={`${apiUrl}/database/${sequence}/output/Silhouette_Score.png`} /></VStack>
       </SimpleGrid> 
    </VStack>
 

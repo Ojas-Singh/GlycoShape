@@ -26,6 +26,8 @@ type ScatterPoint = {
 
 const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
 
+  const apiUrl = process.env.REACT_APP_API_URL;
+
   const colors = ["#1B9C75", "#D55D02", "#746FB1", "#E12886", "#939242","#E3A902","#A4751D","#646464","#E11A1C","#357AB3"];  // Your color array
 
   const ref = useRef<SVGSVGElement | null>(null);
@@ -35,7 +37,7 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl,seq}) => {
   const [infoData, setInfoData] = useState<any | null>(null);
 
   useEffect(() => {
-    fetch(`https://glycoshape.io/database/${seq}/output/info.json`)
+    fetch(`${apiUrl}/database/${seq}/output/info.json`)
       .then(response => {
         // First, check if the response is ok (status code in the 200-299 range)
         if (!response.ok) {

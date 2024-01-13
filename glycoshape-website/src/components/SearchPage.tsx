@@ -13,6 +13,8 @@ import Draw from './Draw';
 
 
 const SearchPage = () =>{
+
+    const apiUrl = process.env.REACT_APP_API_URL;
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const [results, setResults] = useState<string[]>([]);
@@ -73,13 +75,13 @@ const SearchPage = () =>{
       try {
           let url, body;
           if (wurcsString && !searchString) {
-            url = 'https://glycoshape.io/api/wurcs';
+            url = `${apiUrl}/api/wurcs`;
             body = JSON.stringify({
                 wurcs_string: wurcsString,
             });
         } else if (searchString) {
             setIsWurcsSearch(false);
-            url = 'https://glycoshape.io/api/search';
+            url = `${apiUrl}/api/search`;
             body = JSON.stringify({
                 search_string: searchString,
             });
@@ -369,7 +371,7 @@ const SearchPage = () =>{
                   <Link href={`/glycan?IUPAC=${glycan}`}>
               <Image
                 
-                src={`https://glycoshape.io/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image
+                src={`${apiUrl}/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image
                 alt="Glycan Image"
                 // width="300px"
                 height="150px"

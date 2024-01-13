@@ -10,6 +10,8 @@
 
 # production
 /build
+/build_dev
+/build_prod
 /public/database
 
 # misc

@@ -29,11 +29,13 @@ import { HamburgerIcon } from '@chakra-ui/icons';
 import logo from './assets/logo_white.png';
 
 const Navbar: React.FC = () => {
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const isDevelopment = process.env.NODE_ENV === 'development';
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   useEffect(() => {
-    axios.get('https://glycoshape.io/api/log', { withCredentials: true })
+    axios.get(`${apiUrl}/api/log`, { withCredentials: true })
       .then(response => {
         // Handle the response if needed
       })
@@ -50,10 +52,17 @@ const Navbar: React.FC = () => {
       <Box>
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
         <Stack direction='row'>
+
+
+        {isDevelopment ? (
+        <Text top="50%" fontFamily={'texts'} 
+        transform="translateY(30%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Dev</Badge>   </Text>
+      ) : (
+        <Image src={logo} transform="translateY(5%)"  alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} />
+      )}
   
-          {/* <Text top="50%" fontFamily={'texts'} 
-            transform="translateY(20%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Beta</Badge>   </Text> */}
-          <Image src={logo} transform="translateY(5%)"  alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} />
+          
+         
         <Link fontWeight="bold" fontSize={"3xl"} transform="translateY(8%)" color={"#F7FFE6"} href="/" >GlycoShape</Link> 
         {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
         </Stack>
@@ -78,9 +87,13 @@ const Navbar: React.FC = () => {
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
         <Stack direction='row'>
   
-          <Text top="50%" fontFamily={'texts'} 
-            transform="translateY(20%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Beta</Badge>   </Text>
-
+        {isDevelopment ? (
+        <Text top="50%" fontFamily={'texts'} 
+        transform="translateY(10%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Dev</Badge>   </Text>
+      ) : (
+        <Image src={logo} transform="translateY(5%)"  alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} />
+      )}
+  
         <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} href="/" >GlycoShape</Link> 
         {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
         </Stack>

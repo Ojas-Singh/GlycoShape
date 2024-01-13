@@ -1,16 +1,14 @@
 import React, { useState, ChangeEvent, useEffect, useRef, } from 'react';
 import { useBreakpointValue } from "@chakra-ui/react";
 import axios from 'axios';
-import { Select as ChakraSelect } from '@chakra-ui/react';
-// import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
-// import 'react-json-view-lite/dist/index.css';
+
 import {
   Tabs,
   TabList,
   TabPanels,
   Tab,
   TabPanel,
-  useToast, Hide, SimpleGrid, Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading, Accordion,
+  useToast, Hide, SimpleGrid, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading, Accordion,
   Spacer,
   UnorderedList, ListItem,
   CircularProgress,
@@ -27,11 +25,9 @@ import {
   StepStatus,
   StepTitle,
   Stepper,
-  useSteps, Badge, WrapItem, Image,
+  useSteps, Badge, Box, Image,
   Alert,
   AlertIcon,
-  AlertTitle,
-  AlertDescription,
   Menu, MenuButton, MenuItem, MenuList
 } from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
@@ -63,26 +59,6 @@ interface ResidueOption {
   label: string;
   value: number;
 }
-
-
-
-// interface Glycosylation {
-//   glycosylations: {
-//     begin: string;
-//     category: string;
-//     description: string;
-//     end: string;
-//     // evidences: { code: string }[];
-//     evidences: string[];
-//     ftId: string;
-//     molecule: string;
-//     type: string;
-//   }[];
-//   sequence: string;
-//   sequenceLength: number;
-// }
-
-
 
 interface Glycosylation {
   begin: string;
@@ -131,6 +107,9 @@ interface UniprotData {
 
 const ReGlyco = () => {
 
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   const [uniprotID, setUniprotID] = useState<string>("");
   const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
   const [isUpload, setIsUpload] = useState<boolean>(false);
@@ -164,7 +143,7 @@ const ReGlyco = () => {
 
 
   useEffect(() => {
-    fetch("https://glycoshape.io/database/GLYCAN_TYPE.json")
+    fetch(`${apiUrl}/database/GLYCAN_TYPE.json`)
       .then((response) => response.json())
       .then((data) => {
         if (data.N) {
@@ -238,66 +217,6 @@ const ReGlyco = () => {
     count: steps.length,
   })
 
-  // const [maturationResults, setMaturationResults] = useState<ScanResults | null>({
-  //   box: '',
-  //   clash: false,
-  //   output: '',
-  //   results: [] // Empty results array as initial value
-  // });
-  // const [selectedResidueMaturation, setSelectedResidueMaturation] = useState<ResidueOption | null>({
-  //   value: 0,
-  //   label: 'Choose a residue'
-  // });
-
-  // const handleResidueChangeMaturation = (newValue: SingleValue<ResidueOption>, actionMeta: ActionMeta<ResidueOption>) => {
-
-  //   setSelectedResidueMaturation(newValue);
-
-  // };
-
-  // const handleProcessMaturation = async () => {
-  //   setIsLoading(true);  // Start loading
-  //   setActiveStep(2);
-
-  //   const payload = {
-  //     customPDB: isUpload,
-  //     selectedResidueMaturation: selectedResidueMaturation,
-  //     uniprotID: uniprotID,
-  //     filename: UniprotData?.uniprot,
-  //   };
-
-  //   let endpoint = 'https://glycoshape.io/api/maturation'; // default endpoint
-
-
-  //   try {
-  //     const response = await fetch(endpoint, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       },
-  //       body: JSON.stringify(payload)
-  //     });
-
-  //     if (response.ok) {
-  //       const responseData = await response.json();
-  //       setOutputPath(responseData.output);
-  //       setClashValue(responseData.clash);
-  //       setBoxValue(responseData.box)
-  //       setMaturationResults(responseData);
-  //       setActiveStep(3);  // Move to the 'Download' step after processing
-  //       setElapsedTime(0);
-  //       console.log(responseData);
-  //       // Handle the response data as needed
-  //     } else {
-  //       console.error("Failed to post data.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error occurred:", error);
-  //   } finally {
-  //     setIsLoading(false);  // End loading regardless of success or failure
-  //   }
-  // }
-
   const onChange = (
     newValue: OnChangeValue<ResidueOption, true>,
     actionMeta: ActionMeta<ResidueOption>
@@ -358,7 +277,7 @@ const ReGlyco = () => {
       selectedGlycanOption: isUpload ? selectedGlycanOption : null
     };
 
-    let endpoint = 'https://glycoshape.io/api/scan'; // default endpoint
+    let endpoint = `${apiUrl}/api/scan`; // default endpoint
 
 
     try {
@@ -411,7 +330,7 @@ const ReGlyco = () => {
       try {
         setIsUploading(true); // Set uploading state to true when upload begins
 
-        const response = await axios.post('https://glycoshape.io/api/upload_pdb', formData, {
+        const response = await axios.post(`${apiUrl}/api/upload_pdb`, formData, {
           timeout: 600000,
           onUploadProgress: (progressEvent) => {
             const percentage = progressEvent.total ? (progressEvent.loaded * 100) / progressEvent.total : 0;
@@ -451,7 +370,7 @@ const ReGlyco = () => {
 
   const fetchProteinData = async () => {
     try {
-      const response = await fetch("https://glycoshape.io/api/uniprot", {
+      const response = await fetch(`${apiUrl}/api/uniprot`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -468,7 +387,7 @@ const ReGlyco = () => {
       if (error instanceof Error) {
 
         try {
-          const response = await fetch("https://glycoshape.io/api/rcsb", {
+          const response = await fetch(`${apiUrl}/api/rcsb`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -484,8 +403,6 @@ const ReGlyco = () => {
 
         } catch (error) {
           if (error instanceof Error) {
-            // setError(error.message);
-            // setError("wrong uniprot id or pdb id");
             toast({
               title: 'Wrong uniprot id or pdb id',
               description: "Please check your input and try again.",
@@ -525,11 +442,6 @@ const ReGlyco = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  //   useEffect(() => {
-  //     if (uniprotID) {  // or a more specific check if needed
-  //         fetchProteinData();
-  //     }
-  // }, [uniprotID]);
 
   const handleProcess = async () => {
     setIsLoading(true);  // Start loading
@@ -540,7 +452,7 @@ const ReGlyco = () => {
     };
 
     try {
-      const response = await fetch('https://glycoshape.io/api/process_uniprot', {
+      const response = await fetch(`${apiUrl}/api/process_uniprot`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -577,7 +489,7 @@ const ReGlyco = () => {
     };
 
     try {
-      const response = await fetch('https://glycoshape.io/api/process_pdb', {
+      const response = await fetch(`${apiUrl}/api/process_pdb`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -617,11 +529,11 @@ const ReGlyco = () => {
       selectedGlycanOption: isUpload ? selectedGlycanOption : null
     };
 
-    let endpoint = 'https://glycoshape.io/api/one_uniprot'; // default endpoint
+    let endpoint = `${apiUrl}/api/one_uniprot`; // default endpoint
 
     // If isUpload is true, change the endpoint to /screen_pdb
     // if (isUpload) {
-    //   endpoint = 'https://glycoshape.io/api/oneshot_pdb';
+    //   endpoint = `${apiUrl}/api/oneshot_pdb`;
     // }
 
     try {
@@ -665,7 +577,7 @@ const ReGlyco = () => {
       selectedGlycanOption: selectedGlycanOption
     };
 
-    let endpoint = 'https://glycoshape.io/api/oneshot_pdb'; // default endpoint
+    let endpoint = `${apiUrl}/api/oneshot_pdb`; // default endpoint
 
 
     try {
@@ -696,6 +608,55 @@ const ReGlyco = () => {
     }
   }
 
+
+  const  [isShield, setIsShield] = useState<boolean>(false);
+
+  
+  const handleProcessShield = async () => {
+    setIsLoading(true);  // Start loading
+    setActiveStep(2);
+    
+
+    const payload = {
+      customPDB: isUpload,
+      selectedGlycans: selectedGlycans,
+      uniprotID: uniprotID,
+      filename: UniprotData?.uniprot,
+      result: scanResults?.results,
+      selectedGlycanOption: selectedGlycanOption
+    };
+
+    let endpoint = `${apiUrl}/api/oneshot_pdb`; // default endpoint
+
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        setIsShield(true);
+        setOutputPath(responseData.output);
+        setClashValue(responseData.clash);
+        setBoxValue(responseData.box)
+        setActiveStep(3);  // Move to the 'Download' step after processing
+        setElapsedTime(0);
+        console.log(responseData);
+        // Handle the response data as needed
+      } else {
+        console.error("Failed to post data.");
+      }
+    } catch (error) {
+      console.error("Error occurred:", error);
+    } finally {
+      setIsLoading(false);  // End loading regardless of success or failure
+    }
+  }
 
   const [elapsedTime, setElapsedTime] = useState(0);
   useEffect(() => {
@@ -1079,7 +1040,7 @@ const ReGlyco = () => {
                                                     setSelectedGlycanOption(option);
                                                   }}
                                                 ><Image
-                                                    src={`https://glycoshape.io/database/${option}/${option}.svg`}
+                                                    src={`${apiUrl}/database/${option}/${option}.svg`}
                                                     alt="Glycan Image"
                                                     height="80px"
                                                     maxWidth={"90%"}
@@ -1094,7 +1055,7 @@ const ReGlyco = () => {
 
                                           {selectedGlycanOption && (
                                             <Image
-                                              src={`https://glycoshape.io/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
+                                              src={`${apiUrl}/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
                                               alt="Selected Glycan Image"
                                               height="80px"
                                               maxWidth={"90%"}
@@ -1237,7 +1198,7 @@ const ReGlyco = () => {
 
                                       >
                                         <Image
-                                          src={`https://glycoshape.io/database/${glycanID}/${glycanID}.svg`}
+                                          src={`${apiUrl}/database/${glycanID}/${glycanID}.svg`}
                                           alt="Glycan Image"
                                           height="80px"
                                           maxWidth={"90%"}
@@ -1252,7 +1213,7 @@ const ReGlyco = () => {
                                 {selectedGlycanImage[glycoConf.residueTag] && (
                                   <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
                                     <Image
-                                      src={`https://glycoshape.io/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
+                                      src={`${apiUrl}/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
                                       alt="Glycan Image"
                                       width="150px"
                                     /></Link>
@@ -1310,14 +1271,10 @@ const ReGlyco = () => {
                     colorScheme='pink'
                     isFitted
                     variant='enclosed-colored'
-                    //  variant='enclosed'
                     align={"start"}
-                    // alignItems={"start"}
                     maxWidth="100%"
                     padding={"0rem"}
                     paddingTop={"1rem"}
-                  // variant='soft-rounded' 
-                  // colorScheme='green'
                   >
                     <TabList>
                       <Tab border='1px solid' borderTopRadius='xl'>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
@@ -1371,7 +1328,7 @@ const ReGlyco = () => {
                                                     setSelectedGlycanOption(option);
                                                   }}
                                                 ><Image
-                                                    src={`https://glycoshape.io/database/${option}/${option}.svg`}
+                                                    src={`${apiUrl}/database/${option}/${option}.svg`}
                                                     alt="Glycan Image"
                                                     height="80px"
                                                     maxWidth={"90%"}
@@ -1386,7 +1343,7 @@ const ReGlyco = () => {
 
                                           {selectedGlycanOption && (
                                             <Image
-                                              src={`https://glycoshape.io/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
+                                              src={`${apiUrl}/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
                                               alt="Selected Glycan Image"
                                               height="80px"
                                               maxWidth={"90%"}
@@ -1424,6 +1381,43 @@ const ReGlyco = () => {
                                           "Process"
                                         )}
                                       </Button>
+                                      {isDevelopment ? (
+        <div>
+          <Button
+                                        position={"relative"}
+                                        margin={'1rem'}
+                                        borderRadius="full"
+                                        backgroundColor="#806CA5"
+                                        _hover={{ backgroundColor: "#C094D9" }}
+                                        size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                                        onClick={handleProcessShield}
+                                        isDisabled={isLoading}
+                                      >
+                                        {isLoading ? (
+                                          <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                            <CircularProgress
+                                              position="absolute"
+                                              color="#B07095"
+                                              size="50px"
+                                              thickness="5px"
+                                              isIndeterminate
+                                              marginLeft={"15rem"}
+                                              capIsRound
+                                            >
+                                              <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                            </CircularProgress>
+                                            Calculating Shieding...
+                                          </Box>
+                                        ) : (
+                                          "Calculate Shieding"
+                                        )}
+                                      </Button>
+
+        </div>
+      ) : (
+        <div></div>
+      )}
+                                      
                                       {isLoading && (<Alert status='info' >
                                         <AlertIcon />
                                         It can take up to 5 minutes to process your request. Please wait.
@@ -1529,7 +1523,7 @@ const ReGlyco = () => {
 
                                       >
                                         <Image
-                                          src={`https://glycoshape.io/database/${glycanID}/${glycanID}.svg`}
+                                          src={`${apiUrl}/database/${glycanID}/${glycanID}.svg`}
                                           alt="Glycan Image"
                                           height="80px"
                                           maxWidth={"90%"}
@@ -1544,7 +1538,7 @@ const ReGlyco = () => {
                                 {selectedGlycanImage[glycoConf.residueTag] && (
                                   <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
                                     <Image
-                                      src={`https://glycoshape.io/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
+                                      src={`${apiUrl}/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
                                       alt="Glycan Image"
                                       width="150px"
                                     /></Link>
@@ -1616,16 +1610,43 @@ const ReGlyco = () => {
                     </Alert>
                   )}
 
+                  {isShield ? (
+                  <div>
                   <iframe
                     // key={sequence}
                     width="100%"
                     height="400px"
-                    src={`/viewer/embedded.html?pdbUrl=https://glycoshape.io/output/${outputPath}&format=pdb`} frameBorder="0"
+                    src={`/viewer/index_full.html?snapshot-url=${apiUrl}/output/output.molj&snapshot-url-type=molj`} frameBorder="0"
                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     title="Protein Structure"
                   />
-                  <a href={`https://glycoshape.io/output/${outputPath}`} download>
+                  <a href={`${apiUrl}/output/${outputPath}`} download>
+                    <Button position={"relative"}
+                      margin={'1rem'}
+                      borderRadius="full"
+                      isDisabled={isLoading}
+                      backgroundColor="#806CA5"
+                      _hover={{
+                        backgroundColor: "#C094D9"
+                      }}
+                      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
+
+                      Download Shielding at β PDB File
+                    </Button></a> 
+                    </div>
+                  ):(
+                  <div>
+                  <iframe
+                    // key={sequence}
+                    width="100%"
+                    height="400px"
+                    src={`/viewer/embedded.html?pdbUrl=${apiUrl}/output/${outputPath}&format=pdb`} frameBorder="0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Protein Structure"
+                  />
+                  <a href={`${apiUrl}/output/${outputPath}`} download>
                     <Button position={"relative"}
                       margin={'1rem'}
                       borderRadius="full"
@@ -1637,7 +1658,16 @@ const ReGlyco = () => {
                       size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
 
                       Download Re-glycosylated Structure PDB File
-                    </Button></a> <Text fontWeight="bold">Processing log:</Text><Code>
+                    </Button></a> </div>
+                  )}
+
+
+
+                  
+                  
+                    
+                    
+                    <Text fontWeight="bold">Processing log:</Text><Code>
                     {boxValue.split('\n').map((line, index) => (
                       <React.Fragment key={index}>
                         {line}
@@ -1764,7 +1794,5 @@ const ReGlyco = () => {
     </>
   );
 }
-
-
 
 export default ReGlyco;

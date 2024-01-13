@@ -422,8 +422,8 @@ const ReGlyco = () => {
           backgroundImage: `
                 radial-gradient(
                   circle, 
-                  rgba(247 , 250, 220, 0.2)20%, 
-                  rgba(247 , 250, 220, 0.6) 100%
+                  rgba(142, 85, 117, 0.4)20%, 
+                  rgba(128, 85, 140, 0.9) 100%
                 ), 
                 url(${bg})`,
           backgroundSize: "cover",
@@ -434,23 +434,19 @@ const ReGlyco = () => {
         direction={{ base: "column", sm: "column", md: "row", lg: "row", xl: "row" }}
       >
         <Text
-          bgGradient='linear(to-l, #E2CE69,#E2CE69)'
+          bgGradient='linear(to-l, #F7FFE6,#F7FFE6)'
           bgClip='text'
           fontSize={{ base: "4xl", sm: "4xl", md: "5xl", lg: "5xl", xl: "5xl" }}
-
           marginBottom="0.2em"
         >
-          <Link fontWeight="bold" fontFamily={'heading'} href="/swap" marginRight="20px">Swap ND2 and OD1</Link>
+          <Link fontWeight="bold" fontFamily={'heading'} href="/shield" marginRight="20px">Re-Glyco Ensemble
+</Link>
         </Text>
 
-        
-         
-
-        
         <Box position="relative" display="inline-block" ml="2rem" alignItems="center">
           {!isUploading ? (
             <>
-              <Button as="label" backgroundColor="#E2CE69" _hover={{ backgroundColor: "#E2CE69" }} size="md" w="full">
+              <Button as="label" backgroundColor="#704E8C" _hover={{ backgroundColor: "#805AD5" }} size="md" w="full">
                 Upload your .pdb
               </Button>
               <Input
@@ -469,7 +465,7 @@ const ReGlyco = () => {
             <CircularProgress
               isIndeterminate
               // value={uploadProgress}
-              color="#E2CE69"
+              color="#704E8C"
               size="50px"
               thickness="5px"
               capIsRound
@@ -497,7 +493,7 @@ const ReGlyco = () => {
 
               <Spacer />
               <Box >
-                <Stepper width={{ base: "0%", sm: "0%", md: "auto", lg: "auto", xl: "auto" }} visibility={{ base: "hidden", sm: "hidden", md: "visible", lg: "visible", xl: "visible" }} margin="1rem" size={{ base: "sm", sm: "sm", md: "sm", lg: "md", xl: "md" }} colorScheme='yellow' index={activeStep}>
+                <Stepper width={{ base: "0%", sm: "0%", md: "auto", lg: "auto", xl: "auto" }} visibility={{ base: "hidden", sm: "hidden", md: "visible", lg: "visible", xl: "visible" }} margin="1rem" size={{ base: "sm", sm: "sm", md: "sm", lg: "md", xl: "md" }} colorScheme='purple' index={activeStep}>
                   {steps.map((step, index) => (
                     <Step key={index}>
                       <StepIndicator>
@@ -528,56 +524,13 @@ const ReGlyco = () => {
                 <h2>
                   <AccordionButton margin={"1rem"} marginLeft={"0"} >
                     <Box as="span" flex='1' textAlign='left'>
-                      <Heading as='h4' size='md' color={"#E2CE69"}>Structure Information</Heading>
+                      <Heading as='h4' size='md' color={"#704E8C"}>Structure Information</Heading>
                     </Box>
                     <AccordionIcon />
                   </AccordionButton>
                 </h2>
                 <AccordionPanel>
-                  {!isUpload ? (
-                    <SimpleGrid alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '30% 70%' }} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
-
-                      <Box borderWidth="1px" borderRadius="md" padding={4} width="300px">
-                        <Text fontSize="lg" fontWeight="bold" mb={3}>
-                          3D Viewer
-                        </Text>
-
-                        <Text fontWeight="semibold" mb={2}>Model Confidence:</Text>
-
-                        <Text mb={1}>
-                          <Badge bg="#0053D6" borderRadius="full" px={2}>Very high (pLDDT {'>'} 90)</Badge>
-                        </Text>
-
-                        <Text mb={1}>
-                          <Badge bg="#65CBF3" borderRadius="full" px={2}>Confident (90 {'>'} pLDDT {'>'} 70)</Badge>
-                        </Text>
-
-                        <Text mb={1}>
-                          <Badge bg="#FFDB13" borderRadius="full" px={2}>Low (70 {'>'} pLDDT {'>'} 50)</Badge>
-                        </Text>
-
-                        <Text mb={3}>
-                          <Badge bg="#FF7D45" borderRadius="full" px={2}>Very low (pLDDT {'<'} 50)</Badge>
-                        </Text>
-
-                        <Text fontSize="sm">
-                          AlphaFold produces a per-residue confidence score (pLDDT) between 0 and 100. Some regions below 50 pLDDT may be unstructured in isolation.
-                        </Text>
-                      </Box>
-                      <iframe
-                        key={isUpload ? "uploaded" : UniprotData.requestURL}
-                        width="100%"
-                        height="400px"
-
-                        src={isUpload ?
-                          `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` :
-                          `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=mmcif`
-                        }
-                        allowFullScreen
-                        title="Protein Structure"
-                      /></SimpleGrid>
-
-                  ) : (<SimpleGrid alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '100% 0%' }} spacing={0} paddingTop={'0rem'} paddingBottom={'2rem'}>
+                  <SimpleGrid alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '100% 0%' }} spacing={0} paddingTop={'0rem'} paddingBottom={'2rem'}>
 
 
                     <iframe
@@ -591,10 +544,18 @@ const ReGlyco = () => {
                       }
                       allowFullScreen
                       title="Protein Structure"
-                    /></SimpleGrid>)}
+                    /></SimpleGrid>
 
                 </AccordionPanel>
               </AccordionItem>
+
+                
+
+
+
+
+
+
 
               {!isUpload && UniprotData.glycosylation_locations.glycosylations.length > 0 ? (
                 <div>
@@ -754,24 +715,23 @@ const ReGlyco = () => {
 
           <Flex w="100%" minHeight={'60vh'} justifyContent="left" alignItems="left" p={2} marginTop={"0"} direction="column" >
             <Flex w="100%"
-
               justify="center"
               flex="1"
               padding="0rem" paddingTop={'0rem'} direction={{ base: "column", sm: "column", md: "row", lg: "row", xl: "row" }}>
               <Text
-                bgGradient='linear(to-l,  #E2CE69, #D7C9C0)'
+                bgGradient='linear(to-l,  #8E4175, #C297DD)'
                 bgClip='text'
                 fontSize={{ base: "3xl", sm: "3xl", md: "4xl", lg: "5xl", xl: "5xl" }}
                 fontWeight='bold'
                 marginBottom="0.2em"
                 marginLeft={'2rem'}
               >
-                Swap ND2 and OD1
+                Re-Glyco Ensemble
               </Text>
 
               <Spacer />
               <Box >
-                <Stepper width={{ base: "0%", sm: "0%", md: "auto", lg: "auto", xl: "auto" }} visibility={{ base: "hidden", sm: "hidden", md: "visible", lg: "visible", xl: "visible" }} margin="1rem" size={{ base: "sm", sm: "sm", md: "sm", lg: "md", xl: "md" }} colorScheme='yellow' index={activeStep}>
+                <Stepper width={{ base: "0%", sm: "0%", md: "auto", lg: "auto", xl: "auto" }} visibility={{ base: "hidden", sm: "hidden", md: "visible", lg: "visible", xl: "visible" }} margin="1rem" size={{ base: "sm", sm: "sm", md: "sm", lg: "md", xl: "md" }} colorScheme='purple' index={activeStep}>
                   {steps.map((step, index) => (
                     <Step key={index}>
                       <StepIndicator>

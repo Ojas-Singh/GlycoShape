@@ -1,3 +1,12 @@
+
+
+    For a development build, run npm run build:dev or yarn build:dev.
+    For a production build, run npm run build:prod or yarn build:prod.
+
+
+
+
+
 This project was bootstrapped with
 [Create React App](https://github.com/facebook/create-react-app).
 
