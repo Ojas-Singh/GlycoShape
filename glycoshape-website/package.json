@@ -45,8 +45,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "build:dev": "cross-env NODE_ENV=development BUILD_DIR=build_dev node setBuildDir.js && react-scripts build && node moveBuild.js build_dev",
-    "build:prod": "cross-env NODE_ENV=production BUILD_DIR=build_prod node setBuildDir.js && react-scripts build && node moveBuild.js build_prod"
+    "build:dev": "node setEnv.js development cross-env NODE_ENV=development BUILD_DIR=build_dev node setBuildDir.js && react-scripts build && node moveBuild.js build_dev",
+    "build:prod": "node setEnv.js production cross-env NODE_ENV=production BUILD_DIR=build_prod node setBuildDir.js && react-scripts build && node moveBuild.js build_prod"
   },
   "eslintConfig": {
     "extends": "react-app"
