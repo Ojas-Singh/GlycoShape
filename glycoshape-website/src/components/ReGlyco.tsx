@@ -610,6 +610,7 @@ const ReGlyco = () => {
 
 
   const  [isShield, setIsShield] = useState<boolean>(false);
+  const [outputPathShield, setOutputPathShield] = useState("");
 
   
   const handleProcessShield = async () => {
@@ -626,7 +627,7 @@ const ReGlyco = () => {
       selectedGlycanOption: selectedGlycanOption
     };
 
-    let endpoint = `${apiUrl}/api/oneshot_pdb`; // default endpoint
+    let endpoint = `${apiUrl}/api/oneshot_shield`; // default endpoint
 
 
     try {
@@ -643,6 +644,7 @@ const ReGlyco = () => {
         setIsShield(true);
         setOutputPath(responseData.output);
         setClashValue(responseData.clash);
+        setOutputPathShield(responseData.output_shield);
         setBoxValue(responseData.box)
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
@@ -1616,12 +1618,35 @@ const ReGlyco = () => {
                     // key={sequence}
                     width="100%"
                     height="400px"
-                    src={`/viewer/index_full.html?snapshot-url=${apiUrl}/output/output.molj&snapshot-url-type=molj`} frameBorder="0"
+                    src={`/viewer/embedded.html?pdbUrl=${apiUrl}/output/${outputPath}&format=pdb`} frameBorder="0"
                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     title="Protein Structure"
                   />
+                  <iframe
+                    // key={sequence}
+                    width="100%"
+                    height="400px"
+                    src={`/viewer/index_full.html?snapshot-url=${apiUrl}/output/${outputPathShield}.molj&snapshot-url-type=molj`} frameBorder="0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Protein Structure"
+                  />
+
                   <a href={`${apiUrl}/output/${outputPath}`} download>
+                    <Button position={"relative"}
+                      margin={'1rem'}
+                      borderRadius="full"
+                      isDisabled={isLoading}
+                      backgroundColor="#B07095"
+                      _hover={{
+                        backgroundColor: "#CF6385"
+                      }}
+                      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
+
+                      Download Re-glycosylated Structure PDB File
+                    </Button></a> 
+                  <a href={`${apiUrl}/output/${outputPathShield}.pdb`} download>
                     <Button position={"relative"}
                       margin={'1rem'}
                       borderRadius="full"
