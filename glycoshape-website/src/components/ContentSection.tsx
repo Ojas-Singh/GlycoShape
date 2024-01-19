@@ -17,7 +17,7 @@ const ContentSection: React.FC = () => {
     <Flex direction="column" width="100%">
         <Alert status='info'>
     <AlertIcon />
-    Announcement: Unfortunately, some user experienced difficulties in using Re-Glyco between 14:00 GMT on 18th January 2024 and 02:00 GMT on 19th January 2024. This problem was caused by a storage issue which has now been resolved. We apologise for any inconvenience caused.
+    Announcement: Unfortunately, some users experienced difficulties in using Re-Glyco between 14:00 GMT on 18th January 2024 and 02:00 GMT on 19th January 2024. This problem was caused by a storage issue which has now been resolved. We apologise for any inconvenience caused.
   </Alert>
 
       <Flex 
