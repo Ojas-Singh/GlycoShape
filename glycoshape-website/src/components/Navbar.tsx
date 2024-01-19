@@ -23,7 +23,7 @@ import {
   DrawerCloseButton,
   DrawerHeader,
   DrawerBody,
-  useDisclosure
+  useDisclosure,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from '@chakra-ui/icons';
 import logo from './assets/logo_white.png';
@@ -47,12 +47,12 @@ const Navbar: React.FC = () => {
 
   return (
     // <Flex as="nav" position="sticky" top="0" zIndex="1000" bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
-
+    
     <Flex as="nav"  bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
       <Box>
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
         <Stack direction='row'>
-
+        
 
         {isDevelopment ? (
         <Text top="50%" fontFamily={'texts'} 
@@ -93,7 +93,7 @@ const Navbar: React.FC = () => {
       ) : (
         <Image src={logo} transform="translateY(5%)"  alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} />
       )}
-  
+        
         <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} href="/" >GlycoShape</Link> 
         {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
         </Stack>

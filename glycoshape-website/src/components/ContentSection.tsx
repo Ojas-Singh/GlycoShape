@@ -1,5 +1,6 @@
 import React from 'react';
-import {SimpleGrid , Wrap, Highlight, Text, Flex, Box, Image, Heading, Container, Link,  WrapItem, VStack} from "@chakra-ui/react";
+import {SimpleGrid , Wrap, Highlight, Text, Flex, Box, Image, Heading, Container, Link,  WrapItem, VStack,  Alert,
+  AlertIcon} from "@chakra-ui/react";
 import Searchbar from './SearchBar';
 import bg from './assets/ne.png';
 import cell from './assets/cell_surface.jpg';
@@ -14,7 +15,11 @@ const ContentSection: React.FC = () => {
   return (
       
     <Flex direction="column" width="100%">
-      
+        <Alert status='info'>
+    <AlertIcon />
+    Announcement: Unfortunately, some user experienced difficulties in using Re-Glyco between 14:00 GMT on 18th January 2024 and 02:00 GMT on 19th January 2024. This problem was caused by a storage issue which has now been resolved. We apologise for any inconvenience caused.
+  </Alert>
+
       <Flex 
         direction="column" 
         align="center" 
