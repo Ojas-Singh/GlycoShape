@@ -30,7 +30,7 @@ import logo from './assets/logo_white.png';
 
 const Navbar: React.FC = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
-  const isDevelopment = process.env.REACT_APP_BUILD_DEV;
+  const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, md: false });
 

@@ -1,4 +1,4 @@
 REACT_APP_API_URL=https://glycoshape.io
 REACT_APP_BUILD_DIR=build_dev
-REACT_APP_BUILD_DEV=True
+REACT_APP_BUILD_DEV=true
 ```
