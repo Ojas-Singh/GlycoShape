@@ -9,14 +9,9 @@ import {
   Box,
   Link,
   Text,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   useBreakpointValue,
   IconButton,
   Divider,
-  HStack,
   Drawer,
   DrawerOverlay,
   DrawerContent,
@@ -42,7 +37,7 @@ const Navbar: React.FC = () => {
       .catch(error => {
         console.error('Error logging visit:', error);
       });
-  }, []); // Empty dependency array
+  },); // Empty dependency array
   
 
   return (

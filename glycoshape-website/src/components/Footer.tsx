@@ -1,13 +1,11 @@
 import React from 'react';
-import { Box, Flex, Text, Link, Image, VStack, HStack, Icon, Divider} from "@chakra-ui/react";
+import { Box, Flex, Text, Link, Image, VStack, HStack, Divider} from "@chakra-ui/react";
 import logo from './assets/logo_white.png';
 import logo_sfi from './assets/logo_sfi.jpg';
 import logo_oracle from './assets/logo_oracle.png';
 import { SocialIcon } from 'react-social-icons'
 import 'react-social-icons/vimeo'
-import ReactDOM from 'react-dom'
-// Placeholder for social media icons. Replace with actual icons.
-const TwitterIcon = <SocialIcon url="https://twitter.com" />
+
 
 const Footer: React.FC = () => {
   return (
@@ -61,6 +59,7 @@ const Footer: React.FC = () => {
               {/* <SocialIcon network="twitter" url="https://twitter.com/ElisaTelisa" /> */}
               
               <SocialIcon network="github" url="https://github.com/Ojas-Singh/GlycoShape" />
+              <SocialIcon network="twitter" url="https://twitter.com/GlycoShape" />
               
         {/* <Link color="white" href="#"><LinkedInIcon /><SocialIcon url="www.vimeo.com" /></Link> */}
             {/* <Link color="white" href="#">Contact Us</Link> */}

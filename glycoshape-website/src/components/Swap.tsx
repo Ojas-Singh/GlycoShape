@@ -1,19 +1,10 @@
 import React, { useState, ChangeEvent, useEffect, useRef, } from 'react';
-import { useBreakpointValue } from "@chakra-ui/react";
 import axios from 'axios';
-import { Select as ChakraSelect } from '@chakra-ui/react';
 
 import {
-  Switch ,
-  FormControl, FormLabel ,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-  useToast, Hide, SimpleGrid, Wrap, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading, Accordion,
+  Switch,
+  FormControl, FormLabel, Hide, SimpleGrid, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading, Accordion,
   Spacer,
-  UnorderedList, ListItem,
   CircularProgress,
   CircularProgressLabel,
   AccordionItem,
@@ -28,19 +19,13 @@ import {
   StepStatus,
   StepTitle,
   Stepper,
-  useSteps, Badge, WrapItem, Image,
+  useSteps, Badge,
   Alert,
   AlertIcon,
-  AlertTitle,
-  AlertDescription,
-  Menu, MenuButton, MenuItem, MenuList
 } from '@chakra-ui/react';
-import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
-import uniprot_logo from './assets/uniprot.svg';
-import Scanner from './assets/Scanner.png';
-import Setting from './assets/setting.png';
-import Select, { SingleValue, ActionMeta, OnChangeValue, } from 'react-select';
+
+import Select, { ActionMeta, OnChangeValue, } from 'react-select';
 
 // Define an interface for the result items
 interface ResultItem {
@@ -129,7 +114,7 @@ const ReGlyco = () => {
   const [clashValue, setClashValue] = useState(false);
   const [boxValue, setBoxValue] = useState("");
   const [selectedGlycanImage, setSelectedGlycanImage] = useState<{ [key: number]: string }>({});
-  const toast = useToast()
+
 
 
   const placeholders = [
@@ -147,24 +132,7 @@ const ReGlyco = () => {
 
 
 
-  useEffect(() => {
-    fetch(`${apiUrl}/database/GlcNAc_scan.json`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.N) {
-          setGlycanOptions(data.N); // assuming data.N is an array of the desired structure
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching glycan options:", error);
-      });
-  }, []);
 
-  const [glycanOptions, setGlycanOptions] = useState<
-    string[]
-  >([]);
-
-  const [selectedGlycanOption, setSelectedGlycanOption] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -196,17 +164,7 @@ const ReGlyco = () => {
     return () => {
       clearInterval(interval);
     };
-  }, []);
-
-
-  const trimLength = useBreakpointValue({
-    base: 10,
-    sm: 10,
-    md: 40,
-    lg: 90,
-    xl: 90
-  }) ?? 0; // Fallback to 40 if undefined
-
+  },);
 
   const [value, setValue] = useState<readonly ResidueOption[]>([]);
 
@@ -337,14 +295,7 @@ const ReGlyco = () => {
       ...prevState,
       [residueTag]: value
     }));
-}
-
-
-
-  const options = UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
-    value: glycoConf.residueID,
-    label: `${glycoConf.residueName}${glycoConf.residueID}`,
-  }));
+  }
 
 
   const [isLoading, setIsLoading] = useState(false);
@@ -443,10 +394,10 @@ const ReGlyco = () => {
           <Link fontWeight="bold" fontFamily={'heading'} href="/swap" marginRight="20px">Swap ND2 and OD1</Link>
         </Text>
 
-        
-         
 
-        
+
+
+
         <Box position="relative" display="inline-block" ml="2rem" alignItems="center">
           {!isUploading ? (
             <>
@@ -598,101 +549,101 @@ const ReGlyco = () => {
 
               {!isUpload && UniprotData.glycosylation_locations.glycosylations.length > 0 ? (
                 <div>
-                  
-                        
+
+
 
                 </div>
               ) : (
                 <div>
-                        <Heading margin={'1rem'} marginBottom={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
-                          Select residues to swap 
-                        </Heading>
-                        <Select
-                          value={value}
-                          isMulti
-                          name="residues"
-                          className="basic-multi-select"
-                          classNamePrefix="select"
-                          onChange={onChange}
-                          // onSelectResetsInput = {false}
-                          closeMenuOnSelect={false}
+                  <Heading margin={'1rem'} marginBottom={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
+                    Select residues to swap
+                  </Heading>
+                  <Select
+                    value={value}
+                    isMulti
+                    name="residues"
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    onChange={onChange}
+                    // onSelectResetsInput = {false}
+                    closeMenuOnSelect={false}
 
-                          options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
-                            value: glycoConf.residueTag,
-                            label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
-                          }))}
-                        />
+                    options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
+                      value: glycoConf.residueTag,
+                      label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
+                    }))}
+                  />
 
-                        {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
-                          const isSelected = value.find(option => option.value === glycoConf.residueTag);
-                          return isSelected ? (
-                            <div key={index}>
-                              <HStack>
-                                <Heading margin={'0.5rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "1xl", xl: "1xl" }} id={`glycan-${index}`} fontFamily={'texts'}>
-                                  {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
-                                </Heading>
-                                <FormControl display="flex" alignItems="center">
-  <FormLabel htmlFor="glycan-switch" mb="0" fontWeight="normal" color={"#1A202C"}>
-    {selectedGlycanImage[glycoConf.residueTag] ? 'True' : 'False'}
-  </FormLabel>
-  <Switch 
-    id="glycan-switch"
-    colorScheme="yellow"
-    isChecked={selectedGlycanImage[glycoConf.residueTag] === "true"}
-    onChange={(e) => 
-      handleToggleChange(
-        e.target.checked,
-        `${glycoConf.residueID}_${glycoConf.residueChain}`,
-        glycoConf.residueTag
-      )
-    }
-/>
+                  {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
+                    const isSelected = value.find(option => option.value === glycoConf.residueTag);
+                    return isSelected ? (
+                      <div key={index}>
+                        <HStack>
+                          <Heading margin={'0.5rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "1xl", xl: "1xl" }} id={`glycan-${index}`} fontFamily={'texts'}>
+                            {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
+                          </Heading>
+                          <FormControl display="flex" alignItems="center">
+                            <FormLabel htmlFor="glycan-switch" mb="0" fontWeight="normal" color={"#1A202C"}>
+                              {selectedGlycanImage[glycoConf.residueTag] ? 'True' : 'False'}
+                            </FormLabel>
+                            <Switch
+                              id="glycan-switch"
+                              colorScheme="yellow"
+                              isChecked={selectedGlycanImage[glycoConf.residueTag] === "true"}
+                              onChange={(e) =>
+                                handleToggleChange(
+                                  e.target.checked,
+                                  `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                                  glycoConf.residueTag
+                                )
+                              }
+                            />
 
-</FormControl>
+                          </FormControl>
 
 
-                              </HStack>
-                            </div>
-                          ) : null;
-                        })}
+                        </HStack>
+                      </div>
+                    ) : null;
+                  })}
 
-                        <Button
-                          position={"relative"}
-                          margin={'1rem'}
-                          borderRadius="full"
-                          backgroundColor="#F7F9E5"
-                          _hover={{ backgroundColor: "#E2CE69" }}
-                          size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                          onClick={handleProcessCustom }
-                          isDisabled={isLoading} // Disable the button while processing
+                  <Button
+                    position={"relative"}
+                    margin={'1rem'}
+                    borderRadius="full"
+                    backgroundColor="#F7F9E5"
+                    _hover={{ backgroundColor: "#E2CE69" }}
+                    size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                    onClick={handleProcessCustom}
+                    isDisabled={isLoading} // Disable the button while processing
+                  >
+                    {isLoading ? (
+                      <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                        <CircularProgress
+                          position="absolute"
+                          color="#E2CE69"
+                          size="50px"
+                          thickness="5px"
+                          isIndeterminate
+                          marginLeft={"15rem"}
+                          capIsRound
                         >
-                          {isLoading ? (
-                            <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                              <CircularProgress
-                                position="absolute"
-                                color="#E2CE69"
-                                size="50px"
-                                thickness="5px"
-                                isIndeterminate
-                                marginLeft={"15rem"}
-                                capIsRound
-                              >
-                                <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                              </CircularProgress>
-                              Processing...
+                          <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                        </CircularProgress>
+                        Processing...
 
 
-                            </Box>
-                          ) : (
-                            "Process"
-                          )}
-                        </Button>
-                        {isLoading && (<Alert status='info' >
-                          <AlertIcon />
-                          It can take up to 1 minutes to process your request. Please wait.
-                        </Alert>)}
+                      </Box>
+                    ) : (
+                      "Process"
+                    )}
+                  </Button>
+                  {isLoading && (<Alert status='info' >
+                    <AlertIcon />
+                    It can take up to 1 minutes to process your request. Please wait.
+                  </Alert>)}
 
-                    
+
 
 
 
@@ -798,7 +749,7 @@ const ReGlyco = () => {
 
 
             <SimpleGrid alignSelf="center" justifyItems="center" columns={[1, 2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
-              
+
 
             </SimpleGrid>
 

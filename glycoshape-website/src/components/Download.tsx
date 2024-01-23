@@ -2,12 +2,10 @@ import React from 'react';
 import {
   Box,
   Button,
-  Heading,
   VStack,
   HStack,
   Text,
   Divider,
-  Spacer
 } from "@chakra-ui/react";
 
 const Download: React.FC = () => {

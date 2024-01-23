@@ -13,9 +13,9 @@ import {
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-interface CodeDisplayProps {
-  code: string;
-}
+// interface CodeDisplayProps {
+//   code: string;
+// }
 
 const apiUrl = process.env.REACT_APP_API_URL;
 const pythonCode = `

@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
-import { Hide, Link, Highlight, Input, Button, Text, Flex, Image, Modal,ModalFooter, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
+import { Hide, Link, Highlight, Input, Button, Text, Flex, Modal,ModalFooter, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
 } from "@chakra-ui/react";
 import { SearchIcon} from '@chakra-ui/icons'
-import draw from './assets/draw.png';
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
-// import { Link } from 'react-router-dom';
 
 
 const Bar: React.FC = () => {
@@ -34,7 +32,7 @@ const Bar: React.FC = () => {
     return () => {
         clearInterval(interval);
     };
-}, []);
+},);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -64,9 +62,9 @@ const Bar: React.FC = () => {
         return;
       }
       
-      const requestBody = {
-        search_string: searchRef.current.value,
-      };
+      // const requestBody = {
+      //   search_string: searchRef.current.value,
+      // };
       navigate(`/search?query=${searchRef.current.value}`);
       
     } catch (error) {

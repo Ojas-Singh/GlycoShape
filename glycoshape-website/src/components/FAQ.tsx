@@ -6,9 +6,7 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
-  Heading,
   Text,
-  Code
 } from "@chakra-ui/react";
 
 const FAQ: React.FC = () => {

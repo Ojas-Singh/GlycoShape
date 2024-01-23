@@ -1,7 +1,7 @@
 // Cite.tsx
 
 import React from 'react';
-import { Box, Heading, Text, UnorderedList, ListItem,Stack, Divider, Link } from '@chakra-ui/react';
+import { Box,  Text,Stack, Divider, Link } from '@chakra-ui/react';
 
 
 const Cite = () => {
