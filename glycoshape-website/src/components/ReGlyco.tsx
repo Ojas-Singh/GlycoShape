@@ -1075,7 +1075,7 @@ const ReGlyco = () => {
                           >
                             {isLoading ? (
                               <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                                {/* <CircularProgress
+                                <CircularProgress
                                   position="absolute"
                                   color="#B07095"
                                   size="50px"
@@ -1085,13 +1085,14 @@ const ReGlyco = () => {
                                   capIsRound
                                 >
                                   <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                                </CircularProgress> */}
+                                </CircularProgress>
                                 Processing...
                               </Box>
                             ) : (
                               "Process"
                             )}
                           </Button>
+                          {outputPath && (<div>
                           <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1123,6 +1124,8 @@ const ReGlyco = () => {
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
                                       Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                          
+                          </div>)}
                           {isLoading && (
                             <Alert status='info'>
                               <AlertIcon />
@@ -1215,7 +1218,7 @@ const ReGlyco = () => {
                                       >
                                         {isLoading ? (
                                           <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                                            {/* <CircularProgress
+                                            <CircularProgress
                                               position="absolute"
                                               color="#B07095"
                                               size="50px"
@@ -1225,13 +1228,14 @@ const ReGlyco = () => {
                                               capIsRound
                                             >
                                               <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                                            </CircularProgress> */}
+                                            </CircularProgress>
                                             Processing...
                                           </Box>
                                         ) : (
                                           "Process"
                                         )}
                                       </Button>
+                                      {outputPath && (<div>
                                       <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1263,6 +1267,7 @@ const ReGlyco = () => {
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
                                       Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                                      </div>)}
                                       {isLoading && (<Alert status='info' >
                                         <AlertIcon />
                                         It can take up to 5 minutes to process your request. Please wait.
@@ -1406,7 +1411,7 @@ const ReGlyco = () => {
                         >
                           {isLoading ? (
                             <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                              {/* <CircularProgress
+                              <CircularProgress
                                 position="absolute"
                                 color="#B07095"
                                 size="50px"
@@ -1416,7 +1421,7 @@ const ReGlyco = () => {
                                 capIsRound
                               >
                                 <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                              </CircularProgress> */}
+                              </CircularProgress>
                               Processing...
 
 
@@ -1425,6 +1430,7 @@ const ReGlyco = () => {
                             "Process"
                           )}
                         </Button>
+                        {outputPath && (<div>
                         <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1456,6 +1462,7 @@ const ReGlyco = () => {
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
                                       Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                                      </div>)}
                         {isLoading && (<Alert status='info' >
                           <AlertIcon />
                           It can take up to 5 minutes to process your request. Please wait.
@@ -1569,7 +1576,7 @@ const ReGlyco = () => {
                                       >
                                         {isLoading ? (
                                           <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                                            {/* <CircularProgress
+                                            <CircularProgress
                                               position="absolute"
                                               color="#B07095"
                                               size="50px"
@@ -1579,14 +1586,14 @@ const ReGlyco = () => {
                                               capIsRound
                                             >
                                               <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                                            </CircularProgress> */}
+                                            </CircularProgress>
                                             Processing...
                                           </Box>
                                         ) : (
                                           "Process"
                                         )}
                                       </Button>
-                                      
+                                      {outputPath && (<div>
                                       <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1619,7 +1626,7 @@ const ReGlyco = () => {
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
                                       Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
       
-      
+                                      </div>)}
                                       
                                       {isLoading && (<Alert status='info' >
                                         <AlertIcon />
@@ -1764,7 +1771,7 @@ const ReGlyco = () => {
                         >
                           {isLoading ? (
                             <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                              {/* <CircularProgress
+                              <CircularProgress
                                 position="absolute"
                                 color="#B07095"
                                 size="50px"
@@ -1774,7 +1781,7 @@ const ReGlyco = () => {
                                 capIsRound
                               >
                                 <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                              </CircularProgress> */}
+                              </CircularProgress>
                               Processing...
 
 
@@ -1783,6 +1790,7 @@ const ReGlyco = () => {
                             "Process"
                           )}
                         </Button>
+                        {outputPath && (<div>
                         <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1814,6 +1822,7 @@ const ReGlyco = () => {
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
                                       Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                                      </div>)}
                         {isLoading && (<Alert status='info' >
                           <AlertIcon />
                           It can take up to 5 minutes to process your request. Please wait.
