@@ -1074,7 +1074,7 @@ const ReGlyco = () => {
                     <TabPanels>
                       <TabPanel>
                         <Box margin={'1rem'}>
-                          <Text fontWeight="bold" fontFamily={'texts'} color='#B07095' fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}>Glycosylations</Text>
+                          <Text fontWeight="bold" fontFamily={'texts'} color='#B07095' fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}>Glycosylation Sites</Text>
                           <UnorderedList m={3}>
                             {UniprotData.glycosylation_locations.glycosylations.map((glyco, index) => (
                               <ListItem key={index} mb={2} display="flex" alignItems="center" >
@@ -1154,7 +1154,7 @@ const ReGlyco = () => {
                           {isLoading && (
                             <Alert status='info'>
                               <AlertIcon />
-                              It can take up to 5 minutes to process your request. Please wait.
+                              It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
                             </Alert>
                           )}
                         </Box>
@@ -1295,7 +1295,7 @@ const ReGlyco = () => {
                                       </div>)} */}
                                       {isLoading && (<Alert status='info' >
                                         <AlertIcon />
-                                        It can take up to 5 minutes to process your request. Please wait.
+                                        It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
                                       </Alert>)}</Box>
                                   ) : (null)}
                                 </UnorderedList>
@@ -1342,7 +1342,7 @@ const ReGlyco = () => {
                                 {isLoading && (
                                   <Alert status='info'>
                                     <AlertIcon />
-                                    It can take up to 5 minutes to process your request. Please wait.
+                                    It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
                                   </Alert>
                                 )}</div>) : (<div></div>)}
                           </Box>) : (<div></div>)}
@@ -1490,7 +1490,7 @@ const ReGlyco = () => {
                                       </div>)} */}
                         {isLoading && (<Alert status='info' >
                           <AlertIcon />
-                          It can take up to 5 minutes to process your request. Please wait.
+                          It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
                         </Alert>)}
 
                       </TabPanel>
@@ -1655,7 +1655,7 @@ const ReGlyco = () => {
                                       
                                       {isLoading && (<Alert status='info' >
                                         <AlertIcon />
-                                        It can take up to 5 minutes to process your request. Please wait.
+                                        It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
                                       </Alert>)}</Box>
                                   ) : (null)}
                                 </UnorderedList>
@@ -1701,7 +1701,7 @@ const ReGlyco = () => {
                                 {isLoading && (
                                   <Alert status='info'>
                                     <AlertIcon />
-                                    It can take up to 5 minutes to process your request. Please wait.
+                                    It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
                                   </Alert>
                                 )}</div>) : (<div></div>)}
                           </Box>) : (<div></div>)}
@@ -1850,7 +1850,7 @@ const ReGlyco = () => {
                                       </div>)} */}
                         {isLoading && (<Alert status='info' >
                           <AlertIcon />
-                          It can take up to 5 minutes to process your request. Please wait.
+                          It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
                         </Alert>)}
 
                       </TabPanel>
@@ -1881,6 +1881,7 @@ const ReGlyco = () => {
 
                   {isSASA ? (
                   <div>
+                    <Text marginTop={"1rem"}color='#B07095' fontFamily={'heading'} fontWeight={'bold'}>Play multiple frames from the MD trajectory with  &gt; in the Lite Mol viewer</Text>
                   <iframe
                     // key={sequence}
                     width="100%"
@@ -1890,6 +1891,9 @@ const ReGlyco = () => {
                     allowFullScreen
                     title="Protein Structure"
                   />
+                 <HStack marginTop={"1rem"}>
+                 <Text  color='#B07095' fontFamily={'heading'} fontWeight={'bold'}>Solvent Accessible Surface Area (SASA):  Accessible</Text> <Box w='100px' h='20px' bgGradient='linear(to-r, #315CD6, #FFFFFF, #AD1F1F)'  /> <Text color='#B07095' fontFamily={'heading'} fontWeight={'bold'}>Not accessible</Text></HStack>
+                  
                   <iframe
                     // key={sequence}
                     width="100%"
@@ -1924,7 +1928,7 @@ const ReGlyco = () => {
                       }}
                       size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
 
-                      Download Accessible surface area of protein at β
+Download PDB with SASA B-values
                     </Button></a> 
                     <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
             Please reload the page for new calculation.  If you encounter any issues or suspect a bug contact us <Link href="mailto:OJAS.SINGH.2023@mumail.ie">here</Link> 
