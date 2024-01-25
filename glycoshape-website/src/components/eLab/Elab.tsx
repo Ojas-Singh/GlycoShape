@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useLocation, Link as RouterLink } from 'react-router-dom';
 import { SocialIcon } from 'react-social-icons'
 
-
+import elab_logo from '.././assets/eLAB.png';
 
 import { Tag, Divider, Show, SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack, Spacer, Hide } from '@chakra-ui/react';
 
@@ -361,7 +361,10 @@ const ELab: React.FC = () => {
               <Text mb={4} >
                 In our research group we use high-performance computing (HPC) molecular simulation techniques to reconstruct complex carbohydrates (glycans) and to understand their many different roles in biology. During the past few years we have dedicated a huge amount of our time and computational resources to the creation of the GlycoShape DB, where we are continuously depositing equilibrium 3D structures of glycans, glycan fragments and epitopes, from all-atom molecular dynamics (MD) simulations, that can be used in combination with molecular docking and/or MD to study glycan recognition and with Re-Glyco to rebuild glycoproteins to their native functional state. In addition to the development of GlycoShape to advance research in structural glycobiology, we are actively working in the following research areas:
               </Text>
-
+              
+              
+              <SimpleGrid alignSelf="center" justifyItems="center" columns={[1, 2]} spacing={10} paddingTop={'2rem'} paddingBottom={'2rem'}>
+                <div>
               <Heading size="md" mb={2}>Current research topics include,</Heading>
               <List styleType="disc" pl={5} mb={4}>
                 <ListItem>Viral glycobiology</ListItem>
@@ -373,11 +376,11 @@ const ELab: React.FC = () => {
                 <ListItem>Development of statistical and ML tools for advancing glycomics and glycoanalytics </ListItem>
 
               </List>
-
-
-
+              </div>
+              
+              <Image  marginLeft={"2rem"} width="400px" src={elab_logo} /></SimpleGrid>
               <Text mt={4}>
-                For more information please contact <Link href="mailto:elisa.fadda@mu.ie" color="blue.500">elisa.fadda@mu.ie</Link>
+                For more information please contact <Link href="mailto:elisa.fadda@soton.ac.uk " color="blue.500">elisa.fadda@soton.ac.uk</Link>
               </Text>
             </Container>
           </TabPanel>
