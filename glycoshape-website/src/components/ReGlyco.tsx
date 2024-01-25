@@ -125,6 +125,26 @@ const ReGlyco = () => {
   const [boxValue, setBoxValue] = useState("");
   const [selectedGlycanImage, setSelectedGlycanImage] = useState<{ [key: number]: string }>({});
   const toast = useToast()
+  type ProcessType = 'handleProcessOne_scan' |'handleProcessOne' | 'handleProcess_shot' | 'handleProcess' | 'handleProcessCustom';
+  const [lastRunType, setLastRunType] = useState<ProcessType>('handleProcessOne');
+  const getCurrentHandler = () => {
+    switch (lastRunType) {
+        case 'handleProcessOne_scan':
+            return handleProcessOne_scan;
+        case 'handleProcessOne':
+            return handleProcessOne_sasa;
+        case 'handleProcess_shot':
+            return handleProcess_shotSASA;
+        case 'handleProcess':
+            return handleProcessCustomSasa;
+        case 'handleProcessCustom':
+            return handleProcessCustomSasa;
+        default:
+            return () => {};
+    }
+};
+
+
 
   const handleTabChange = () => {
     setOutputPath("");
@@ -301,6 +321,7 @@ const ReGlyco = () => {
         setScanResults(responseData);
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
+        setLastRunType('handleProcessOne_scan');
         console.log(responseData);
         // Handle the response data as needed
       } else {
@@ -474,6 +495,7 @@ const ReGlyco = () => {
         setBoxValue(responseData.box)
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
+        setLastRunType('handleProcess');
         console.log(responseData);
         // Handle the response data as needed
       } else {
@@ -512,6 +534,7 @@ const ReGlyco = () => {
         setBoxValue(responseData.box)
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
+        setLastRunType('handleProcessCustom');
         // console.log(responseData);
         console.log(UniprotData?.uniprot);
         // Handle the response data as needed
@@ -602,6 +625,7 @@ const ReGlyco = () => {
         setIsSASA(false);
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
+        setLastRunType('handleProcessOne');
         console.log(responseData);
         // Handle the response data as needed
       } else {
@@ -696,6 +720,7 @@ const ReGlyco = () => {
         setBoxValue(responseData.box)
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
+        setLastRunType('handleProcess_shot');
         console.log(responseData);
         // Handle the response data as needed
       } else {
@@ -1092,7 +1117,7 @@ const ReGlyco = () => {
                               "Process"
                             )}
                           </Button>
-                          {outputPath && (<div>
+                          {/* {outputPath && (<div>
                           <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1119,13 +1144,13 @@ const ReGlyco = () => {
                                             Processing...
                                           </Box>
                                         ) : (
-                                          "Process Ensemble and Accessible surface area of protein"
+                                          "Process Ensemble"
                                         )}
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                                      Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                                      Process Ensemble will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
                           
-                          </div>)}
+                          </div>)} */}
                           {isLoading && (
                             <Alert status='info'>
                               <AlertIcon />
@@ -1235,7 +1260,7 @@ const ReGlyco = () => {
                                           "Process"
                                         )}
                                       </Button>
-                                      {outputPath && (<div>
+                                      {/* {outputPath && (<div>
                                       <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1262,12 +1287,12 @@ const ReGlyco = () => {
                                             Processing...
                                           </Box>
                                         ) : (
-                                          "Process Ensemble and Accessible surface area of protein"
+                                          "Process Ensemble"
                                         )}
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                                      Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
-                                      </div>)}
+                                      Process Ensemble will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                                      </div>)} */}
                                       {isLoading && (<Alert status='info' >
                                         <AlertIcon />
                                         It can take up to 5 minutes to process your request. Please wait.
@@ -1430,7 +1455,7 @@ const ReGlyco = () => {
                             "Process"
                           )}
                         </Button>
-                        {outputPath && (<div>
+                        {/* {outputPath && (<div>
                         <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1457,12 +1482,12 @@ const ReGlyco = () => {
                                             Processing...
                                           </Box>
                                         ) : (
-                                          "Process Ensemble and Accessible surface area of protein"
+                                          "Process Ensemble"
                                         )}
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                                      Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
-                                      </div>)}
+                                      Process Ensemble will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                                      </div>)} */}
                         {isLoading && (<Alert status='info' >
                           <AlertIcon />
                           It can take up to 5 minutes to process your request. Please wait.
@@ -1593,7 +1618,7 @@ const ReGlyco = () => {
                                           "Process"
                                         )}
                                       </Button>
-                                      {outputPath && (<div>
+                                      {/* {outputPath && (<div>
                                       <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1620,13 +1645,13 @@ const ReGlyco = () => {
                                             Processing...
                                           </Box>
                                         ) : (
-                                          "Process Ensemble and Accessible surface area of protein"
+                                          "Process Ensemble"
                                         )}
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                                      Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                                      Process Ensemble will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
       
-                                      </div>)}
+                                      </div>)} */}
                                       
                                       {isLoading && (<Alert status='info' >
                                         <AlertIcon />
@@ -1790,7 +1815,7 @@ const ReGlyco = () => {
                             "Process"
                           )}
                         </Button>
-                        {outputPath && (<div>
+                        {/* {outputPath && (<div>
                         <Button
                                         position={"relative"}
                                         margin={'1rem'}
@@ -1817,12 +1842,12 @@ const ReGlyco = () => {
                                             Processing...
                                           </Box>
                                         ) : (
-                                          "Process Ensemble and Accessible surface area of protein"
+                                          "Process Ensemble"
                                         )}
                                       </Button>
                                       <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                                      Process Ensemble and Accessible surface area of protein will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
-                                      </div>)}
+                                      Process Ensemble will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                                      </div>)} */}
                         {isLoading && (<Alert status='info' >
                           <AlertIcon />
                           It can take up to 5 minutes to process your request. Please wait.
@@ -1886,7 +1911,7 @@ const ReGlyco = () => {
                       }}
                       size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
 
-                      Download Re-glycosylated Structure PDB File
+                      Download Re-glyco Ensemble PDB File
                     </Button></a> 
                   <a href={`${apiUrl}/output/${outputPathSASA}.pdb`} download>
                     <Button position={"relative"}
@@ -1916,21 +1941,75 @@ const ReGlyco = () => {
                     allowFullScreen
                     title="Protein Structure"
                   />
-                  <a href={`${apiUrl}/output/${outputPath}`} download>
-                    <Button position={"relative"}
-                      margin={'1rem'}
-                      borderRadius="full"
-                      isDisabled={isLoading}
-                      backgroundColor="#B07095"
-                      _hover={{
-                        backgroundColor: "#CF6385"
-                      }}
-                      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
+                  
+                  {lastRunType !== 'handleProcessOne_scan' ? (
+                <div>
+                   <a href={`${apiUrl}/output/${outputPath}`} download>
+              <Button position={"relative"}
+                margin={'1rem'}
+                borderRadius="full"
+                isDisabled={isLoading}
+                backgroundColor="#B07095"
+                _hover={{
+                  backgroundColor: "#CF6385"
+                }}
+                size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
 
-                      Download Re-glycosylated Structure PDB File
-                    </Button></a>
+                Download Re-glycosylated Structure PDB File
+              </Button>
+              </a>
+              <Button
+                                        position={"relative"}
+                                        margin={'1rem'}
+                                        borderRadius="full"
+                                        backgroundColor="#806CA5"
+                                        _hover={{ backgroundColor: "#C094D9" }}
+                                        size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                                        onClick={getCurrentHandler()}
+                                        isDisabled={isLoading}
+                                      >
+                                        {isLoading ? (
+                                          <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                            <CircularProgress
+                                              position="absolute"
+                                              color="#B07095"
+                                              size="50px"
+                                              thickness="5px"
+                                              isIndeterminate
+                                              marginLeft={"15rem"}
+                                              capIsRound
+                                            >
+                                              <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                            </CircularProgress>
+                                            Processing...
+                                          </Box>
+                                        ) : (
+                                          "Process Ensemble"
+                                        )}
+                                      </Button>
+                                      <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+                                      Process Ensemble will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
+                          
+                </div>
+            ) : (
+              <a href={`${apiUrl}/output/${outputPath}`} download>
+              <Button position={"relative"}
+                margin={'1rem'}
+                borderRadius="full"
+                isDisabled={isLoading}
+                backgroundColor="#B07095"
+                _hover={{
+                  backgroundColor: "#CF6385"
+                }}
+                size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
+
+                Download Re-glycosylated Structure PDB File
+              </Button>
+              </a>
+            )}
+
                     <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-            Please reload the page for new calculation.  If you encounter any issues or suspect a bug contact us <Link href="mailto:OJAS.SINGH.2023@mumail.ie">here</Link> 
+             If you encounter any issues or suspect a bug contact us <Link href="mailto:OJAS.SINGH.2023@mumail.ie">here</Link> 
             </Text>
                      </div>
                   )}
