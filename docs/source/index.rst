@@ -9,7 +9,7 @@
 GlycoShape's documentation!
 ======================================
 
-`GlycoShape <https:/glycoshape.org>`_ is an OA database of glycans 3D structural data and information that can be downloaded or used with `Re-Glyco <https://glycoshape.org/reglyco>`_ to rebuild glycoproteins from the `RCSB PDB <https://www.rcsb.org/>`_ or `EMBL-EBI AlphaFold <https://alphafold.ebi.ac.uk/>`_ repositories.
+`GlycoShape <https://glycoshape.org>`_ is an OA database of glycans 3D structural data and information that can be downloaded or used with `Re-Glyco <https://glycoshape.org/reglyco>`_ to rebuild glycoproteins from the `RCSB PDB <https://www.rcsb.org/>`_ or `EMBL-EBI AlphaFold <https://alphafold.ebi.ac.uk/>`_ repositories.
 
 .. toctree::
    :maxdepth: 2
@@ -18,10 +18,22 @@ GlycoShape's documentation!
    installation
    usage
    faq
-   glossary
-   citation
-   license
+   license_and_citation
    contact
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Method Documentation:
+
+   GAP
+   Re-Glyco
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developer Documentation:
+
+   api
+   changelog
 
 
 Indices and tables
