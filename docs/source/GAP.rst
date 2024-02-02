@@ -35,7 +35,7 @@ Code Snippets
 
 Here is an example code snippet in GAP:
 
-.. code-block:: python
+.. code-block:: none
 
    def calculate_fitness(individual):
        # Calculate the fitness of an individual

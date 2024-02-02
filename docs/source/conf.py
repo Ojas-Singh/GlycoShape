@@ -15,11 +15,14 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 
+import datetime
+
 # -- Project information -----------------------------------------------------
 
+author = 'eLab Team'
 project = 'GlycoShape'
-copyright = '2024, Ojas-Singh'
-author = 'Ojas-Singh'
+copyright = f'{datetime.datetime.now().year}, {author}'
+
 
 
 # -- General configuration ---------------------------------------------------
@@ -28,8 +31,11 @@ author = 'Ojas-Singh'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
+    'sphinx_rtd_theme', 
 ]
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

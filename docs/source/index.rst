@@ -15,11 +15,8 @@ GlycoShape's documentation!
    :maxdepth: 2
    :caption: User Documentation:
 
-   installation
    usage
    faq
-   license_and_citation
-   contact
 
 .. toctree::
    :maxdepth: 2
@@ -30,11 +27,18 @@ GlycoShape's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Developer Documentation:
+   :caption: API Documentation:
 
    api
    changelog
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Installation:
+
+   installation
+   license_and_citation
+   contact
 
 Indices and tables
 ==================
