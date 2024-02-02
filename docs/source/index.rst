@@ -21,6 +21,7 @@ GlycoShape's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Method Documentation:
+   
    simulation
    GAP
    reglyco
