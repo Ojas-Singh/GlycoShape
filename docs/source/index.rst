@@ -3,13 +3,25 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to GlycoShape's documentation!
+:github_url: https://github.com/Ojas-Singh/GlycoShape
+:website_url: https://GlycoShape.org  
+
+GlycoShape's documentation!
 ======================================
+
+`GlycoShape <https:/glycoshape.org>`_ is an OA database of glycans 3D structural data and information that can be downloaded or used with `Re-Glyco <https://glycoshape.org/reglyco>`_ to rebuild glycoproteins from the `RCSB PDB <https://www.rcsb.org/>`_ or `EMBL-EBI AlphaFold <https://alphafold.ebi.ac.uk/>`_ repositories.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: User Documentation:
 
+   installation
+   usage
+   faq
+   glossary
+   citation
+   license
+   contact
 
 
 Indices and tables
