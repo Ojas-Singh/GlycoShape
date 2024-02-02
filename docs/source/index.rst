@@ -21,9 +21,10 @@ GlycoShape's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Method Documentation:
-
+   simulation
    GAP
-   Re-Glyco
+   reglyco
+   reference
 
 .. toctree::
    :maxdepth: 2
@@ -40,9 +41,3 @@ GlycoShape's documentation!
    license_and_citation
    contact
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

@@ -1,10 +1,31 @@
-GAP
-===
+Glycan Analysis Pipeline
+========================
 
 Introduction
 ------------
+The Glycan Analysis Pipeline (GAP) is a pakaage for the analysis of Glycan structures. It is a python package that provides a novel algorithm for the conformational analysis of the glycan structures from Molecular dynamics simulations.
 
-This is a dummy file for GAP (Generic Algorithm Platform). It provides an overview of the platform and its features.
+
+Molecule representation
+-----------------------
+
+
+
+Dimentionality reduction
+------------------------    
+
+
+Clustering algorithm and number of clusters
+--------------------------------------------
+
+
+
+Representative structure from clusters KDE maxima
+-------------------------------------------------
+
+
+
+
 
 Figures
 -------

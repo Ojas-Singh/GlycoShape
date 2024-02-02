@@ -1,4 +1,4 @@
-Using GlycoShape Website
+Using GlycoShape
 ========================
 
 To use the GlycoShape website, follow these steps:
