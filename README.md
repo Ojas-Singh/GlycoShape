@@ -9,10 +9,25 @@ GlycoShape depends on these codesbase.
 [Re-Glyco repository](https://github.com/Ojas-Singh/Re-Glyco)  and 
 [GlycanAnalysisPipeline (GAP) repository](https://github.com/Ojas-Singh/GlycanAnalysisPipeline)
 
+# Installation Guide
+
+
+
+Installing and running GlycoShape on a local machine involves a series of steps that may require a certain level of technical expertise, particularly in server setup and configuration. While the process is not entirely straightforward, we've outlined a general procedure below to assist you through it. We recommend that individuals undertaking this task have some experience with server setup. 
+
+Please follow these steps carefully, and do not hesitate to reach out us [here](mailto:ojas.singh.2023@mumail.ie). Your patience and attention to detail during this process will be greatly appreciated. 
+
+
+- Install [GlycanAnalysisPipeline (GAP)](https://github.com/Ojas-Singh/GlycanAnalysisPipeline)
+- Run GAP on the Data dir according to the README of GAP.
+- Run DB_Scripts to rearragne the files in clean format.
+- Install [Re-Glyco ](https://github.com/Ojas-Singh/Re-Glyco) 
+ 
+
+
+## Build the website using npm
 
 Once you have Database dir ready and Re-Glyco API running at port 8000
-
-# Build the website using npm
 
 ```
 cd glycoshape-website
