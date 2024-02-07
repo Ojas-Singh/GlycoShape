@@ -42,5 +42,4 @@ sudo certbot --nginx
 
 # cite 
 
-Callum M Ives and Ojas Singh et al. Restoring Protein Glycosylation with GlycoShape bioRxiv (2023).
-https://doi.org/10.1101/2023.12.11.571101
+Callum M Ives and Ojas Singh et al. Restoring Protein Glycosylation with GlycoShape [bioRxiv (2023)](https://www.biorxiv.org/content/10.1101/2023.12.11.571101v1.full).
