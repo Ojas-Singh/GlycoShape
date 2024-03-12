@@ -19,7 +19,7 @@ import SearchPage from './components/SearchPage';
 import GlycanPage from './components/GlycanPage';
 import theme from './components/Theme';
 import Cite from './components/Cite';
-import Shield from './components/Shield';
+import Fit from './components/ReGlycofit';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -49,11 +49,8 @@ const App: React.FC = () => {
               <Route path="/blog" element={<div><Search /><Elab /></div>} />
               <Route path="/publications" element={<div><Search /><Elab /></div>} />
               <Route path="/swap" element={<div><Swap /></div>} />
-              <Route path="/shield" element={<div><Shield /></div>} />
+              <Route path="/fit" element={<div><Fit /></div>} />
             </Routes>
-
-
-
 
           </Flex>
           <Cite />

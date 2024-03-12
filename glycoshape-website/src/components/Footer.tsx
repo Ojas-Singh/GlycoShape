@@ -35,7 +35,7 @@ const Footer: React.FC = () => {
           <Text color="white" fontWeight="bold">Tools</Text>
           <Divider />
           <Link color="white" href="/reglyco">Re-Glyco</Link>
-          {/* <Link color="white" href="#">Pridiction</Link> */}
+          <Link color="white" href="/fit">Re-Glyco Fit</Link>
           <Link color="white" href="/viewer/index.html">Mol * Viewer</Link>
           <Link color="white" href="/swap">ND2 and OD1 Swap</Link>
           
