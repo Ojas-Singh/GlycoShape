@@ -28,6 +28,7 @@ import {
 import { AttachmentIcon } from '@chakra-ui/icons'
 import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
+import fit from './assets/fit.png'
 import Select, { ActionMeta, OnChangeValue, } from 'react-select';
 
 // Define an interface for the result items
@@ -212,9 +213,9 @@ const ReGlyco = () => {
   const [value, setValue] = useState<readonly ResidueOption[]>([]);
 
   const steps = [
-    { title: 'Choose Structure', description: 'AF, PDB or upload your own' },
-    { title: 'Select Glycans', description: ' Choose your N- or O-glycan' },
-    { title: 'Download', description: 'Press process and download re-glyco structure!' },
+    { title: 'Upload Structure', description: 'AF, PDB or upload your own' },
+    { title: 'Select Glycans', description: 'and upload SAXS/density file' },
+    { title: 'Download', description: 'Press process and download Re-Glyco-Fit structure!' },
   ]
 
 
@@ -689,7 +690,7 @@ const ReGlyco = () => {
                 <h2>
                   <AccordionButton margin={"1rem"} marginLeft={"0"} >
                     <Box as="span" flex='1' textAlign='left'>
-                      <Heading as='h4' size='md' color={"#81D8D0"}>Structure Information</Heading>
+                      <Heading as='h4' size='md' color={"#2C7A7B"}>Structure Information</Heading>
                     </Box>
                     <AccordionIcon />
                   </AccordionButton>
@@ -760,7 +761,7 @@ const ReGlyco = () => {
               
                 <div>
 
-<Heading margin={'1rem'} marginBottom={'1rem'} fontFamily={'texts'} color='#81D8D0' fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
+<Heading margin={'1rem'} marginBottom={'1rem'} fontFamily={'texts'} color='#2C7A7B' fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
                         Select residues to glycosylate
                       </Heading>
                       <Select
@@ -844,8 +845,11 @@ const ReGlyco = () => {
 <Box position="relative" display="inline-block" ml="1rem" alignItems="center">
 
           <Button colorScheme='teal' variant='outline' as="label" borderRadius="full"  size="md">
-            {!uploadedFileName ? (<div>Upload your Experimental data (.dat, .mrc, .fit files)</div> ):(<div><AttachmentIcon /> {uploadedFileName}</div>)}
+            {!uploadedFileName ? (<div>Upload your Experimental data file</div> ):(<div><AttachmentIcon /> {uploadedFileName}</div>)}
+            
           </Button>
+          
+                          
           <Input
             type="file"
             position="absolute"
@@ -858,7 +862,8 @@ const ReGlyco = () => {
             onChange={handleFitFileUpload}
           />
 </Box>
-      
+<Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+              Based on uploaded file extenstion  (.dat or .ccp4) Re-Glyco-Fit will do SAXS data fitting from generated ensembles or fit the glycans in the density map.  </Text>
 
                       <Button
                         position={"relative"}
@@ -964,7 +969,7 @@ const ReGlyco = () => {
               </Button>
               </a>
 
-              <Image   width={'auto'} maxHeight={"30rem"}src={`${apiUrl}/output/${plotPath}`} alt="FOXS SAXS Fit" />
+              <Image   width={'auto'} maxHeight={"40rem"}src={`${apiUrl}/output/${plotPath}`} alt="FOXS SAXS Fit" />
                                        </div>
 
                                       
@@ -1045,11 +1050,8 @@ const ReGlyco = () => {
 
 
             <SimpleGrid alignSelf="center" justifyItems="center" columns={[1, 2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+              <Image src={fit} alt="Glycoprotein" width="90%" />
               
-              <video width={'60%'} autoPlay loop muted id="bgVideo" >
-                {/* <source src="/gamma_s.mp4" type="video/mp4" /> */}
-                Your browser does not support the video tag.
-              </video>
               <Box padding={"2rem"} paddingTop={"0rem"}><Text
                 bgGradient='linear(to-l,  #81D8D0, #C39CAA)'
                 bgClip='text'
@@ -1059,15 +1061,14 @@ const ReGlyco = () => {
                 align={"center"}
                 marginLeft={'2rem'}
               >
-                With SAXS/Density Fit
+                With SAXS and Density Fit
               </Text>
                 <Text fontFamily={'texts'} color='#B195A2' paddingTop="10rem" padding={"0rem"} justifySelf="left" align={'left'} fontSize={'lg'}>
 
-                  Re-Glyco is a tool we designed to restore the missing glycosylation on glycoproteins deposited in the RCSB PDB or in the EBI-EMBL AlphaFold protein structure database. To get started, upload your protein structure file or choose a pre-existing AlphaFold or PDB structure, and let Re-Glyco do the rest! Below are some example of UniProt IDs to get you started:
-
+                  Re-Glyco-Fit is a tool we designed to accurately restores missing glycans, aligning them within experimental constraints such as SAXS or CCP4 density maps. Significantly enhances the accuracy and reliability of glycoprotein models, bridging the gap between computational predictions and experimental data. To get started, upload your protein structure file and SAXS(.dat) or density(.ccp4) file and let Re-Glyco-Fit do the rest! 
 
                 </Text>
-
+{/* 
                 <Text fontFamily={'texts'}>
                   <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>Q9BXJ4</Button>
                   <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P29016</Button>
@@ -1075,9 +1076,9 @@ const ReGlyco = () => {
                   <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P27918</Button>
                   <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>B0YJ81</Button>
 
-                </Text>
-                <Text fontFamily={'texts'} paddingTop="0rem" color='#B195A2' alignSelf={"left"} fontSize={'lg'}>
-                  and press fetch!</Text>
+                </Text> */}
+                {/* <Text fontFamily={'texts'} paddingTop="0rem" color='#B195A2' alignSelf={"left"} fontSize={'lg'}>
+                  and press fetch!</Text> */}
 
                 <Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
                   Currently supported function includes :<br />
