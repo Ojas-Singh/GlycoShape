@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, useEffect, useRef, } from 'react';
 import axios from 'axios';
-
+import { useLocation, useNavigate } from 'react-router';
 import {
   Switch,
   FormControl, FormLabel, Hide, SimpleGrid, Box, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading, Accordion,
@@ -100,6 +100,9 @@ const ReGlyco = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+
+  
+
   const [uniprotID, setUniprotID] = useState<string>("");
   const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
   const [isUpload, setIsUpload] = useState<boolean>(false);
@@ -131,6 +134,92 @@ const ReGlyco = () => {
   }, [outputPath]); // Depend on yourVariable to trigger effect
 
 
+  const fetchProteinData = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/uniprot`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ uniprot: uniprotID.toUpperCase() })
+      });
+
+      const data: UniprotData = await response.json();
+      setUniprotID(data.uniprot);
+      setUniprotData(data);
+      setIsUpload(false);
+      setSelectedGlycans({});
+      setSelectedGlycanImage({});
+      setActiveStep(1);
+    } catch (error) {
+      if (error instanceof Error) {
+
+        try {
+          const response = await fetch(`${apiUrl}/api/rcsb`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ uniprot: uniprotID })
+          });
+
+          const data: UniprotData = await response.json();
+          setUniprotData(data);
+          setIsUpload(false);
+          setSelectedGlycans({});
+          setSelectedGlycanImage({});
+          setActiveStep(1);
+
+        } catch (error) {
+          if (error instanceof Error) {
+            
+          } else {
+            setError("An unknown error occurred.");
+          }
+        }
+      }
+    }
+  }
+
+
+  
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const [id, setId] = useState<string>(queryParams.get('id') || '');
+
+  useEffect(() => {
+    // Update uniprotID based on id from the URL
+    if (id) {
+      setUniprotID(id); // Assuming setId is meant to update uniprotID. If not, directly set uniprotID here if it's stateful.
+    }
+  
+    const debounceDelay = 1000;
+  
+    const timeoutId = setTimeout(() => {
+      const fetchData = async () => {
+        try {
+          // Now checking for id as well to ensure it triggers when id is set
+          if (!isUpload && (uniprotID.length > 3 || id)) {
+            await fetchProteinData();
+            setScanResults({
+              box: '',
+              clash: false,
+              output: '',
+              results: [] 
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching protein data:", error);
+        }
+      };
+  
+      fetchData();
+    }, debounceDelay);
+  
+    return () => clearTimeout(timeoutId);
+  
+    // Including id in the dependencies array ensures that the effect runs when id changes
+  }, [isUpload, uniprotID, id]); 
 
 
 
@@ -306,7 +395,8 @@ const ReGlyco = () => {
     setActiveStep(2);
     const payload = {
       selectedGlycans: selectedGlycans,
-      uniprotID: UniprotData?.uniprot
+      uniprotID: UniprotData?.uniprot,
+      isUpload: isUpload,
 
     };
 
@@ -391,7 +481,7 @@ const ReGlyco = () => {
 
           marginBottom="0.2em"
         >
-          <Link fontWeight="bold" fontFamily={'heading'} href="/swap" marginRight="20px">Swap ND2 and OD1</Link>
+          <Link fontWeight="bold" fontFamily={'heading'} href="/swap" marginRight="20px">Swap Atoms</Link>
         </Text>
 
 
@@ -547,13 +637,7 @@ const ReGlyco = () => {
                 </AccordionPanel>
               </AccordionItem>
 
-              {!isUpload && UniprotData.glycosylation_locations.glycosylations.length > 0 ? (
-                <div>
-
-
-
-                </div>
-              ) : (
+              
                 <div>
                   <Heading margin={'1rem'} marginBottom={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
                     Select residues to swap
@@ -647,7 +731,7 @@ const ReGlyco = () => {
 
 
 
-                  <br /></div>)}
+                  <br /></div>
 
 
 
@@ -717,7 +801,7 @@ const ReGlyco = () => {
                 marginBottom="0.2em"
                 marginLeft={'2rem'}
               >
-                Swap ND2 and OD1
+                Swap
               </Text>
 
               <Spacer />

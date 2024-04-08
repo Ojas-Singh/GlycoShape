@@ -6,6 +6,7 @@ import logo_oracle from './assets/logo_oracle.png';
 import { SocialIcon } from 'react-social-icons'
 import 'react-social-icons/vimeo'
 
+const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
 
 const Footer: React.FC = () => {
   return (
@@ -35,7 +36,13 @@ const Footer: React.FC = () => {
           <Text color="white" fontWeight="bold">Tools</Text>
           <Divider />
           <Link color="white" href="/reglyco">Re-Glyco</Link>
-          <Link color="white" href="/fit">Re-Glyco Fit</Link>
+          
+          {isDevelopment ? (
+        <Link color="white" href="/fit">Re-Glyco Fit</Link>
+      ) : (
+        <div></div>
+      )}
+          
           <Link color="white" href="/viewer/index.html">Mol * Viewer</Link>
           <Link color="white" href="/swap">ND2 and OD1 Swap</Link>
           

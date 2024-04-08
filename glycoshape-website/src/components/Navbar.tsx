@@ -19,6 +19,10 @@ import {
   DrawerHeader,
   DrawerBody,
   useDisclosure,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem
 } from "@chakra-ui/react";
 import { HamburgerIcon } from '@chakra-ui/icons';
 import logo from './assets/logo_white.png';
@@ -121,7 +125,17 @@ const Navbar: React.FC = () => {
       ) : (
         <Flex align="center">
           <Link fontWeight="bold" color={"#F7FFE6"} href="/search?query=all" marginRight="20px">Database</Link>
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link>
+          {/* <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link> */}
+          <Menu>
+            <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
+              Tools
+            </MenuButton>
+            <MenuList bg="#28363F" borderColor="#28363F">
+              <MenuItem fontWeight="bold" as={Link} href="/reglyco" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
+              <MenuItem fontWeight="bold" as={Link} href="/fit" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
+              <MenuItem fontWeight="bold" as={Link} href="/swap" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
+            </MenuList>
+          </Menu>
           
           <Link fontWeight="bold" color={"#F7FFE6"} href="/downloads" marginRight="20px">Downloads</Link>
           <Box alignContent={"center"} height='40px'>

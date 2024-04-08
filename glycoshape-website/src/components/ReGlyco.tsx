@@ -1,8 +1,10 @@
 import React, { useState, ChangeEvent, useEffect, useRef, } from 'react';
 import { useBreakpointValue } from "@chakra-ui/react";
 import axios from 'axios';
-
+import { useLocation, useNavigate } from 'react-router';
+import { FaCheck, FaTimes } from 'react-icons/fa';
 import {
+  useColorModeValue ,
   Tabs,
   TabList,
   TabPanels,
@@ -109,6 +111,7 @@ const ReGlyco = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
   const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
+  
 
   const [uniprotID, setUniprotID] = useState<string>("");
   const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
@@ -121,6 +124,9 @@ const ReGlyco = () => {
 
   const [selectedGlycans, setSelectedGlycans] = useState({});
   const [outputPath, setOutputPath] = useState("");
+
+
+
   const [clashValue, setClashValue] = useState(false);
   const [boxValue, setBoxValue] = useState("");
   const [selectedGlycanImage, setSelectedGlycanImage] = useState<{ [key: number]: string }>({});
@@ -157,15 +163,17 @@ const ReGlyco = () => {
 
   ];
   const scrollToRef = useRef<HTMLDivElement>(null);
+  // useEffect(() => {
+  //   if (outputPath /* condition to check */) {
+  //     // Scroll to the element when the condition is met
+  //     scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
+  //   }
+  // }, [outputPath]); // Depend on yourVariable to trigger effect
+
   useEffect(() => {
-    if (outputPath /* condition to check */) {
-      // Scroll to the element when the condition is met
-      scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [outputPath]); // Depend on yourVariable to trigger effect
-
-
-
+    // Scroll to the element when outputPath changes
+    scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [outputPath]);
   useEffect(() => {
     fetch(`${apiUrl}/database/GLYCAN_TYPE.json`)
       .then((response) => response.json())
@@ -257,28 +265,77 @@ const ReGlyco = () => {
 
   };
 
+
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const [id, setId] = useState<string>(queryParams.get('id') || '');
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Assuming you want to fetch data when upload is not in progress and uniprotID is set
-        if (!isUpload && uniprotID) {
-          await fetchProteinData();
-          setScanResults({
-            box: '',
-            clash: false,
-            output: '',
-            results: [] // Empty results array as initial value
-          })
-
+    // Update uniprotID based on id from the URL
+    if (id) {
+      setUniprotID(id); // Assuming setId is meant to update uniprotID. If not, directly set uniprotID here if it's stateful.
+    }
+  
+    const debounceDelay = 1000;
+  
+    const timeoutId = setTimeout(() => {
+      const fetchData = async () => {
+        try {
+          // Now checking for id as well to ensure it triggers when id is set
+          if (!isUpload && (uniprotID.length > 3 || id)) {
+            await fetchProteinData();
+            setScanResults({
+              box: '',
+              clash: false,
+              output: '',
+              results: [] 
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching protein data:", error);
         }
-      } catch (error) {
-        // Handle or log error
-        console.error("Error fetching protein data:", error);
-      }
-    };
+      };
+  
+      fetchData();
+    }, debounceDelay);
+  
+    return () => clearTimeout(timeoutId);
+  
+    // Including id in the dependencies array ensures that the effect runs when id changes
+  }, [isUpload, uniprotID, id]); 
+  
 
-    fetchData();
-  }, [isUpload, uniprotID]);
+
+
+  // useEffect(() => {
+  //   // Debounce delay in milliseconds
+  //   const debounceDelay = 1000; // Adjust this delay to control the debounce rate
+  
+  //   // Cleanup logic to clear the timeout if the effect is re-invoked before the delay is over
+  //   const timeoutId = setTimeout(() => {
+  //     const fetchData = async () => {
+  //       try {
+  //         if (!isUpload && uniprotID.length > 3) {
+  //           await fetchProteinData();
+  //           setScanResults({
+  //             box: '',
+  //             clash: false,
+  //             output: '',
+  //             results: [] // Assume resetting results or handling them as needed
+  //           });
+  //         }
+  //       } catch (error) {
+  //         console.error("Error fetching protein data:", error);
+  //       }
+  //     };
+  
+  //     fetchData();
+  //   }, debounceDelay);
+  
+  //   // Cleanup function to cancel the timeout if the component unmounts or if the useEffect hook runs again before the timeout completes
+  //   return () => clearTimeout(timeoutId);
+  
+  // }, [isUpload, uniprotID]); // Dependencies array
 
 
   const [scanResults, setScanResults] = useState<ScanResults | null>({
@@ -288,6 +345,7 @@ const ReGlyco = () => {
     results: [] // Empty results array as initial value
   });
 
+  const [summary, setSummary] = useState<ResultItem[] | null>(null);
 
   const handleProcessOne_scan = async () => {
     setIsLoading(true);  // Start loading
@@ -400,10 +458,11 @@ const ReGlyco = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ uniprot: uniprotID })
+        body: JSON.stringify({ uniprot: uniprotID.toUpperCase() })
       });
 
       const data: UniprotData = await response.json();
+      setUniprotID(data.uniprot);
       setUniprotData(data);
       setIsUpload(false);
       setSelectedGlycans({});
@@ -432,7 +491,7 @@ const ReGlyco = () => {
           if (error instanceof Error) {
             toast({
               title: 'Wrong uniprot id or pdb id',
-              description: "Please check your input and try again.",
+              description: "For the given uniprot/PDB id the strucure is not available in the AF/RSCB database. Please check your input and try again or upload your own structure.",
               status: 'error',
               duration: 4000,
               isClosable: true,
@@ -492,6 +551,7 @@ const ReGlyco = () => {
         setOutputPath(responseData.output);
         setClashValue(responseData.clash);
         setIsSASA(false);
+        setSummary(responseData.summary);
         setBoxValue(responseData.box)
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
@@ -532,6 +592,7 @@ const ReGlyco = () => {
         setClashValue(responseData.clash);
         setIsSASA(false);
         setBoxValue(responseData.box)
+        setSummary(responseData.summary);
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
         setLastRunType('handleProcessCustom');
@@ -622,6 +683,7 @@ const ReGlyco = () => {
         setOutputPath(responseData.output);
         setClashValue(responseData.clash);
         setBoxValue(responseData.box)
+        setSummary(responseData.summary);
         setIsSASA(false);
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
@@ -701,8 +763,9 @@ const ReGlyco = () => {
     };
 
     let endpoint = `${apiUrl}/api/oneshot_pdb`; // default endpoint
+    setOutputPath('');
 
-
+    
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -714,10 +777,11 @@ const ReGlyco = () => {
 
       if (response.ok) {
         const responseData = await response.json();
-        setOutputPath(responseData.output);
         setClashValue(responseData.clash);
         setIsSASA(false);
         setBoxValue(responseData.box)
+        setSummary(responseData.summary);
+        setOutputPath(responseData.output);
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
         setLastRunType('handleProcess_shot');
@@ -1176,8 +1240,12 @@ const ReGlyco = () => {
                                       <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
                                         {result.residue}
                                       </Box>
-                                      <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
-                                      <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
+                                      <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible: &nbsp;</Text>
+                                      {result.clash_solved ? (
+    <FaCheck color="green" />
+  ) : (
+    <FaTimes color="red" />
+  )}
                                     </ListItem>
                                   ))}
                                   {scanResults.results.length === 0 && scanResults.box.length > 0 ? (
@@ -1534,8 +1602,12 @@ const ReGlyco = () => {
                                       <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
                                         {result.residue}
                                       </Box>
-                                      <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:</Text>
-                                      <Text as="span" ml={1}>{result.clash_solved ? 'Yes' : 'No'}</Text>
+                                      <Text as="span" ml={2}>- <Text as="i">N-glycosylation</Text> possible:&nbsp;</Text>
+                                      {result.clash_solved ? (
+    <FaCheck color="green" />
+  ) : (
+    <FaTimes color="red" />
+  )}  
                                     </ListItem>
                                   ))}
                                   {scanResults.results.length === 0 && scanResults.box.length > 0 ? (
@@ -2019,12 +2091,45 @@ Download PDB with SASA B-values
                   )}
 
 
+{summary ? (
+                              <div>
+                                <Text marginTop="1.5rem" fontWeight="bold">Processing summary:</Text>
+                                <UnorderedList styleType="none" m={3}>
+                                  {summary.map((result, index) => (
+                                    <ListItem key={index} mb={2} display="flex" alignItems="center">
+                                      <Text as="span" fontWeight="bold">Residue:</Text>
+                                      <Box as="span" fontFamily="monospace" minWidth="6ch" textAlign="right">
+                                        {result.residue}
+                                      </Box>
+                                      <Text as="span" ml={2}>- <Text as="i">{result.glycan}</Text> possible: </Text>&nbsp;
+                                      {result.clash_solved ? (
+    <FaCheck color="green" />
+  ) : (
+    <FaTimes color="red" />
+  )}
+                                    </ListItem>
 
+                                  ))}
+                                  
+                                  
+                                     
+                                </UnorderedList>
+
+                                {summary.some(result => !result.clash_solved) && (
+      <Text mt={4}>
+        Please <Link color="teal.500" href={`/swap?id=${uniprotID}`} target="_blank">try this link</Link> to get the clashed residue swapped and try with a new swapped PDB.
+      </Text>
+    )}
+
+                              </div>
+                            ) : (
+                              <div></div>
+                            )}
                   
                   
                     
                     
-                    <Text fontWeight="bold">Processing log:</Text><Code>
+                    <Text  marginTop="1rem" fontWeight="bold">Processing log:</Text><Code>
                     {boxValue.split('\n').map((line, index) => (
                       <React.Fragment key={index}>
                         {line}

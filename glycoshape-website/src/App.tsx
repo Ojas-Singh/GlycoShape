@@ -20,6 +20,7 @@ import GlycanPage from './components/GlycanPage';
 import theme from './components/Theme';
 import Cite from './components/Cite';
 import Fit from './components/ReGlycofit';
+import NotFoundPage from './components/NotFoundPage'; 
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -50,6 +51,7 @@ const App: React.FC = () => {
               <Route path="/publications" element={<div><Search /><Elab /></div>} />
               <Route path="/swap" element={<div><Swap /></div>} />
               <Route path="/fit" element={<div><Fit /></div>} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
 
           </Flex>
