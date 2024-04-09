@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import axios from 'axios';
-
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Image,
   Button,
   Stack,Badge,
   Flex,
   Box,
-  Link,
   Text,
+  Link,
   useBreakpointValue,
   IconButton,
   Divider,
@@ -62,7 +62,7 @@ const Navbar: React.FC = () => {
   
           
          
-        <Link fontWeight="bold" fontSize={"3xl"} transform="translateY(8%)" color={"#F7FFE6"} href="/" >GlycoShape</Link> 
+        <Link as={RouterLink} fontWeight="bold" fontSize={"3xl"} transform="translateY(8%)" color={"#F7FFE6"} to="/" >GlycoShape</Link> 
         {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
         </Stack>
       </Box>
@@ -101,22 +101,28 @@ const Navbar: React.FC = () => {
                 <DrawerBody>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={Link} href="/search?query=all" w="100%" onClick={onClose} mb={4}>Database</Button>
+            }} as={RouterLink}  to="/search?query=all" w="100%" onClick={onClose} mb={4}>Database</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={Link} href="/reglyco" w="100%" onClick={onClose} mb={4}>Re-Glyco</Button>
+            }} as={RouterLink}  to="/reglyco" w="100%" onClick={onClose} mb={4}>Re-Glyco</Button>
+            <Button _hover={{
+              backgroundColor: "#F7FFE6"
+            }} as={RouterLink}  to="/fit" w="100%" onClick={onClose} mb={4}>Re-Glyco Fit</Button>
+            <Button _hover={{
+              backgroundColor: "#F7FFE6"
+            }} as={RouterLink}  to="/swap" w="100%" onClick={onClose} mb={4}>Swap</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={Link} href="/downloads" w="100%" onClick={onClose} mb={4}>Downloads</Button>
+            }} as={RouterLink}  to="/downloads" w="100%" onClick={onClose} mb={4}>Downloads</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={Link} href="/api-docs" w="100%" onClick={onClose} mb={4}>API</Button>
+            }} as={RouterLink}  to="/api-docs" w="100%" onClick={onClose} mb={4}>API</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={Link} href="/faq" w="100%" onClick={onClose} mb={4}>FAQ</Button>
+            }} as={RouterLink}  to="/faq" w="100%" onClick={onClose} mb={4}>FAQ</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={Link} href="/elab" w="100%" onClick={onClose} mb={4}>eLab</Button>
+            }} as={RouterLink}  to="/elab" w="100%" onClick={onClose} mb={4}>eLab</Button>
                 </DrawerBody>
               </DrawerContent>
             </DrawerOverlay>
@@ -124,29 +130,29 @@ const Navbar: React.FC = () => {
         </>
       ) : (
         <Flex align="center">
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/search?query=all" marginRight="20px">Database</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all" marginRight="20px">Database</Link>
           {/* <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link> */}
           <Menu>
             <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
               Tools
             </MenuButton>
             <MenuList bg="#28363F" borderColor="#28363F">
-              <MenuItem fontWeight="bold" as={Link} href="/reglyco" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
-              <MenuItem fontWeight="bold" as={Link} href="/fit" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
-              <MenuItem fontWeight="bold" as={Link} href="/swap" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
+              <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
+              <MenuItem fontWeight="bold" as={RouterLink} to="/fit" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
+              <MenuItem fontWeight="bold" as={RouterLink} to="/swap" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
             </MenuList>
           </Menu>
           
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/downloads" marginRight="20px">Downloads</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/downloads" marginRight="20px">Downloads</Link>
           <Box alignContent={"center"} height='40px'>
   <Divider orientation='vertical' />
           </Box>
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/api-docs" marginRight="20px" marginLeft={"20px"}>API</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/api-docs" marginRight="20px" marginLeft={"20px"}>API</Link>
           <Box alignContent={"center"} height='40px'>
   <Divider orientation='vertical' />
           </Box> 
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/faq" marginRight="20px" marginLeft={"20px"}>FAQ</Link> 
-          <Link fontWeight="bold" color={"#F7FFE6"} href="/elab" marginRight="20px">eLab</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/faq" marginRight="20px" marginLeft={"20px"}>FAQ</Link> 
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/elab" marginRight="20px">eLab</Link>
           
         </Flex>
       )}

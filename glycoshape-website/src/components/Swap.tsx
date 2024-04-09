@@ -136,7 +136,7 @@ const ReGlyco = () => {
 
   const fetchProteinData = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/uniprot`, {
+      const response = await fetch(`${apiUrl}/api/uniprot_swap`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -155,7 +155,7 @@ const ReGlyco = () => {
       if (error instanceof Error) {
 
         try {
-          const response = await fetch(`${apiUrl}/api/rcsb`, {
+          const response = await fetch(`${apiUrl}/api/rcsb_swap`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

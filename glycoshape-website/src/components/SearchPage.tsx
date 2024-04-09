@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, } from 'react';
 import { useBreakpointValue } from "@chakra-ui/react";
 import { useLocation } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Hide, Highlight, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
 } from "@chakra-ui/react";
@@ -264,10 +265,12 @@ const SearchPage = () => {
 
               &nbsp;
               <Button
+                
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={url => window.location.replace('/search?query=N-Glycans')}
+                onClick={(e) => setSearchString('N-Glycans')}
+                // onClick={url => window.location.replace('/search?query=N-Glycans')}
               >
                 N-Glycans
               </Button>&nbsp;
@@ -275,7 +278,8 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={url => window.location.replace('/search?query=O-Glycans')}
+                onClick={(e) => setSearchString('O-Glycans')}
+                // onClick={url => window.location.replace('/search?query=O-Glycans')}
               >
                 O-Glycans
               </Button>&nbsp;
@@ -283,7 +287,8 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={url => window.location.replace('/search?query=GAGs')}
+                onClick={(e) => setSearchString('GAGs')}
+                // onClick={url => window.location.replace('/search?query=GAGs')}
               >
                 GAGs
               </Button>&nbsp;
@@ -291,7 +296,8 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={url => window.location.replace('/search?query=Oligomannose')}
+                onClick={(e) => setSearchString('Oligomannose')}
+                // onClick={url => window.location.replace('/search?query=Oligomannose')}
               >
                 Oligomannose
               </Button>&nbsp;
@@ -299,7 +305,8 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={url => window.location.replace('/search?query=Complex')}
+                onClick={(e) => setSearchString('Complex')}
+                // onClick={url => window.location.replace('/search?query=Complex')}
               >
                 Complex
               </Button>&nbsp;
@@ -307,13 +314,15 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={url => window.location.replace('/search?query=Hybrid')}
+                // to="/search?query=Hybrid"
+                onClick={(e) => setSearchString('Hybrid')}
+                // onClick={url => window.location.replace('/search?query=Hybrid')}
               >
                 Hybrid
               </Button>&nbsp;
             </Hide>
           </Flex>
-          <Link href='/faq' color={"#F7FFE6"}>
+          <Link as={RouterLink} to='/faq' color={"#F7FFE6"}>
             <Highlight query='See search help' styles={{ alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color: '#F7FFE6' }}>
               See search help
             </Highlight></Link>
@@ -366,7 +375,7 @@ const SearchPage = () => {
 
 
 
-                    <Link href={`/glycan?IUPAC=${glycan}`}>
+                    <Link as={RouterLink} to={`/glycan?IUPAC=${glycan}`}>
                       <Image
 
                         src={`${apiUrl}/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image

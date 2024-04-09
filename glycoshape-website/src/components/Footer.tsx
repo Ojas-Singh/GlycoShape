@@ -1,10 +1,12 @@
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { Box, Flex, Text, Link, Image, VStack, HStack, Divider} from "@chakra-ui/react";
 import logo from './assets/logo_white.png';
 import logo_sfi from './assets/logo_sfi.jpg';
 import logo_oracle from './assets/logo_oracle.png';
 import { SocialIcon } from 'react-social-icons'
 import 'react-social-icons/vimeo'
+
 
 const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
 
@@ -21,9 +23,9 @@ const Footer: React.FC = () => {
         <VStack align="start">
           <Text color="white" fontWeight="bold">Core Data</Text>
           <Divider />
-          <Link color="white" href="/search?query=N-Glycans">N linked Glycans</Link>
-          <Link color="white" href="/search?query=O-Glycans">O linked Glycans</Link>
-          <Link color="white" href="/search?query=GAGs">Glycosaminoglycans </Link>
+          <Link as={RouterLink} color="white" to="/search?query=N-Glycans">N linked Glycans</Link>
+          <Link as={RouterLink} color="white" to="/search?query=O-Glycans">O linked Glycans</Link>
+          <Link as={RouterLink} color="white" to="/search?query=GAGs">Glycosaminoglycans </Link>
         </VStack>
         {/* <VStack align="start">
           <Text color="white" fontWeight="bold">Supporting Data</Text>
@@ -35,16 +37,16 @@ const Footer: React.FC = () => {
         <VStack align="start">
           <Text color="white" fontWeight="bold">Tools</Text>
           <Divider />
-          <Link color="white" href="/reglyco">Re-Glyco</Link>
+          <Link as={RouterLink} color="white" to="/reglyco">Re-Glyco</Link>
           
           {isDevelopment ? (
-        <Link color="white" href="/fit">Re-Glyco Fit</Link>
+        <Link as={RouterLink} color="white" to="/fit">Re-Glyco Fit</Link>
       ) : (
         <div></div>
       )}
           
-          <Link color="white" href="/viewer/index.html">Mol * Viewer</Link>
-          <Link color="white" href="/swap">ND2 and OD1 Swap</Link>
+          <Link  color="white" href="/viewer/index.html">Mol * Viewer</Link>
+          <Link as={RouterLink} color="white" to="/swap">ND2 and OD1 Swap</Link>
           
         </VStack>
         {/* <VStack align="start">

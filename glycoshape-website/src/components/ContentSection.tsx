@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
 import { Alert, AlertIcon, AlertTitle, AlertDescription,
   SimpleGrid,  Highlight, Text, Flex, Box, Image, Heading, Container, Link,  VStack, 
@@ -147,7 +148,7 @@ const ContentSection: React.FC = () => {
   > */}
 
           {/* GlycoShape DB provides open access to over 300 glycan structure and A Glycoprotein Builder <Link color={'#B07095'} href="/reglyco" >(Re-Glyco)</Link> to accelerate scientific research.  */}
-          GlycoShape is an OA database of glycans 3D structural data and information that can be downloaded or used with <Link color={'#B07095'} href="/reglyco" >Re-Glyco</Link> to rebuild glycoproteins from <Link href="https://www.rcsb.org/" >the RCSB PDB</Link> or <Link href="https://alphafold.ebi.ac.uk/" >EMBL-EBI AlphaFold</Link> repositories
+          GlycoShape is an OA database of glycans 3D structural data and information that can be downloaded or used with <Link as={RouterLink} color={'#B07095'} to="/reglyco" >Re-Glyco</Link> to rebuild glycoproteins from <Link href="https://www.rcsb.org/" >the RCSB PDB</Link> or <Link href="https://alphafold.ebi.ac.uk/" >EMBL-EBI AlphaFold</Link> repositories
           {/* </Highlight> */}
         </Text>
       </Flex>

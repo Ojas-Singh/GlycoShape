@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import { Hide, Link, Highlight, Input, Button, Text, Flex, Modal,ModalFooter, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
 } from "@chakra-ui/react";
 import { SearchIcon} from '@chakra-ui/icons'
@@ -200,56 +201,68 @@ const Bar: React.FC = () => {
 
 &nbsp;  
             <Button 
+              as={RouterLink} 
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=N-Glycans')}
+              to="/search?query=N-Glycans"
+              // onClick={url => window.location.replace('/search?query=N-Glycans')}
             >
              N-Glycans
             </Button>&nbsp;
             <Button 
+              as={RouterLink} 
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=O-Glycans')}
+              to="/search?query=O-Glycans"
+              // onClick={url => window.location.replace('/search?query=O-Glycans')}
             >
              O-Glycans
             </Button>&nbsp;
             <Button 
+              as={RouterLink} 
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=GAGs')}
+              to="/search?query=GAGs"
+              // onClick={url => window.location.replace('/search?query=GAGs')}
             >
              GAGs
             </Button>&nbsp;
             <Button 
+              as={RouterLink}
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=Oligomannose')}
+              to="/search?query=Oligomannose"
+              // onClick={url => window.location.replace('/search?query=Oligomannose')}
             >
              Oligomannose
             </Button>&nbsp;
             <Button 
+              as={RouterLink}
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=Complex')}
+              to="/search?query=Complex"
+              // onClick={url => window.location.replace('/search?query=Complex')}
             >
              Complex
             </Button>&nbsp;
             <Button 
+              as={RouterLink}
               backgroundColor="#7CC9A9" 
               _hover={{ backgroundColor: "#51BF9D" }} 
               color="white"
-              onClick={url => window.location.replace('/search?query=Hybrid')}
+              to="/search?query=Hybrid"
+              // onClick={url => window.location.replace('/search?query=Hybrid')}
             >
              Hybrid
             </Button>&nbsp;
             </Hide>
           </Flex>
-          <Link href='/faq' color={"#F7FFE6"}> 
+          <Link as={RouterLink} to='/faq' color={"#F7FFE6"}> 
           <Highlight query='See search help' styles={{alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .4)', color:'#F7FFE6'}}>
           See search help 
        </Highlight>
