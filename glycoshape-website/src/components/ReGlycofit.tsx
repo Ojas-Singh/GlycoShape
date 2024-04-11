@@ -277,7 +277,7 @@ const ReGlyco = () => {
     const file = event.target.files?.[0];
     if (file) {
 
-      const allowedExtensions = [".dat"]; // Example extensions
+      const allowedExtensions = [".dat",".mrc",".ccp4"]; // Example extensions
       const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
 
       if (!allowedExtensions.includes("." + fileExtension)) {
