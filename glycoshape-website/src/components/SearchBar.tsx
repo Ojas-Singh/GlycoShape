@@ -66,7 +66,10 @@ const Bar: React.FC = () => {
       // const requestBody = {
       //   search_string: searchRef.current.value,
       // };
-      navigate(`/search?query=${searchRef.current.value}`);
+
+      const query = searchRef.current?.value.trim() ? searchRef.current.value : 'all';
+      navigate(`/search?query=${query}`);
+      // navigate(`/search?query=${searchRef.current.value}`);
       
     } catch (error) {
       console.error("There was an error fetching the data", error);

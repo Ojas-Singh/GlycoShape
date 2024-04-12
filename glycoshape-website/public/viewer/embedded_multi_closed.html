@@ -44,7 +44,7 @@
                 emdbProvider: 'rcsb',
             }).then(viewer => {
                 for (let i = 0; i < pdbUrlArray.length; i++) {
-                    const label = pdbUrlArray[i] ? pdbUrlArray[i].slice(-18) : 'Unknown';
+                    const label = pdbUrlArray[i] ? pdbUrlArray[i].slice(-22) : 'Unknown';
                     viewer.loadStructureFromUrl(pdbUrlArray[i], formatArray[i], false, {
                         label: label
                     });

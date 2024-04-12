@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, } from 'react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
 import { useLocation, useNavigate } from 'react-router';
 import {
-  keyframes, Show, Hide, Grid, Divider, Spacer, Wrap, WrapItem, Code, HStack, Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack, SimpleGrid
+ Link, keyframes, Show, Hide, Grid, Divider, Spacer, Wrap, WrapItem, Code, HStack, Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack, SimpleGrid
 } from "@chakra-ui/react";
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
@@ -123,6 +123,7 @@ const GlycanPage: React.FC = () => {
     wurcs: string;
     glycoct: string | null;
     smiles: string;
+    oxford: string;
     components: string[];
     composition: string | null;
     mass: string;
@@ -528,6 +529,71 @@ const GlycanPage: React.FC = () => {
 
                                   </Button>
                                 </WrapItem>
+
+                                {data?.oxford && (
+  <WrapItem alignContent={'center'}>
+    <Text fontFamily={'texts'} transform="translateY(50%)" fontSize="md">
+      Oxford &nbsp;&nbsp;&nbsp;&nbsp;:
+    </Text>
+    <Box padding={'0.5rem'}>
+      <Code
+        p={2}
+        display="block"
+        whiteSpace="pre"
+        width={'60vw'}
+        overflowX="auto"
+        fontFamily={'mono'}
+      >
+        {data.oxford}
+      </Code>
+    </Box>
+    <Button
+      marginRight={'0rem'}
+      transform="translateY(30%)"
+      alignContent={"center"}
+      type="submit"
+      borderRadius="full"
+      size={"sm"}
+      backgroundColor="#7CC9A9"
+      _hover={{
+        backgroundColor: "#51BF9D"
+      }}
+      onClick={() => handleCopyClick(data?.oxford || '')}
+    >
+      {hasCopied ? <CheckIcon /> : <CopyIcon />}
+    </Button>
+  </WrapItem>
+)} 
+
+{/* 
+<WrapItem alignContent={'center'}>
+                                  <Text fontFamily={'texts'} transform="translateY(50%)" fontSize="md" >
+                                    Oxford :   </Text>
+                                  <Box padding={'0.5rem'} >
+                                    <Code
+                                      p={2}
+                                      display="block"
+                                      whiteSpace="pre"
+                                      // width={{base: "10rem",sm: "10rem", md: "20rem", lg: "60rem",xl: "60rem"}}
+                                      width={'60vw'}
+                                      overflowX="auto"
+                                      fontFamily={'mono'}
+                                    >
+                                      {data?.oxford}
+                                    </Code></Box>
+                                  <Button marginRight={'0rem'} transform="translateY(30%)" alignContent={"center"} type="submit"
+                                    borderRadius="full"
+                                    size={"sm"}
+                                    backgroundColor="#7CC9A9"
+                                    _hover={{
+                                      backgroundColor: "#51BF9D"
+                                    }}
+                                    onClick={() => handleCopyClick(data?.oxford || '')}>
+                                    {hasCopied ? <CheckIcon /> : <CopyIcon />}
+
+                                  </Button>
+
+                                </WrapItem> */}
                               </Box>
                             </VStack>
                           </Wrap>
@@ -634,7 +700,9 @@ const GlycanPage: React.FC = () => {
                       </Box>
 
                     </Box></Box>
-
+                    <Text color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
+             If you encounter any issues on this page or suspect a bug contact us <Link href="mailto:callum.ives@mu.ie">here</Link> 
+            </Text>
                 </TabPanel>
 
 
@@ -654,12 +722,12 @@ const GlycanPage: React.FC = () => {
                     {/* Main Content */}
                     <Box flex="1" p={{ base: "-2rem", sm: "0rem", md: "2rem", lg: "2rem", xl: "2rem" }} marginTop={'-2.5rem'} >
 
-                      <Box ref={contentRef6} id="clusters" p={'1rem'} pb={'4rem'} paddingTop={'1rem'}
+                      <Box ref={contentRef6} id="clusters" p={'1rem'} pb={'2rem'} paddingTop={'1rem'}
                         boxShadow="md"
                         marginBottom="1em"
                         backgroundColor="white"
                         borderRadius="md">
-                        <Text fontSize="2xl" color={"#2D5E6B"} mb={2}> {clusterLength} Clusters</Text>
+                        <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>This glycan has {clusterLength} major conformations clusters</Text>
                         <Divider />
                         <VStack>
 
@@ -681,7 +749,9 @@ const GlycanPage: React.FC = () => {
                               title="Protein Structure"
                             />
                           </Show>
-
+                          <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+             All major cluster conformations are displayed above. Aligned with residue 1 to 3 in the glycan sequence.
+            </Text>
                           <Box paddingTop={"2rem"} >
                             <SimpleGrid alignSelf="center" justifyItems="center" columns={[1, 2]} spacing={0} paddingTop={'0rem'} paddingBottom={'2rem'}>
 
@@ -708,7 +778,9 @@ const GlycanPage: React.FC = () => {
                           </Box>
 
                         </VStack>
-
+                        <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}  paddingLeft={"1rem"}>
+                            Probabilty of each cluster conformation is displayed above in the pie chart. Along with each cluster center torsion angle lies the distribution in densities plot.
+                          </Text>
                       </Box>
 
 
@@ -749,15 +821,19 @@ const GlycanPage: React.FC = () => {
                           <Divider />
                           <ContourPlot dataUrl={`${apiUrl}/database/${sequence}/output/torsions.csv`} seq={`${sequence}`} />
                         </VStack>
+                        <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'} paddingBottom={"0.5rem"} paddingLeft={"1rem"}>
+                          Dihedral torsion plot of the selected residues in the glycan sequence.
+              </Text>
                       </Box>
 
 
 
                       <Box ref={contentRef9} id="PCA_details" mb={2} boxShadow="md" marginBottom="1em" backgroundColor="white" borderRadius="md">
                         <VStack align={'left'} padding={'1rem'}>
-                          <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>PCA details</Text>
+                          <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>Conformation space representation (PCA details)</Text>
+                          
                           <Divider />
-                          <SimpleGrid alignSelf="center" justifyItems="center" columns={[1, 2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+                          <SimpleGrid alignSelf="left" justifyItems="center" columns={[1, 2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
 
                             <Scatter3D dataUrl={`${apiUrl}/database/${sequence}/output/pca.csv`} />
 
@@ -766,7 +842,9 @@ const GlycanPage: React.FC = () => {
                               <Image width={{ base: '100%', lg: '25vw' }} src={`${apiUrl}/database/${sequence}/output/Silhouette_Score.png`} /></VStack>
                           </SimpleGrid>
                         </VStack>
-
+                        <Text color='#B195A2'  fontSize={'xs'} paddingBottom={"0.5rem"} paddingLeft={"1rem"}>
+                          Principal Component Analysis (PCA) of all conformation explored in Molecular Dynamics Simulation and Silhouette Score plots for no. of cluster selection.
+            </Text>
                       </Box>
                     </Box></Box>
 

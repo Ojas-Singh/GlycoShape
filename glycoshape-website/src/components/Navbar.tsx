@@ -105,9 +105,15 @@ const Navbar: React.FC = () => {
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/reglyco" w="100%" onClick={onClose} mb={4}>Re-Glyco</Button>
-            <Button _hover={{
-              backgroundColor: "#F7FFE6"
-            }} as={RouterLink}  to="/fit" w="100%" onClick={onClose} mb={4}>Re-Glyco Fit</Button>
+            
+            {isDevelopment ? (
+        <Button _hover={{
+          backgroundColor: "#F7FFE6"
+        }} as={RouterLink}  to="/fit" w="100%" onClick={onClose} mb={4}>Re-Glyco Fit</Button>
+        ) : (
+          <></>)}
+
+            
             <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/swap" w="100%" onClick={onClose} mb={4}>Swap</Button>
@@ -132,16 +138,24 @@ const Navbar: React.FC = () => {
         <Flex align="center">
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all" marginRight="20px">Database</Link>
           {/* <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link> */}
-          <Menu>
-            <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
-              Tools
-            </MenuButton>
-            <MenuList bg="#28363F" borderColor="#28363F">
-              <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
-              <MenuItem fontWeight="bold" as={RouterLink} to="/fit" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
-              <MenuItem fontWeight="bold" as={RouterLink} to="/swap" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
-            </MenuList>
-          </Menu>
+          
+          
+          {isDevelopment ? (
+        <Menu>
+        <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
+          Tools
+        </MenuButton>
+        <MenuList bg="#28363F" borderColor="#28363F">
+          <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/fit" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/swap" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
+        </MenuList>
+      </Menu>) : (
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/reglyco" marginRight="20px">Re-Glyco</Link>
+        )}
+  
+          
+          
           
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/downloads" marginRight="20px">Downloads</Link>
           <Box alignContent={"center"} height='40px'>

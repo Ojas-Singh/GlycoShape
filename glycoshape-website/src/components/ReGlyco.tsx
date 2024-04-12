@@ -2117,7 +2117,7 @@ Download PDB with SASA B-values
 
                                 {summary.some(result => !result.clash_solved) && (
       <Text mt={4}>
-        Please <Link color="teal.500" href={`/swap?id=${uniprotID}`} target="_blank">try this link</Link> to get the clashed residue swapped and try with a new swapped PDB.
+        Please <Link color="teal.500" href={`/swap?id=${uniprotID}`} target="_blank">try this link</Link> to get the clashed residue's ND2 and OD1 swapped and try with a new swapped PDB.
       </Text>
     )}
 

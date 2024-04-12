@@ -42,11 +42,11 @@ const Footer: React.FC = () => {
           {isDevelopment ? (
         <Link as={RouterLink} color="white" to="/fit">Re-Glyco Fit</Link>
       ) : (
-        <div></div>
+        <></>
       )}
-          
+          <Link as={RouterLink} color="white" to="/swap">Swap</Link>
           <Link  color="white" href="/viewer/index.html">Mol * Viewer</Link>
-          <Link as={RouterLink} color="white" to="/swap">ND2 and OD1 Swap</Link>
+          
           
         </VStack>
         {/* <VStack align="start">
