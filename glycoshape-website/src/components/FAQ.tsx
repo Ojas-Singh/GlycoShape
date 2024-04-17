@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   IconButton , keyframes, useStyleConfig , Flex, Image, Stack, Button, Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Text,
+  VStack,
 } from "@chakra-ui/react";
 import { ChevronRightIcon, ChevronLeftIcon } from '@chakra-ui/icons'
 import { useLocation } from 'react-router-dom';
@@ -120,18 +121,33 @@ to { transform: translateX(0); opacity: 1; }
       </Accordion>
     </Box>
       {/* Tutorial Section */}
-      <Box ref={tutorialRef} p={10}  margin="0 auto">
+      <Box ref={tutorialRef} p={2}  margin="0 auto">
       <Text 
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
           fontSize={{base: "6xl",sm: "6xl", md: "6xl", lg: "6xl",xl: "6xl"}}
           fontWeight='extrabold'
-          align={"center"}
-          marginBottom="0.2em"
+          align={"start"}
+          paddingLeft={"1rem"}
+          // marginBottom="0.1rem"
         >
           Tutorials
         </Text>
+          <VStack>
+        <Text 
+          bgGradient='linear(to-l,  #B07095, #D7C9C0)'
+          bgClip='text'
+          fontSize={{base: "4xl",sm: "4xl", md: "4xl", lg: "5xl",xl: "5xl"}}
+          fontWeight='extrabold'
+          align={"start"}
+          paddingLeft={"1rem"}
+          marginBottom="0.2em"
+        >
+          Re-Glyco
+        </Text>
+        
         <Flex align="center" justify="center" gap="2">
+        
         <IconButton
   isRound={true}
   variant='solid'
@@ -141,7 +157,6 @@ to { transform: translateX(0); opacity: 1; }
   icon={<ChevronLeftIcon />}
   onClick={prevSlide}
 />
-        {/* <Button variant='ghost' colorScheme="teal" onClick={prevSlide} fontSize="5xl">{`<`}</Button> */}
         <Box>
           <Text 
                   bgGradient='linear(to-l, #44666C, #A7C4A3)'
@@ -167,6 +182,61 @@ to { transform: translateX(0); opacity: 1; }
 />
         {/* <Button variant='ghost' colorScheme="teal" onClick={nextSlide} fontSize="5xl">{`>`}</Button> */}
         </Flex>
+        </VStack>
+
+
+
+
+        <VStack paddingTop={"5rem"}>
+        <Text 
+          bgGradient='linear(to-l,  #B07095, #D7C9C0)'
+          bgClip='text'
+          fontSize={{base: "4xl",sm: "4xl", md: "4xl", lg: "5xl",xl: "5xl"}}
+          fontWeight='extrabold'
+          align={"start"}
+          paddingLeft={"1rem"}
+          marginBottom="0.2em"
+        >
+          Database Search
+        </Text>
+        
+        <Flex align="center" justify="center" gap="2">
+        
+        <IconButton
+  isRound={true}
+  variant='solid'
+  colorScheme='teal'
+  aria-label='Done'
+  fontSize='20px'
+  icon={<ChevronLeftIcon />}
+  onClick={prevSlide}
+/>
+        <Box>
+          <Text 
+                  bgGradient='linear(to-l, #44666C, #A7C4A3)'
+                  bgClip='text'
+                  fontSize='2xl'
+                  fontWeight='extrabold'
+                  marginBottom="0.2em"
+                >
+          {/* <Text fontSize="xl" p={3} textAlign="center"> */}
+            {slides[currentSlide].caption}</Text>
+            <Image src={slides[currentSlide].gif} height="32rem" objectFit="cover" alt="Tutorial Slide" animation={animation} />
+
+        </Box>
+
+        <IconButton
+  isRound={true}
+  variant='solid'
+  colorScheme='teal'
+  aria-label='Done'
+  fontSize='20px'
+  icon={<ChevronRightIcon />}
+  onClick={nextSlide}
+/>
+        {/* <Button variant='ghost' colorScheme="teal" onClick={nextSlide} fontSize="5xl">{`>`}</Button> */}
+        </Flex>
+        </VStack>
       </Box>
     </Box>
   );
