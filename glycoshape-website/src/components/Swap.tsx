@@ -612,7 +612,7 @@ const ReGlyco = () => {
 
                         src={isUpload ?
                           `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` :
-                          `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=mmcif`
+                          `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb`
                         }
                         allowFullScreen
                         title="Protein Structure"
@@ -628,7 +628,7 @@ const ReGlyco = () => {
 
                       src={isUpload ?
                         `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` :
-                        `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=mmcif`
+                        `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb`
                       }
                       allowFullScreen
                       title="Protein Structure"
@@ -640,7 +640,7 @@ const ReGlyco = () => {
               
                 <div>
                   <Heading margin={'1rem'} marginBottom={'1rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }} >
-                    Select residues to swap
+                    Select clashed residues
                   </Heading>
                   <Select
                     value={value}
@@ -668,7 +668,7 @@ const ReGlyco = () => {
                           </Heading>
                           <FormControl display="flex" alignItems="center">
                             <FormLabel htmlFor="glycan-switch" mb="0" fontWeight="normal" color={"#1A202C"}>
-                              {selectedGlycanImage[glycoConf.residueTag] ? 'True' : 'False'}
+                              {selectedGlycanImage[glycoConf.residueTag] ? 'Swap ND2 and OD1?' : 'False'}
                             </FormLabel>
                             <Switch
                               id="glycan-switch"
@@ -690,7 +690,9 @@ const ReGlyco = () => {
                       </div>
                     ) : null;
                   })}
-
+<Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+             Flip the toggle button to swap the atoms.
+            </Text>
                   <Button
                     position={"relative"}
                     margin={'1rem'}

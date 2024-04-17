@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   IconButton , keyframes, useStyleConfig , Flex, Image, Stack, Button, Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Text,
   VStack,
+  HStack,
+  Spacer,
 } from "@chakra-ui/react";
 import { ChevronRightIcon, ChevronLeftIcon } from '@chakra-ui/icons'
 import { useLocation } from 'react-router-dom';
@@ -60,9 +62,12 @@ to { transform: translateX(0); opacity: 1; }
   }, [location.pathname]); // Re-run when path changes
 
   const slides: Slide[] = [
-    { gif: '/img/1.gif', caption: 'First Slide Caption' },
-    { gif: '/img/2.gif', caption: 'Second Slide Caption' },
-    { gif: '/img/3.gif', caption: 'Third Slide Caption' },
+    { gif: '/img/1.gif', caption: 'Enter Uniprot/PDB ID or upload PDB structure' },
+    { gif: '/img/2.gif', caption: 'GlcNAc Scan to predict potential N-glycosylation sites' },
+    { gif: '/img/3.gif', caption: 'One shot N-glycosylation' },
+    { gif: '/img/4.gif', caption: 'Advanced (Site-by-Site) Glycosylation' },
+    { gif: '/img/5.gif', caption: 'Ensemble and SASA' },
+    { gif: '/img/6.gif', caption: "Swap clashed ASN residue's ND2 and OD1" },
     // Add more slides as needed
   ];
 
@@ -121,19 +126,23 @@ to { transform: translateX(0); opacity: 1; }
       </Accordion>
     </Box>
       {/* Tutorial Section */}
-      <Box ref={tutorialRef} p={2}  margin="0 auto">
+      <Box ref={tutorialRef} p={0} paddingBottom={0} margin="0 auto">
       <Text 
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
           fontSize={{base: "6xl",sm: "6xl", md: "6xl", lg: "6xl",xl: "6xl"}}
           fontWeight='extrabold'
           align={"start"}
-          paddingLeft={"1rem"}
+          
+          paddingLeft={"2rem"}
           // marginBottom="0.1rem"
         >
           Tutorials
         </Text>
           <VStack>
+            <HStack >
+          
+        <Spacer />
         <Text 
           bgGradient='linear(to-l,  #B07095, #D7C9C0)'
           bgClip='text'
@@ -141,10 +150,11 @@ to { transform: translateX(0); opacity: 1; }
           fontWeight='extrabold'
           align={"start"}
           paddingLeft={"1rem"}
-          marginBottom="0.2em"
+          marginBottom="0em"
         >
-          Re-Glyco
+          Re-Glyco : A GlycoProtein Builder
         </Text>
+        </HStack>
         
         <Flex align="center" justify="center" gap="2">
         
@@ -158,17 +168,16 @@ to { transform: translateX(0); opacity: 1; }
   onClick={prevSlide}
 />
         <Box>
-          <Text 
-                  bgGradient='linear(to-l, #44666C, #A7C4A3)'
-                  bgClip='text'
+          
+            <Image src={slides[currentSlide].gif} maxHeight="42rem" objectFit="cover" alt="Tutorial Slide" animation={animation} />
+            <Text padding={"1rem"}
+            align={"center"}
+                   color={"#B07095"}
                   fontSize='2xl'
                   fontWeight='extrabold'
                   marginBottom="0.2em"
                 >
-          {/* <Text fontSize="xl" p={3} textAlign="center"> */}
             {slides[currentSlide].caption}</Text>
-            <Image src={slides[currentSlide].gif} height="32rem" objectFit="cover" alt="Tutorial Slide" animation={animation} />
-
         </Box>
 
         <IconButton
@@ -186,7 +195,7 @@ to { transform: translateX(0); opacity: 1; }
 
 
 
-
+{/* 
         <VStack paddingTop={"5rem"}>
         <Text 
           bgGradient='linear(to-l,  #B07095, #D7C9C0)'
@@ -219,9 +228,8 @@ to { transform: translateX(0); opacity: 1; }
                   fontWeight='extrabold'
                   marginBottom="0.2em"
                 >
-          {/* <Text fontSize="xl" p={3} textAlign="center"> */}
             {slides[currentSlide].caption}</Text>
-            <Image src={slides[currentSlide].gif} height="32rem" objectFit="cover" alt="Tutorial Slide" animation={animation} />
+            <Image src={slides[currentSlide].gif} height="52rem" objectFit="cover" alt="Tutorial Slide" animation={animation} />
 
         </Box>
 
@@ -234,9 +242,8 @@ to { transform: translateX(0); opacity: 1; }
   icon={<ChevronRightIcon />}
   onClick={nextSlide}
 />
-        {/* <Button variant='ghost' colorScheme="teal" onClick={nextSlide} fontSize="5xl">{`>`}</Button> */}
         </Flex>
-        </VStack>
+        </VStack> */}
       </Box>
     </Box>
   );
