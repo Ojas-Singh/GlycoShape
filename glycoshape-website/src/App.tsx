@@ -9,6 +9,7 @@ import ScrollToTopButton from './components/Scroll';
 import ContentSection from './components/ContentSection';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
+import Tutorials from './components/Tutorials';
 import Search from './components/SearchTop';
 import API from './components/API';
 import Download from './components/Download';
@@ -40,7 +41,7 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<ContentSection />} />
               <Route path="/faq" element={<div><Search /><FAQ /></div>} />
-              <Route path="/tutorial" element={<div><Search /><FAQ /></div>} />
+              <Route path="/tutorial" element={<div><Search /><Tutorials /></div>} />
               <Route path="/api-docs" element={<div><Search /><API /></div>} />
               <Route path="/downloads" element={<div><Search /> <Download /></div>} />
               <Route path="/reglyco" element={<div><ReGlyco /></div>} />

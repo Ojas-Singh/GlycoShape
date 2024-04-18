@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Heading, Link,
-  IconButton , keyframes, useStyleConfig , Flex, Image, Stack, Button, Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Text,
-  VStack,
-  HStack,
-  Spacer,
-  UnorderedList,
-  ListItem,
+import {keyframes, useStyleConfig , Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Text,
+
 } from "@chakra-ui/react";
-import { ChevronRightIcon, ChevronLeftIcon } from '@chakra-ui/icons'
 import { useLocation } from 'react-router-dom';
 
 interface FAQItem {
@@ -16,27 +9,11 @@ interface FAQItem {
   content: string;
 }
 
-interface Slide {
-  gif: string;
-  caption: string;
-}
 
 const FAQ: React.FC = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
-  const tutorialRef = useRef<HTMLDivElement>(null);
-  const location = useLocation(); // To detect route change
-  // Define animations for sliding in from left or right
-const slideInLeft = keyframes`
-from { transform: translateX(100%); opacity: 0; }
-to { transform: translateX(0); opacity: 1; }
-`;
-
-const slideInRight = keyframes`
-from { transform: translateX(-100%); opacity: 0; }
-to { transform: translateX(0); opacity: 1; }
-`;
-
+ 
   useEffect(() => {
     // Function to fetch FAQs
     const fetchFAQs = async () => {
@@ -56,43 +33,11 @@ to { transform: translateX(0); opacity: 1; }
 
     fetchFAQs();
 
-    if (location.pathname === '/tutorial') {
-      // Set a timeout to scroll to the tutorial section after 1 second
-      setTimeout(() => {
-        tutorialRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 1000);  // 1000 milliseconds = 1 second
-    }
-  }, [location.pathname]); // Re-run when path changes
+   
+  }, []); // Re-run when path changes
 
-  const slides: Slide[] = [
-    { gif: '/img/1.gif', caption: 'Enter Uniprot/PDB ID or upload PDB structure' },
-    { gif: '/img/2.gif', caption: 'GlcNAc Scan to predict potential N-glycosylation sites' },
-    { gif: '/img/3.gif', caption: 'One shot N-glycosylation' },
-    { gif: '/img/4.gif', caption: 'Advanced (Site-by-Site) Glycosylation' },
-    { gif: '/img/5.gif', caption: 'Ensemble and SASA' },
-    { gif: '/img/6.gif', caption: "Swap clashed ASN residue's ND2 and OD1" },
-    // Add more slides as needed
-  ];
+ 
 
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const [animation, setAnimation] = useState("");
-
-  const nextSlide = () => {
-    setAnimation(""); // Reset animation state
-    setTimeout(() => {
-        setAnimation(`0.5s ${slideInLeft} ease-out forwards`);
-        setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 10);
-};
-
-const prevSlide = () => {
-    setAnimation(""); // Reset animation state
-    setTimeout(() => {
-        setAnimation(`0.5s ${slideInRight} ease-out forwards`);
-        setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    }, 10);
-};
 
 
   return (
@@ -131,95 +76,7 @@ const prevSlide = () => {
         ))}
       </Accordion>
     </Box>
-      {/* Tutorial Section */}
-      <Box ref={tutorialRef} p={0} paddingBottom={0} margin="0 auto">
-      <Text 
-          bgGradient='linear(to-l, #44666C, #A7C4A3)'
-          bgClip='text'
-          fontSize={{base: "6xl",sm: "6xl", md: "6xl", lg: "6xl",xl: "6xl"}}
-          fontWeight='extrabold'
-          align={"start"}
-          
-          paddingLeft={"2rem"}
-          // marginBottom="0.1rem"
-        >
-          Tutorials
-        </Text>
-          <VStack>
-            <HStack >
-          
-        <Spacer />
-        <Text 
-          bgGradient='linear(to-l,  #B07095, #D7C9C0)'
-          bgClip='text'
-          fontSize={{base: "4xl",sm: "4xl", md: "4xl", lg: "5xl",xl: "5xl"}}
-          fontWeight='extrabold'
-          align={"start"}
-          paddingLeft={"1rem"}
-          marginBottom="0em"
-        >
-          Re-Glyco : A GlycoProtein Builder
-        </Text>
-        </HStack>
-        
-        <Flex align="center" justify="center" gap="2">
-        
-        <IconButton
-  isRound={true}
-  variant='solid'
-  colorScheme='teal'
-  aria-label='Done'
-  fontSize='20px'
-  icon={<ChevronLeftIcon />}
-  onClick={prevSlide}
-/>
-        <Box>
-          
-            <Image src={slides[currentSlide].gif} maxHeight="42rem" objectFit="cover" alt="Tutorial Slide" animation={animation} />
-            <Text padding={"1rem"}
-            align={"center"}
-                   color={"#B07095"}
-                  fontSize='2xl'
-                  fontWeight='extrabold'
-                  marginBottom="0.2em"
-                >
-            {slides[currentSlide].caption}</Text>
-        </Box>
-
-        <IconButton
-  isRound={true}
-  variant='solid'
-  colorScheme='teal'
-  aria-label='Done'
-  fontSize='20px'
-  icon={<ChevronRightIcon />}
-  onClick={nextSlide}
-/>
-        </Flex>
-        </VStack>
-              <Box gap="2">
-
-        <Heading padding={'5rem'} as="h3" size="lg" color={"#6A8A81"} paddingBottom={"1.5rem"}>Other learning resources:</Heading>
-              <Box paddingLeft="10rem">
-                <UnorderedList alignContent={"center"}>
-                <ListItem>
-                          <Link color={"#B07095"} fontWeight="semibold" href='https://www.youtube.com/watch?v=oR1CeBXTvZ0&list=PLN5HMWt4P0VugGKpzqEChc7so-s1gV8FO&index=2' isExternal>
-                            Sugar Drawer from Glycosmos
-                          </Link>
-                          </ListItem>
-              <ListItem>
-                          
-                          <Link color={"#B07095"} fontWeight="semibold"href='https://www.ncbi.nlm.nih.gov/glycans/snfg.html' isExternal>
-                            Symbol Nomenclature for Glycans (SNFG)
-                          </Link>
-                          </ListItem>
-                          </UnorderedList>
-                          </Box>
-                          </Box>
-
-
-      </Box>
-
+      
       
     </Box>
   );
