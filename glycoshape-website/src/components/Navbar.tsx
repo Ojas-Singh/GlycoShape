@@ -128,6 +128,9 @@ const Navbar: React.FC = () => {
             }} as={RouterLink}  to="/faq" w="100%" onClick={onClose} mb={4}>FAQ</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
+            }} as={RouterLink}  to="/tutorial" w="100%" onClick={onClose} mb={4}>Tutorials</Button>
+                  <Button _hover={{
+              backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/elab" w="100%" onClick={onClose} mb={4}>eLab</Button>
                 </DrawerBody>
               </DrawerContent>
