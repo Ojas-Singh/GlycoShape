@@ -747,9 +747,9 @@ const ReGlyco = () => {
                       width="100%"
                       height="400px"
 
-                      src={isUpload ?
-                        `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` :
-                        `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=mmcif`
+                      src={uploadedFileName ?
+                        `/viewer/embeddedfit.html?pdbUrl=${UniprotData.requestURL}&densityUrl=${apiUrl}/output/${uploadedFileName}` :
+                        `/viewer/embeddedfit.html?pdbUrl=${UniprotData.requestURL}`
                       }
                       allowFullScreen
                       title="Protein Structure"

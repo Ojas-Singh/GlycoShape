@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+    <title>Load CCP4 and PDB Data in Mol* Viewer</title>
+    <style>
+        #app {
+            position: absolute;
+            left: 50px;
+            top: 50px;
+            width: 95%;
+            height: 95vh;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="molstar.css" />
+</head>
+<body>
+    <div id="app"></div>
+    <script type="text/javascript" src="./molstar.js"></script>
+    <script type="text/javascript">
+        const urlParams = new URLSearchParams(window.location.search);
+        const densityUrl = urlParams.get('densityUrl');
+        const pdbUrl = urlParams.get('pdbUrl');
+
+        molstar.Viewer.create('app', {
+            layoutIsExpanded: true,
+            layoutShowControls: false,
+            layoutShowRemoteState: false,
+            layoutShowSequence: true,
+            layoutShowLog: true,
+            layoutShowLeftPanel: true,
+
+            viewportShowExpand: true,
+            viewportShowSelectionMode: false,
+            viewportShowAnimation: false,
+
+            pdbProvider: 'rcsb',
+            emdbProvider: 'rcsb',
+        }).then(viewer => {
+            console.log('Viewer initialized successfully.');
+            if (densityUrl) {
+                console.log('Attempting to load density map:', densityUrl);
+                viewer.loadVolumeFromUrl({
+                    url: densityUrl,
+                    format: 'ccp4',
+                    isBinary: true,
+                }, [{
+                    type: 'relative',
+                    value: 2,
+                    color: 0x6699CC,
+                    alpha: 0.1,
+                }]).then(() => {
+                    console.log('Density map loaded successfully.');
+                }).catch(e => {
+                    console.error('Failed to load density map:', e);
+                });
+            }
+            if (pdbUrl) {
+                console.log('Attempting to load PDB data:', pdbUrl);
+                viewer.loadStructureFromUrl(pdbUrl, 'pdb', false, {
+                    
+                    label: 'label'
+                }).then(() => {
+                    console.log('PDB data loaded successfully.');
+                }).catch(e => {
+                    console.error('Failed to load PDB data:', e);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
