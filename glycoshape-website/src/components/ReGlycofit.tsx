@@ -272,6 +272,7 @@ const ReGlyco = () => {
   });
 
   const [uploadedFileName, setUploadedFileName] = useState('');
+  const [isCcp4File, setIsCcp4File] = useState(false);
 
   const handleFitFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -285,6 +286,8 @@ const ReGlyco = () => {
         setError("File type not allowed.");
         return;
       }
+      const isCcp4 = fileExtension === 'ccp4';
+      setIsCcp4File(isCcp4);
       const formData = new FormData();
       formData.append('pdbFile', file);
 
@@ -747,7 +750,7 @@ const ReGlyco = () => {
                       width="100%"
                       height="400px"
 
-                      src={uploadedFileName ?
+                      src={isCcp4File ?
                         `/viewer/embeddedfit.html?pdbUrl=${UniprotData.requestURL}&densityUrl=${apiUrl}/output/${uploadedFileName}` :
                         `/viewer/embeddedfit.html?pdbUrl=${UniprotData.requestURL}`
                       }
@@ -931,7 +934,14 @@ const ReGlyco = () => {
                     // key={sequence}
                     width="100%"
                     height="400px"
-                    src={`/viewer/embedded.html?pdbUrl=${apiUrl}/output/${outputPath}&format=pdb`} frameBorder="0"
+                    // src={`/viewer/embedded.html?pdbUrl=${apiUrl}/output/${outputPath}&format=pdb`} 
+                    src ={
+                      isCcp4File ?
+                        `/viewer/embeddedfit.html?pdbUrl=${apiUrl}/output/${outputPath}&densityUrl=${apiUrl}/output/${uploadedFileName}` :
+                        `/viewer/embeddedfit.html?pdbUrl=${apiUrl}/output/${outputPath}`
+                    }
+                    
+                    frameBorder="0"
                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     title="Protein Structure"
@@ -954,22 +964,30 @@ const ReGlyco = () => {
               </Button>
               </a>
               
-              <a href={`${apiUrl}/output/${fitPath}`} download>
-              <Button position={"relative"}
-                margin={'1rem'}
-                borderRadius="full"
-                isDisabled={isLoading}
-                backgroundColor="#81D8D0"
-                _hover={{
-                  backgroundColor: "#008081"
-                }}
-                size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>
+              {!isCcp4File && (
+        <div>
+          <a href={`${apiUrl}/output/${fitPath}`} download>
+            <Button
+              position={"relative"}
+              margin={'1rem'}
+              borderRadius="full"
+              isDisabled={isLoading}
+              backgroundColor="#81D8D0"
+              _hover={{ backgroundColor: "#008081" }}
+              size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+            >
+              Download SAXS Fit File
+            </Button>
+          </a>
 
-                Download SAXS Fit File
-              </Button>
-              </a>
-
-              <Image   width={'auto'} maxHeight={"40rem"}src={`${apiUrl}/output/${plotPath}`} alt="FOXS SAXS Fit" />
+          <Image
+            width={'auto'}
+            maxHeight={"40rem"}
+            src={`${apiUrl}/output/${plotPath}`}
+            alt="FOXS SAXS Fit"
+          />
+        </div>
+      )}
                                        </div>
 
                                       
