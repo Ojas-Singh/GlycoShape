@@ -1,0 +1,8 @@
+[submodule "GlycanAnalysisPipeline"]
+	path = GlycanAnalysisPipeline
+	url = https://github.com/Ojas-Singh/GlycanAnalysisPipeline.git
+	branch = main
+[submodule "Re-Glyco"]
+	path = Re-Glyco
+	url = https://github.com/Ojas-Singh/Re-Glyco.git
+	branch = main
