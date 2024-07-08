@@ -278,7 +278,7 @@ const ReGlyco = () => {
     const file = event.target.files?.[0];
     if (file) {
 
-      const allowedExtensions = [".dat",".mrc",".ccp4"]; // Example extensions
+      const allowedExtensions = [".dat",".mrc",".ccp4", ".map"]; // Example extensions
       const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
 
       if (!allowedExtensions.includes("." + fileExtension)) {
@@ -286,7 +286,7 @@ const ReGlyco = () => {
         setError("File type not allowed.");
         return;
       }
-      const isCcp4 = fileExtension === 'ccp4';
+      const isCcp4 = fileExtension === 'ccp4' || fileExtension === 'mrc' || fileExtension === 'map';
       setIsCcp4File(isCcp4);
       const formData = new FormData();
       formData.append('pdbFile', file);
