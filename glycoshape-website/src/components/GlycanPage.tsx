@@ -8,6 +8,7 @@ import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
 import PieChart from './Pie';
 import { css } from '@emotion/react';
+import axios from 'axios';
 
 
 
@@ -19,7 +20,27 @@ const GlycanPage: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const [error, setError] = useState<string | null>(null);
   const [sequence, setsequence] = useState<string>(queryParams.get('IUPAC') || '');
+  const [sequenceGlytoucan, setSequenceGlytoucan] = useState<string>(queryParams.get('glytoucan') || '');
 
+  // Define the async function outside the useEffect with explicit type for the parameter
+  async function fetchData(sequenceGlytoucan: string) {
+    try {
+      const response = await axios.get('https://glycoshape.io/api/fetch_glytoucan', {
+        params: { id: sequenceGlytoucan }
+      });
+      if (response.data && response.data.iupac) {
+        setsequence(response.data.iupac);
+      }
+    } catch (error) {
+      console.error('Failed to fetch glytoucan data', error);
+    }
+  }
+
+  useEffect(() => {
+    if (sequenceGlytoucan) {
+      fetchData(sequenceGlytoucan);
+    }
+  }, [sequenceGlytoucan]);  // Dependency on sequenceGlytoucan
   const backgroundPulseAnimation = keyframes`
   0% { background-color: transparent; }
   95% { background-color: #F7F9E5; } /* Example highlight color */
@@ -206,7 +227,7 @@ const GlycanPage: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [sequence]); 
 
 
 
@@ -233,9 +254,18 @@ const GlycanPage: React.FC = () => {
                   // marginRight="1rem"
                   />
                   <Show above='lg'>
-                    <Text fontSize={{ base: "0", sm: "1xl", md: "3xl", lg: "3xl", xl: "3xl" }} >
+                    
+                    {/* <Text fontSize={{ base: "0", sm: "1xl", md: "3xl", lg: "3xl", xl: "3xl" }} >
                       {sequence.length > 30 ? sequence.substring(0, 60) + '...' : sequence}
-                    </Text>
+                    </Text> */}
+                    {
+  data?.glytoucan_id ?
+  <Text fontSize={{ base: "0", sm: "1xl", md: "3xl", lg: "3xl", xl: "3xl" }}>{data.glytoucan_id}</Text> :
+  <Text fontSize={{ base: "0", sm: "1xl", md: "3xl", lg: "3xl", xl: "3xl" }}>
+    {sequence.length > 30 ? sequence.substring(0, 60) + '...' : sequence}
+  </Text>
+}
+
                   </Show>
                 </HStack>
                 <Spacer />

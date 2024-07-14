@@ -22,6 +22,7 @@ import theme from './components/Theme';
 import Cite from './components/Cite';
 import Fit from './components/ReGlycofit';
 import NotFoundPage from './components/NotFoundPage'; 
+import CookieConsent from './components/CookieConsent';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -34,6 +35,7 @@ const App: React.FC = () => {
         <Flex direction="column" minHeight="100vh">
           {/* Navbar, if you have one */}
           <Navbar />
+          <CookieConsent />
           <ScrollToTopButton />
           {/* Main content area */}
           <Flex direction="column" flex="1">
