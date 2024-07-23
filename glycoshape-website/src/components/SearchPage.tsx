@@ -3,7 +3,7 @@ import { useBreakpointValue } from "@chakra-ui/react";
 import { useLocation } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
-  Hide, Highlight, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
+  HStack, Hide, Highlight, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
 } from "@chakra-ui/react";
 import { SearchIcon } from '@chakra-ui/icons'
 import bg from './assets/gly.png';
@@ -16,7 +16,9 @@ const SearchPage = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const [results, setResults] = useState<string[]>([]);
+  // const [results, setResults] = useState<string[]>([]);
+  // const [results, setResults] = useState<{ iupac: string, glytoucan_id: string | null }[]>([]);
+  const [results, setResults] = useState<{ iupac: string, glytoucan_id: string | null, mass: string | null }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchString, setSearchString] = useState<string>(queryParams.get('query') || '');
   const [isWurcsSearch, setIsWurcsSearch] = useState(true);
@@ -355,7 +357,7 @@ const SearchPage = () => {
             {/* Add more filters as needed */}
             {/* </Box> */}
             <Box width="70%" >
-              {results.map((glycan, index) => (
+              {/* {results.map((glycan, index) => (
                 <Box
                   key={index}
                   // width="100%"
@@ -390,7 +392,55 @@ const SearchPage = () => {
 
                   </VStack>
                 </Box>
-              ))}</Box></Flex>
+              ))} */}
+
+
+{results.map((glycan, index) => (
+        <Box
+            key={index}
+            padding="1rem"
+            boxShadow="md"
+            marginBottom="1em"
+            backgroundColor="white"
+            borderRadius="md"
+            display="flex"
+            flex='1'
+        >
+            <VStack align={'stretch'} width="100%">
+                {/* <Heading fontSize={{ base: "xs", sm: "xs", md: "xl", lg: "xl", xl: "xl" }}>
+                    {glycan.iupac.length > trimLength ? glycan.iupac.substring(0, trimLength) + '...' : glycan.iupac}
+                </Heading>
+
+                {glycan.glytoucan_id && (
+                    <Text fontSize="md" color="gray.600">
+                        GlyTouCan ID: {glycan.glytoucan_id}
+                    </Text>
+                )} */}
+
+              <Heading fontSize={{ base: "xs", sm: "xs", md: "xl", lg: "xl", xl: "xl" }}>
+              {glycan.glytoucan_id ? glycan.glytoucan_id : (glycan.iupac.length > trimLength ? glycan.iupac.substring(0, trimLength) + '...' : glycan.iupac)}
+            </Heading>
+            <HStack justify="space-between" align="center" width="100%" paddingRight='3rem'>            
+
+                <Link as={RouterLink} to={`/glycan?IUPAC=${glycan.iupac}`}>
+                    <Image
+                        src={`${apiUrl}/database/${glycan.iupac}/${glycan.iupac}.svg`}
+                        alt="Glycan Image"
+                        height="150px"
+                        maxWidth={"200px"}
+                    />
+                </Link>
+                {glycan.mass && (
+              <Text fontSize="md" color="gray.600">
+                Mass: {glycan.mass}
+              </Text>
+            )}
+            </HStack>
+            </VStack>
+        </Box>
+    ))}
+
+              </Box></Flex>
         </Flex>
       )}
       {error && (
