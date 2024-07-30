@@ -39,6 +39,7 @@ const GlycanPage: React.FC = () => {
   useEffect(() => {
     if (sequenceGlytoucan) {
       fetchData(sequenceGlytoucan);
+      
     }
   }, [sequenceGlytoucan]);  // Dependency on sequenceGlytoucan
   const backgroundPulseAnimation = keyframes`
@@ -148,8 +149,8 @@ const GlycanPage: React.FC = () => {
     components: string[];
     composition: string | null;
     mass: string;
-    motifs: string[];
-    termini: string[];
+    motifs: string[] | null;
+    termini: string[] | null;
     tpsa: number;
     rot_bonds: number;
     hbond_donor: number;
@@ -227,6 +228,9 @@ const GlycanPage: React.FC = () => {
     };
 
     fetchData();
+    setTimeout(() => {
+      scrollToContent(contentRef1)
+    }, 300);  // 1000 milliseconds = 0.5 second
   }, [sequence]); 
 
 
@@ -640,8 +644,8 @@ const GlycanPage: React.FC = () => {
                               { label: "Glycan Type", value: data?.glycan_type || "Not Available" },
                               { label: "Components", value: JSON.stringify(data?.components) },
                               { label: "Composition", value: JSON.stringify(data?.composition) || "Not Available" },
-                              { label: "Motifs", value: data?.motifs.join(', ') },
-                              { label: "Termini", value: data?.termini.join(', ') }
+                              { label: "Motifs", value: data?.motifs ? data.motifs.join(', ')  : "Not Available" },
+                              { label: "Termini", value:  data?.termini ? data.termini.join(', ') : "Not Available"  }
                             ].map(item => (
                               <Flex key={item.label} align="center" justify="space-between">
                                 <Text fontFamily={'texts'} fontSize="md" width="45%" textAlign="right">{item.label}</Text>

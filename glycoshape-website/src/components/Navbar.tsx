@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import axios from 'axios';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate   } from 'react-router-dom';
 import {
   Image,
   Button,
@@ -32,6 +32,8 @@ const Navbar: React.FC = () => {
   const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     axios.get(`${apiUrl}/api/log`, { withCredentials: true })
@@ -43,6 +45,15 @@ const Navbar: React.FC = () => {
       });
   },); // Empty dependency array
   
+  const handleNavigation = (path: string) => {
+    console.log(`Current path: ${location.pathname}, Target path: ${path}`);
+    if (location.pathname.substring(0, 5) === path.substring(0, 5)) {
+      console.log("Path is the same. Performing full page reload.");
+      window.location.reload(); // This ensures a full page reload
+    } else {
+      navigate(path); // Use navigate for navigation to a different path
+    }
+  };
 
   return (
     // <Flex as="nav" position="sticky" top="0" zIndex="1000" bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
@@ -101,10 +112,10 @@ const Navbar: React.FC = () => {
                 <DrawerBody>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={RouterLink}  to="/search?query=all" w="100%" onClick={onClose} mb={4}>Database</Button>
+            }} as={RouterLink}  to="/search?query=all" w="100%"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }} mb={4}>Database</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
-            }} as={RouterLink}  to="/reglyco" w="100%" onClick={onClose} mb={4}>Re-Glyco</Button>
+            }} as={RouterLink}  to="/reglyco" w="100%" onClick={onClose}  mb={4}>Re-Glyco</Button>
             
             {isDevelopment ? (
         <Button _hover={{
@@ -139,7 +150,7 @@ const Navbar: React.FC = () => {
         </>
       ) : (
         <Flex align="center">
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all" marginRight="20px">Database</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }}  marginRight="20px">Database</Link>
           {/* <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link> */}
           
           
@@ -149,12 +160,12 @@ const Navbar: React.FC = () => {
           Tools
         </MenuButton>
         <MenuList bg="#28363F" borderColor="#28363F">
-          <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
-          <MenuItem fontWeight="bold" as={RouterLink} to="/fit" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
-          <MenuItem fontWeight="bold" as={RouterLink} to="/swap" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() =>  handleNavigation('/fit')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/swap" onClick={() =>  handleNavigation('/swap')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
         </MenuList>
       </Menu>) : (
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/reglyco" marginRight="20px">Re-Glyco</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} marginRight="20px">Re-Glyco</Link>
         )}
   
           
