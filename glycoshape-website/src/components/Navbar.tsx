@@ -48,7 +48,9 @@ const Navbar: React.FC = () => {
   const handleNavigation = (path: string) => {
     console.log(`Current path: ${location.pathname}, Target path: ${path}`);
     if (location.pathname.substring(0, 5) === path.substring(0, 5)) {
+      console.log(`Current path: ${location.pathname}, Target path: ${path}`);
       console.log("Path is the same. Performing full page reload.");
+      navigate(path);
       window.location.reload(); // This ensures a full page reload
     } else {
       navigate(path); // Use navigate for navigation to a different path

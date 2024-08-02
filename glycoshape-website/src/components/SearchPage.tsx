@@ -27,7 +27,7 @@ const SearchPage = () => {
   const [wurcsImageSrc, setWurcsImageSrc] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const searchRef = useRef<HTMLInputElement>(null);
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const trimLength = useBreakpointValue({
     base: 30,
@@ -75,6 +75,7 @@ const SearchPage = () => {
 
   const handleSearch = async () => {
     try {
+      setIsLoading(true);
       let url, body;
       if (wurcsString && !searchString) {
         url = `${apiUrl}/api/wurcs`;
@@ -83,6 +84,7 @@ const SearchPage = () => {
         });
       } else if (searchString) {
         setIsWurcsSearch(false);
+        
         url = `${apiUrl}/api/search`;
         body = JSON.stringify({
           search_string: searchString,
@@ -91,6 +93,7 @@ const SearchPage = () => {
         // Handle the case when neither wurcsString nor searchString has a value
         // console.warn("Please provide a valid search string or WURCS string!");
         setError("No search string or WURCS string provided.");
+        setIsLoading(false);
         return;
       }
 
@@ -110,6 +113,7 @@ const SearchPage = () => {
 
       if (data.results) {
         setResults(data.results);
+        setIsLoading(false);
       } else {
         console.warn("Please provide a valid search string!");
       }
@@ -117,6 +121,7 @@ const SearchPage = () => {
       const errorMessage = (err instanceof Error) ? err.message : "An unknown error occurred";
       console.error("There was an error fetching the data", errorMessage);
       setError(errorMessage);
+      setIsLoading(false);
     }
   };
 
@@ -331,6 +336,10 @@ const SearchPage = () => {
             </Highlight></Link>
         </Flex>
       </Flex>
+      {isLoading ? (
+        <Text></Text>
+      ) : (
+        <div>
       {results.length === 0 && !error && (
         <Box textAlign={"center"} alignSelf={"center"} py={10} px={6}>
         <HStack>
@@ -358,7 +367,7 @@ const SearchPage = () => {
         <Text color="gray.500" textAlign="center" marginBottom="1em">
         </Text>
         </Box>
-      )}
+      )}</div>)}
       {results.length > 0 && (
         <Flex direction="column" align="center" width="100%">
 
