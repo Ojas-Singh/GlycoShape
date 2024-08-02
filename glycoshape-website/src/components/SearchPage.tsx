@@ -9,6 +9,7 @@ import { SearchIcon } from '@chakra-ui/icons'
 import bg from './assets/gly.png';
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
+import notfound from './assets/404.png';
 
 
 const SearchPage = () => {
@@ -330,7 +331,34 @@ const SearchPage = () => {
             </Highlight></Link>
         </Flex>
       </Flex>
+      {results.length === 0 && !error && (
+        <Box textAlign={"center"} alignSelf={"center"} py={10} px={6}>
+        <HStack>
+      
+      <Image height="10rem" src={notfound} alt="404" />
+      <Heading
+        display="inline-block"
+        as="h2"
+        size="3xl"
+        bgGradient="linear(to-r,#B72521, #ECC7A1)"
+        backgroundClip="text">
+        The glycan you are looking for is currently not in the database.
+      </Heading>
+      </HStack>
+      
+      <Button 
+              backgroundColor="#7CC9A9" 
+              _hover={{ backgroundColor: "#51BF9D" }} 
+              color="white"
+            >
+             <RouterLink to="mailto:elisa.fadda@soton.ac.uk"> Please contact us if you would like us to add it.
+             </RouterLink>
+            </Button>
 
+        <Text color="gray.500" textAlign="center" marginBottom="1em">
+        </Text>
+        </Box>
+      )}
       {results.length > 0 && (
         <Flex direction="column" align="center" width="100%">
 
@@ -339,6 +367,7 @@ const SearchPage = () => {
 
           <Flex direction="row" width="100%" padding="2em" paddingTop={'1em'}>
             {/* Filters on the left */}
+            
 
             <Box width="30%" paddingTop={'2rem'}>
               <Text fontSize={{ base: "xs", sm: "xs", md: "2xl", lg: "2xl", xl: "2xl" }} marginBottom="1em">
@@ -350,6 +379,7 @@ const SearchPage = () => {
                 }
               </Text>
             </Box>
+           
 
             {/* <Box width="30%" padding="0em"> */}
             {/* Example filter */}
