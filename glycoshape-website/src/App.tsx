@@ -23,6 +23,7 @@ import Cite from './components/Cite';
 import Fit from './components/ReGlycofit';
 import NotFoundPage from './components/NotFoundPage'; 
 import CookieConsent from './components/CookieConsent';
+import GOTW from './components/GOTW';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -55,6 +56,7 @@ const App: React.FC = () => {
               <Route path="/publications" element={<div><Search /><Elab /></div>} />
               <Route path="/swap" element={<div><Swap /></div>} />
               <Route path="/fit" element={<div><Fit /></div>} />
+              <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
 
