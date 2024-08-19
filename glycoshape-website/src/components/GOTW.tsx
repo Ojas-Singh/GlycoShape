@@ -301,7 +301,7 @@ const App: React.FC = () => {
           <AccordionPanel pb={4}>
             <Text>*All replica multiframe PDB file needs to be merged.</Text>
             <Text>*You need one mol2 file also while submission, which will be generated if you use provided script. <br />("trajout glycan.dry.mol2 mol2 onlyframes 1" in cpptraj)</Text>
-            <Text>*Please check you final trajectory before uploading and verify if thier is no bond breaks and the whole molecule is in one piece.</Text>
+            <Text>*Please check you final trajectory before uploading and verify if there is no bond breaks and the whole molecule is in one piece.</Text>
             <Text>*Please provide the correct full GLYCAM name and GlyTouCan ID of the glycan.</Text>
           </AccordionPanel>
         </AccordionItem>
