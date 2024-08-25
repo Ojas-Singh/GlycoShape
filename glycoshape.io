@@ -1,5 +1,4 @@
-#/etc/nginx/sites-available/glycoshape.io
-
+#/etc/nginx/sites-available/glycoshape.org
 
 server {
     if ($host = glycoshape.io) {
@@ -45,18 +44,18 @@ server {
 
     }
     location /database/ {
-        alias /mnt/database/DB/;
-        autoindex on;
+        alias /mnt/database/DB_temp/;
+        autoindex off;
         include /etc/nginx/cors.conf;
     }
 
     location /api/ {
-        client_max_body_size 100M;
+        client_max_body_size 2056M;
         client_body_buffer_size 10M;
         
-        proxy_read_timeout 900;
-        proxy_connect_timeout 900;
-        proxy_send_timeout 900; 
+        proxy_read_timeout 10000;
+        proxy_connect_timeout 10000;
+        proxy_send_timeout 10000; 
         proxy_pass http://127.0.0.1:8001; # Assuming Gunicorn is running on this port
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -78,7 +77,7 @@ server {
     
     location /output/ {
         alias /mnt/database/server_dir/;
-        autoindex on;
+        autoindex off;
         include /etc/nginx/cors.conf;
     }
     
