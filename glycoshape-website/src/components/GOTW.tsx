@@ -185,7 +185,7 @@ const App: React.FC = () => {
         
         <form style={{ width: '100%' }} onSubmit={handleSubmitUrl}>
           <Input
-            width="100%"
+            width="80%"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder={placeholdertext}
@@ -362,7 +362,13 @@ const App: React.FC = () => {
             <Input
               name="simulationLength"
               value={formData.simulationLength}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  handleInputChange(e);
+                }
+              }}
+              // onChange={handleInputChange}
               placeholder="Answers in microseconds, please."
             />
           </FormControl>
@@ -404,7 +410,13 @@ const App: React.FC = () => {
             <Input
               name="temperature"
               value={formData.temperature}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  handleInputChange(e);
+                }
+              }}
+              // onChange={handleInputChange}
               placeholder="Answers in degree Kelvin, please."
             />
           </FormControl>
@@ -414,7 +426,13 @@ const App: React.FC = () => {
             <Input
               name="pressure"
               value={formData.pressure}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  handleInputChange(e);
+                }
+              }}
+              // onChange={handleInputChange}
               placeholder="Answers in bar, please."
             />
           </FormControl>
@@ -424,7 +442,13 @@ const App: React.FC = () => {
             <Input
               name="saltConcentration"
               value={formData.saltConcentration}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  handleInputChange(e);
+                }
+              }}
+              // onChange={handleInputChange}
               placeholder="Answers in millimolar, please."
             />
           </FormControl>
