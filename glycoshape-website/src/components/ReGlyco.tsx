@@ -163,12 +163,7 @@ const ReGlyco = () => {
 
   ];
   const scrollToRef = useRef<HTMLDivElement>(null);
-  // useEffect(() => {
-  //   if (outputPath /* condition to check */) {
-  //     // Scroll to the element when the condition is met
-  //     scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
-  //   }
-  // }, [outputPath]); // Depend on yourVariable to trigger effect
+
 
   useEffect(() => {
     // Scroll to the element when outputPath changes
@@ -862,6 +857,23 @@ const ReGlyco = () => {
     return () => clearInterval(timer);
   }, [isLoading]);
 
+  type GlytoucanMapping = { [key: string]: string | null }; // Allow string indexing with string keys and values of type string or null
+  const [glytoucanMapping, setGlytoucanMapping] = useState<GlytoucanMapping>({}); // Properly typed state  useEffect(() => {
+    useEffect(() => {  
+  // Fetch the mapping JSON file
+    const fetchGlytoucanMapping = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/database/iupac_glytoucan_mapping.json`);
+        const mappingData = await response.json();
+        setGlytoucanMapping(mappingData);
+      } catch (error) {
+        console.error("Error fetching GlyTouCan mapping:", error);
+      }
+    };
+
+    fetchGlytoucanMapping();
+  }, [] ); // Empty dependencies array to run once on component mount
+
 
 
 
@@ -1037,19 +1049,15 @@ const ReGlyco = () => {
               </Box>
             </Flex>
 
-            <Accordion marginTop={"-2rem"} w="90%" defaultIndex={[0]} allowMultiple>
-
-              <AccordionItem>
+                <Box w="90%" justifyContent="center" alignItems="center" p={2} marginTop={"0"}>
 
                 <h2>
-                  <AccordionButton margin={"1rem"} marginLeft={"0"} >
                     <Box as="span" flex='1' textAlign='left'>
                       <Heading as='h4' size='md' color={"#B07095"}>Structure Information</Heading>
                     </Box>
-                    <AccordionIcon />
-                  </AccordionButton>
+
                 </h2>
-                <AccordionPanel>
+
                   {!isUpload ? (
                     <SimpleGrid alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '30% 70%' }} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
 
@@ -1109,8 +1117,6 @@ const ReGlyco = () => {
                       title="Protein Structure"
                     /></SimpleGrid>)}
 
-                </AccordionPanel>
-              </AccordionItem>
 
               {!isUpload && UniprotData.glycosylation_locations.glycosylations.length > 0 ? (
                 <div>
@@ -1181,40 +1187,7 @@ const ReGlyco = () => {
                               "Process"
                             )}
                           </Button>
-                          {/* {outputPath && (<div>
-                          <Button
-                                        position={"relative"}
-                                        margin={'1rem'}
-                                        borderRadius="full"
-                                        backgroundColor="#806CA5"
-                                        _hover={{ backgroundColor: "#C094D9" }}
-                                        size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                                        onClick={handleProcessOne_sasa}
-                                        isDisabled={isLoading}
-                                      >
-                                        {isLoading ? (
-                                          <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                                            <CircularProgress
-                                              position="absolute"
-                                              color="#B07095"
-                                              size="50px"
-                                              thickness="5px"
-                                              isIndeterminate
-                                              marginLeft={"15rem"}
-                                              capIsRound
-                                            >
-                                              <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                                            </CircularProgress>
-                                            Processing...
-                                          </Box>
-                                        ) : (
-                                          "Process Ensemble"
-                                        )}
-                                      </Button>
-                                      <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                                      Process Ensemble will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
-                          
-                          </div>)} */}
+
                           {isLoading && (
                             <Alert status='info'>
                               <AlertIcon />
@@ -1265,10 +1238,22 @@ const ReGlyco = () => {
                                               width="70%"
                                               color={"#1A202C"}
                                             >
-                                              {selectedGlycanOption || 'Select Glycan Option'}
+
+                                               {/* Update to display glytoucanID if available */}
+       {selectedGlycanOption
+          ? (glytoucanMapping[selectedGlycanOption]
+            ? (glytoucanMapping[selectedGlycanOption]?.substring(0, trimLength) || "") 
+            : selectedGlycanOption.substring(0, trimLength) + "...")
+          : 'select Glycan'}
+
+                                              {/* {selectedGlycanOption || 'Select Glycan Option'} */}
                                             </MenuButton>
                                             <MenuList maxHeight="300px" overflowY="auto">
-                                              {glycanOptions.map((option, index) => (
+                                              {glycanOptions.map((option, index) => {
+                                                
+                                                const glytoucanID = glytoucanMapping[option] || option; // Use glytoucanID if it exists, otherwise use glycanID
+                                                return (
+
                                                 <MenuItem
                                                   key={index}
                                                   onClick={() => {
@@ -1281,21 +1266,24 @@ const ReGlyco = () => {
                                                     maxWidth={"90%"}
                                                     mr={2}
                                                   />
-                                                  {option.length > 40 ? option.substring(0, trimLength) + "..." : option}
-                                                </MenuItem>
-                                              ))}
+                                                    {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
+                                                    {/* {option.length > 40 ? option.substring(0, trimLength) + "..." : option} */}
+                                                </MenuItem>);
+})}
                                             </MenuList>
                                           </Menu>
 
 
                                           {selectedGlycanOption && (
+                                    <Link href={`/glycan?IUPAC=${selectedGlycanOption}`} target="_blank" rel="noopener noreferrer">
+
                                             <Image
                                               src={`${apiUrl}/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
                                               alt="Selected Glycan Image"
                                               height="80px"
                                               maxWidth={"90%"}
                                               ml={2}
-                                            />
+                                            /></Link>
                                           )}
                                         </HStack>
                                       </div>
@@ -1450,10 +1438,22 @@ const ReGlyco = () => {
                                   <MenuButton as={Button} bgColor={"#B07095"} _hover={{
                                     backgroundColor: "#CF6385"
                                   }} width="70%" color={"#1A202C"}>
-                                    {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'}
+       {/* Update to display glytoucanID if available */}
+       {selectedGlycanImage[glycoConf.residueTag] 
+          ? (glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]
+            ? (glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]?.substring(0, trimLength) || "") 
+            : selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "...")
+          : 'select Glycan'}
+
+                                    {/* {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'} */}
                                   </MenuButton>
                                   <MenuList maxHeight="300px" overflowY="auto">
-                                    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
+                                    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => 
+                                      {
+                                        const glytoucanID = glytoucanMapping[glycanID] || glycanID; // Use glytoucanID if it exists, otherwise use glycanID
+                                     return (
+                                      
+                                      
                                       <MenuItem
                                         key={glycanIndex}
                                         value={glycanID}
@@ -1473,14 +1473,17 @@ const ReGlyco = () => {
                                           maxWidth={"90%"}
                                           mr={2}
                                         />
-                                        {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID}
+                                                    {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
+                                        {/* {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID} */}
                                       </MenuItem>
-                                    ))}
+        );
+                         } )}
+
                                   </MenuList>
                                 </Menu>
 
                                 {selectedGlycanImage[glycoConf.residueTag] && (
-                                  <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
+                                  <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`} target="_blank" rel="noopener noreferrer">
                                     <Image
                                       src={`${apiUrl}/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
                                       alt="Glycan Image"
@@ -1651,13 +1654,15 @@ const ReGlyco = () => {
 
 
                                           {selectedGlycanOption && (
+                                                                                <Link href={`/glycan?IUPAC=${selectedGlycanOption}`} target="_blank" rel="noopener noreferrer">
+
                                             <Image
                                               src={`${apiUrl}/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
                                               alt="Selected Glycan Image"
                                               height="80px"
                                               maxWidth={"90%"}
                                               ml={2}
-                                            />
+                                            /></Link>
                                           )}
                                         </HStack>
                                       </div>
@@ -1813,10 +1818,21 @@ const ReGlyco = () => {
                                   <MenuButton as={Button} bgColor={"#B07095"} _hover={{
                                     backgroundColor: "#CF6385"
                                   }} width="70%" color={"#1A202C"}>
-                                    {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'}
+
+{/* Update to display glytoucanID if available */}
+{selectedGlycanImage[glycoConf.residueTag] 
+          ? (glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]
+            ? (glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]?.substring(0, trimLength) || "") 
+            : selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "...")
+          : 'select Glycan'}
+
+
+                                    {/* {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'} */}
                                   </MenuButton>
                                   <MenuList maxHeight="300px" overflowY="auto">
-                                    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
+                                    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => { 
+                                      const glytoucanID = glytoucanMapping[glycanID] || glycanID; // Use glytoucanID if it exists, otherwise use glycanID
+                                      return (
                                       <MenuItem
                                         key={glycanIndex}
                                         value={glycanID}
@@ -1836,15 +1852,16 @@ const ReGlyco = () => {
                                           maxWidth={"90%"}
                                           mr={2}
                                         />
+                                        {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
                                         {/* {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID} */}
-                                        {glycanID}
-                                      </MenuItem>
-                                    ))}
+                                        {/* {glycanID} */}
+                                      </MenuItem>);
+                        })}
                                   </MenuList>
                                 </Menu>
 
                                 {selectedGlycanImage[glycoConf.residueTag] && (
-                                  <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
+                                  <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`} target="_blank" rel="noopener noreferrer">
                                     <Image
                                       src={`${apiUrl}/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
                                       alt="Glycan Image"
@@ -2139,11 +2156,11 @@ Download PDB with SASA B-values
                   </Code>
                 </Box>
               )}
-            </Accordion>
-
+ </Box>
 
           </Flex>
         )}
+       
         {!UniprotData && (
 
           <Flex w="100%" minHeight={'60vh'} justifyContent="left" alignItems="left" p={2} marginTop={"0"} direction="column" >
