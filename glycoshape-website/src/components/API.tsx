@@ -222,7 +222,7 @@ const API: React.FC = () => {
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel pb={4}>
-            <Text>All the database files can be accessed at <Link color='#B195A2' href={`${apiUrl}/database`}>{apiUrl}/database</Link></Text>
+            <Text>All the database files can be accessed at <Link color='#B195A2' href={`${apiUrl}/database/`}>{apiUrl}/database/</Link></Text>
             <Text>example: for glycan <Code>IUPAC_name</Code> and cluster <Code>i</Code> </Text>
             <Code p="1">
               
