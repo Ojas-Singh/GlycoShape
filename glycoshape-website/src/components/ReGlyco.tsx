@@ -1,24 +1,19 @@
 import React, { useState, ChangeEvent, useEffect, useRef, } from 'react';
 import { useBreakpointValue } from "@chakra-ui/react";
 import axios from 'axios';
-import { useLocation, useNavigate } from 'react-router';
+import { useLocation} from 'react-router';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import {
-  useColorModeValue ,
   Tabs,
   TabList,
   TabPanels,
   Tab,
   TabPanel,
-  useToast, Hide, SimpleGrid, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading, Accordion,
+  useToast, Hide, SimpleGrid, Input, Text, Button, VStack, HStack, Link, Flex, Code, Heading, 
   Spacer,
   UnorderedList, ListItem,
   CircularProgress,
-  CircularProgressLabel,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon, Step,
+  CircularProgressLabel, Step,
   StepDescription,
   StepIcon,
   StepIndicator,
@@ -112,6 +107,7 @@ const ReGlyco = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
   
+  const [searchTerm, setSearchTerm] = React.useState('');
 
   const [uniprotID, setUniprotID] = useState<string>("");
   const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
@@ -174,7 +170,10 @@ const ReGlyco = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data.N) {
-          setGlycanOptions(data.N); // assuming data.N is an array of the desired structure
+          const sortedData = data.N.sort((a: string, b: string) => a.length - b.length);      
+        // Set the sorted data
+        setGlycanOptions(sortedData);
+          // setGlycanOptions(data.N); // assuming data.N is an array of the desired structure
         }
       })
       .catch((error) => {
@@ -299,38 +298,6 @@ const ReGlyco = () => {
     // Including id in the dependencies array ensures that the effect runs when id changes
   }, [isUpload, uniprotID, id]); 
   
-
-
-
-  // useEffect(() => {
-  //   // Debounce delay in milliseconds
-  //   const debounceDelay = 1000; // Adjust this delay to control the debounce rate
-  
-  //   // Cleanup logic to clear the timeout if the effect is re-invoked before the delay is over
-  //   const timeoutId = setTimeout(() => {
-  //     const fetchData = async () => {
-  //       try {
-  //         if (!isUpload && uniprotID.length > 3) {
-  //           await fetchProteinData();
-  //           setScanResults({
-  //             box: '',
-  //             clash: false,
-  //             output: '',
-  //             results: [] // Assume resetting results or handling them as needed
-  //           });
-  //         }
-  //       } catch (error) {
-  //         console.error("Error fetching protein data:", error);
-  //       }
-  //     };
-  
-  //     fetchData();
-  //   }, debounceDelay);
-  
-  //   // Cleanup function to cancel the timeout if the component unmounts or if the useEffect hook runs again before the timeout completes
-  //   return () => clearTimeout(timeoutId);
-  
-  // }, [isUpload, uniprotID]); // Dependencies array
 
 
   const [scanResults, setScanResults] = useState<ScanResults | null>({
@@ -514,13 +481,6 @@ const ReGlyco = () => {
   }
 
 
-
-  // const options = UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
-  //   value: glycoConf.residueID,
-  //   label: `${glycoConf.residueName}${glycoConf.residueID}`,
-  // }));
-
-
   const [isLoading, setIsLoading] = useState(false);
 
 
@@ -659,10 +619,6 @@ const ReGlyco = () => {
 
     let endpoint = `${apiUrl}/api/one_uniprot`; // default endpoint
 
-    // If isUpload is true, change the endpoint to /screen_pdb
-    // if (isUpload) {
-    //   endpoint = `${apiUrl}/api/oneshot_pdb`;
-    // }
 
     try {
       const response = await fetch(endpoint, {
@@ -1231,47 +1187,68 @@ const ReGlyco = () => {
                                         <HStack>
                                           <Heading m={1} fontSize={"sm"}>On all predicted sequons : &nbsp;</Heading>
                                           <Menu>
-                                            <MenuButton
-                                              as={Button}
-                                              bgColor={"#B07095"}
-                                              _hover={{ backgroundColor: "#CF6385" }}
-                                              width="70%"
-                                              color={"#1A202C"}
-                                            >
+  <MenuButton
+    as={Button}
+    bgColor={"#B07095"}
+    _hover={{ backgroundColor: "#CF6385" }}
+    width="70%"
+    color={"#1A202C"}
+  >
+    {/* Display glytoucanID if available */}
+    {selectedGlycanOption
+      ? (glytoucanMapping[selectedGlycanOption]
+        ? (glytoucanMapping[selectedGlycanOption]?.substring(0, trimLength) || "") 
+        : selectedGlycanOption.substring(0, trimLength) + "...")
+      : 'select Glycan'}
+  </MenuButton>
+  <MenuList
+    maxHeight="300px"
+    overflowY="auto"
+    width="900px"  // Fixed width
+    minWidth="400px"  // Ensures the menu does not go below this width
+    maxWidth="100%"  // Ensures the menu does not exceed this width
+  >
+    {/* Search Input */}
+    <MenuItem>
+      <Input
+        placeholder="Search Glycans"
+        onClick={(e) => e.stopPropagation()} // Prevents menu from closing
+        onChange={(e) => setSearchTerm(e.target.value)}
+        mb={2}
+        width="100%"
+      />
+    </MenuItem>
 
-                                               {/* Update to display glytoucanID if available */}
-       {selectedGlycanOption
-          ? (glytoucanMapping[selectedGlycanOption]
-            ? (glytoucanMapping[selectedGlycanOption]?.substring(0, trimLength) || "") 
-            : selectedGlycanOption.substring(0, trimLength) + "...")
-          : 'select Glycan'}
+    {/* Filtered List */}
+    {glycanOptions
+      .filter(option => {
+        const glytoucanID = glytoucanMapping[option] || option;
+        return glytoucanID.toLowerCase().includes(searchTerm.toLowerCase());
+      })
+      .map((option, index) => {
+        const glytoucanID = glytoucanMapping[option] || option; // Use glytoucanID if it exists, otherwise use glycanID
+        return (
+          <MenuItem
+            key={index}
+            onClick={() => {
+              setSelectedGlycanOption(option);
+            }}
+          >
+            <Image
+              src={`${apiUrl}/database/${option}/${option}.svg`}
+              alt="Glycan Image"
+              height="80px"
+              maxWidth={"90%"}
+              mr={2}
+            />
+            {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
+          </MenuItem>
+        );
+      })}
+  </MenuList>
+</Menu>
 
-                                              {/* {selectedGlycanOption || 'Select Glycan Option'} */}
-                                            </MenuButton>
-                                            <MenuList maxHeight="300px" overflowY="auto">
-                                              {glycanOptions.map((option, index) => {
-                                                
-                                                const glytoucanID = glytoucanMapping[option] || option; // Use glytoucanID if it exists, otherwise use glycanID
-                                                return (
 
-                                                <MenuItem
-                                                  key={index}
-                                                  onClick={() => {
-                                                    setSelectedGlycanOption(option);
-                                                  }}
-                                                ><Image
-                                                    src={`${apiUrl}/database/${option}/${option}.svg`}
-                                                    alt="Glycan Image"
-                                                    height="80px"
-                                                    maxWidth={"90%"}
-                                                    mr={2}
-                                                  />
-                                                    {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
-                                                    {/* {option.length > 40 ? option.substring(0, trimLength) + "..." : option} */}
-                                                </MenuItem>);
-})}
-                                            </MenuList>
-                                          </Menu>
 
 
                                           {selectedGlycanOption && (
@@ -1316,39 +1293,7 @@ const ReGlyco = () => {
                                           "Process"
                                         )}
                                       </Button>
-                                      {/* {outputPath && (<div>
-                                      <Button
-                                        position={"relative"}
-                                        margin={'1rem'}
-                                        borderRadius="full"
-                                        backgroundColor="#806CA5"
-                                        _hover={{ backgroundColor: "#C094D9" }}
-                                        size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                                        onClick={handleProcess_shotSASA}
-                                        isDisabled={isLoading}
-                                      >
-                                        {isLoading ? (
-                                          <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                                            <CircularProgress
-                                              position="absolute"
-                                              color="#B07095"
-                                              size="50px"
-                                              thickness="5px"
-                                              isIndeterminate
-                                              marginLeft={"15rem"}
-                                              capIsRound
-                                            >
-                                              <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                                            </CircularProgress>
-                                            Processing...
-                                          </Box>
-                                        ) : (
-                                          "Process Ensemble"
-                                        )}
-                                      </Button>
-                                      <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                                      Process Ensemble will process multiple glycan conformations and calculate the SASA which can be used for docking to glycoproteins.</Text>
-                                      </div>)} */}
+                                     
                                       {isLoading && (<Alert status='info' >
                                         <AlertIcon />
                                         It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
@@ -1433,54 +1378,76 @@ const ReGlyco = () => {
                                 </Heading>
 
 
+                               
 
-                                <Menu>
-                                  <MenuButton as={Button} bgColor={"#B07095"} _hover={{
-                                    backgroundColor: "#CF6385"
-                                  }} width="70%" color={"#1A202C"}>
-       {/* Update to display glytoucanID if available */}
-       {selectedGlycanImage[glycoConf.residueTag] 
-          ? (glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]
-            ? (glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]?.substring(0, trimLength) || "") 
-            : selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "...")
-          : 'select Glycan'}
+<Menu>
+  <MenuButton
+    as={Button}
+    bgColor={"#B07095"}
+    _hover={{ backgroundColor: "#CF6385" }}
+    width="70%"
+    color={"#1A202C"}
+  >
+    {/* Display glytoucanID if available */}
+    {selectedGlycanImage[glycoConf.residueTag] 
+      ? (
+        glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]
+        ? glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]?.substring(0, trimLength) || ""
+        : selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..."
+      ) : 'select Glycan'}
+  </MenuButton>
+  <MenuList
+    maxHeight="300px"
+    overflowY="auto"
+    width="900px" // Set a fixed width
+    minWidth="400px" // Optional: set min width to ensure it's always at least this wide
+    maxWidth="100%" // Optional: set max width to prevent exceeding this width
+  >
+    {/* Search Input */}
+    <MenuItem>
+      <Input
+        placeholder="Search Glycans"
+        onClick={(e) => e.stopPropagation()} // Prevents menu from closing
+        onChange={(e) => setSearchTerm(e.target.value)}
+        mb={2}
+        width="100%"
+      />
+    </MenuItem>
 
-                                    {/* {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'} */}
-                                  </MenuButton>
-                                  <MenuList maxHeight="300px" overflowY="auto">
-                                    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => 
-                                      {
-                                        const glytoucanID = glytoucanMapping[glycanID] || glycanID; // Use glytoucanID if it exists, otherwise use glycanID
-                                     return (
-                                      
-                                      
-                                      <MenuItem
-                                        key={glycanIndex}
-                                        value={glycanID}
-                                        onClick={() =>
-                                          handleSelectChange(
-                                            { target: { value: glycanID } } as any,
-                                            `${glycoConf.residueID}_${glycoConf.residueChain}`,
-                                            glycoConf.residueTag
-                                          )
-                                        }
-
-                                      >
-                                        <Image
-                                          src={`${apiUrl}/database/${glycanID}/${glycanID}.svg`}
-                                          alt="Glycan Image"
-                                          height="80px"
-                                          maxWidth={"90%"}
-                                          mr={2}
-                                        />
-                                                    {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
-                                        {/* {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID} */}
-                                      </MenuItem>
+    {/* Filtered List */}
+    {glycoConf.glycanIDs
+      .filter(glycanID => {
+        const glytoucanID = glytoucanMapping[glycanID] || glycanID;
+        return glytoucanID.toLowerCase().includes(searchTerm.toLowerCase());
+      })
+      .map((glycanID, glycanIndex) => {
+        const glytoucanID = glytoucanMapping[glycanID] || glycanID; 
+        return (
+          <MenuItem
+            key={glycanIndex}
+            value={glycanID}
+            onClick={() =>
+              handleSelectChange(
+                { target: { value: glycanID } } as any,
+                `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                glycoConf.residueTag
+              )
+            }
+          >
+            <Image
+              src={`${apiUrl}/database/${glycanID}/${glycanID}.svg`}
+              alt="Glycan Image"
+              height="80px"
+              maxWidth={"90%"}
+              mr={2}
+            />
+            {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
+          </MenuItem>
         );
-                         } )}
+      })}
+  </MenuList>
+</Menu>
 
-                                  </MenuList>
-                                </Menu>
 
                                 {selectedGlycanImage[glycoConf.residueTag] && (
                                   <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`} target="_blank" rel="noopener noreferrer">
@@ -1623,34 +1590,66 @@ const ReGlyco = () => {
                                         <HStack>
                                           <Heading m={1} fontSize={"sm"}>On all predicted sequons : &nbsp;</Heading>
                                           <Menu>
-                                            <MenuButton
-                                              as={Button}
-                                              bgColor={"#B07095"}
-                                              _hover={{ backgroundColor: "#CF6385" }}
-                                              width="70%"
-                                              color={"#1A202C"}
-                                            >
-                                              {selectedGlycanOption || 'Select Glycan Option'}
-                                            </MenuButton>
-                                            <MenuList maxHeight="300px" overflowY="auto">
-                                              {glycanOptions.map((option, index) => (
-                                                <MenuItem
-                                                  key={index}
-                                                  onClick={() => {
-                                                    setSelectedGlycanOption(option);
-                                                  }}
-                                                ><Image
-                                                    src={`${apiUrl}/database/${option}/${option}.svg`}
-                                                    alt="Glycan Image"
-                                                    height="80px"
-                                                    maxWidth={"90%"}
-                                                    mr={2}
-                                                  />
-                                                  {option.length > 40 ? option.substring(0, trimLength) + "..." : option}
-                                                </MenuItem>
-                                              ))}
-                                            </MenuList>
-                                          </Menu>
+  <MenuButton
+    as={Button}
+    bgColor={"#B07095"}
+    _hover={{ backgroundColor: "#CF6385" }}
+    width="70%"
+    color={"#1A202C"}
+  >
+    {/* Display glytoucanID if available */}
+    {selectedGlycanOption
+      ? (glytoucanMapping[selectedGlycanOption]
+        ? (glytoucanMapping[selectedGlycanOption]?.substring(0, trimLength) || "") 
+        : selectedGlycanOption.substring(0, trimLength) + "...")
+      : 'select Glycan'}
+  </MenuButton>
+  <MenuList
+    maxHeight="300px"
+    overflowY="auto"
+    width="900px"  // Fixed width
+    minWidth="400px"  // Ensures the menu does not go below this width
+    maxWidth="100%"  // Ensures the menu does not exceed this width
+  >
+    {/* Search Input */}
+    <MenuItem>
+      <Input
+        placeholder="Search Glycans"
+        onClick={(e) => e.stopPropagation()} // Prevents menu from closing
+        onChange={(e) => setSearchTerm(e.target.value)}
+        mb={2}
+        width="100%"
+      />
+    </MenuItem>
+
+    {/* Filtered List */}
+    {glycanOptions
+      .filter(option => {
+        const glytoucanID = glytoucanMapping[option] || option;
+        return glytoucanID.toLowerCase().includes(searchTerm.toLowerCase());
+      })
+      .map((option, index) => {
+        const glytoucanID = glytoucanMapping[option] || option; // Use glytoucanID if it exists, otherwise use glycanID
+        return (
+          <MenuItem
+            key={index}
+            onClick={() => {
+              setSelectedGlycanOption(option);
+            }}
+          >
+            <Image
+              src={`${apiUrl}/database/${option}/${option}.svg`}
+              alt="Glycan Image"
+              height="80px"
+              maxWidth={"90%"}
+              mr={2}
+            />
+            {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
+          </MenuItem>
+        );
+      })}
+  </MenuList>
+</Menu>
 
 
                                           {selectedGlycanOption && (
@@ -1814,51 +1813,75 @@ const ReGlyco = () => {
 
 
 
-                                <Menu>
-                                  <MenuButton as={Button} bgColor={"#B07095"} _hover={{
-                                    backgroundColor: "#CF6385"
-                                  }} width="70%" color={"#1A202C"}>
+                                                       
 
-{/* Update to display glytoucanID if available */}
-{selectedGlycanImage[glycoConf.residueTag] 
-          ? (glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]
-            ? (glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]?.substring(0, trimLength) || "") 
-            : selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "...")
-          : 'select Glycan'}
+<Menu>
+  <MenuButton
+    as={Button}
+    bgColor={"#B07095"}
+    _hover={{ backgroundColor: "#CF6385" }}
+    width="70%"
+    color={"#1A202C"}
+  >
+    {/* Display glytoucanID if available */}
+    {selectedGlycanImage[glycoConf.residueTag] 
+      ? (
+        glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]
+        ? glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]?.substring(0, trimLength) || ""
+        : selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..."
+      ) : 'select Glycan'}
+  </MenuButton>
+  <MenuList
+    maxHeight="300px"
+    overflowY="auto"
+    width="900px" // Set a fixed width
+    minWidth="400px" // Optional: set min width to ensure it's always at least this wide
+    maxWidth="100%" // Optional: set max width to prevent exceeding this width
+  >
+    {/* Search Input */}
+    <MenuItem>
+      <Input
+        placeholder="Search Glycans"
+        onClick={(e) => e.stopPropagation()} // Prevents menu from closing
+        onChange={(e) => setSearchTerm(e.target.value)}
+        mb={2}
+        width="100%"
+      />
+    </MenuItem>
 
-
-                                    {/* {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'} */}
-                                  </MenuButton>
-                                  <MenuList maxHeight="300px" overflowY="auto">
-                                    {glycoConf.glycanIDs.map((glycanID, glycanIndex) => { 
-                                      const glytoucanID = glytoucanMapping[glycanID] || glycanID; // Use glytoucanID if it exists, otherwise use glycanID
-                                      return (
-                                      <MenuItem
-                                        key={glycanIndex}
-                                        value={glycanID}
-                                        onClick={() =>
-                                          handleSelectChange(
-                                            { target: { value: glycanID } } as any,
-                                            `${glycoConf.residueID}_${glycoConf.residueChain}`,
-                                            glycoConf.residueTag
-                                          )
-                                        }
-
-                                      >
-                                        <Image
-                                          src={`${apiUrl}/database/${glycanID}/${glycanID}.svg`}
-                                          alt="Glycan Image"
-                                          height="80px"
-                                          maxWidth={"90%"}
-                                          mr={2}
-                                        />
-                                        {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
-                                        {/* {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID} */}
-                                        {/* {glycanID} */}
-                                      </MenuItem>);
-                        })}
-                                  </MenuList>
-                                </Menu>
+    {/* Filtered List */}
+    {glycoConf.glycanIDs
+      .filter(glycanID => {
+        const glytoucanID = glytoucanMapping[glycanID] || glycanID;
+        return glytoucanID.toLowerCase().includes(searchTerm.toLowerCase());
+      })
+      .map((glycanID, glycanIndex) => {
+        const glytoucanID = glytoucanMapping[glycanID] || glycanID; 
+        return (
+          <MenuItem
+            key={glycanIndex}
+            value={glycanID}
+            onClick={() =>
+              handleSelectChange(
+                { target: { value: glycanID } } as any,
+                `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                glycoConf.residueTag
+              )
+            }
+          >
+            <Image
+              src={`${apiUrl}/database/${glycanID}/${glycanID}.svg`}
+              alt="Glycan Image"
+              height="80px"
+              maxWidth={"90%"}
+              mr={2}
+            />
+            {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
+          </MenuItem>
+        );
+      })}
+  </MenuList>
+</Menu>
 
                                 {selectedGlycanImage[glycoConf.residueTag] && (
                                   <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`} target="_blank" rel="noopener noreferrer">
@@ -2232,11 +2255,11 @@ Download PDB with SASA B-values
                 </Text>
 
                 <Text fontFamily={'texts'}>
-                  <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>Q9BXJ4</Button>
+                  <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P27918</Button>
+                  <Button margin='0rem' onClick={(e) => (setUniprotID('Q7Z3Q1'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>Q7Z3Q1</Button>
                   <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P29016</Button>
                   <Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>O15552</Button>
-                  <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P27918</Button>
-                  <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>B0YJ81</Button>
+                  <Button margin='0rem' onClick={(e) => (setUniprotID('I3UJJ7'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>I3UJJ7</Button>
 
                 </Text>
                 <Text fontFamily={'texts'} paddingTop="0rem" color='#B195A2' alignSelf={"left"} fontSize={'lg'}>
@@ -2251,7 +2274,9 @@ Download PDB with SASA B-values
                   O-Mannosylation<br />
                   O-Glucosylation<br />
                   O-Xylosylation<br />
-                  C-Mannosylation</Text>
+                  C-Mannosylation<br />
+                  O-Arabinosylation
+</Text>
 
 
               </Box>
