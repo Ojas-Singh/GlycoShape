@@ -24,6 +24,7 @@ import Fit from './components/ReGlycofit';
 import NotFoundPage from './components/NotFoundPage'; 
 import CookieConsent from './components/CookieConsent';
 import GOTW from './components/GOTW';
+import Stats from './components/Stats';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -57,6 +58,7 @@ const App: React.FC = () => {
               <Route path="/swap" element={<div><Swap /></div>} />
               <Route path="/fit" element={<div><Fit /></div>} />
               <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
+              <Route path="/stats" element={<div><Stats /></div>} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
 

@@ -31,8 +31,7 @@ const Cite = () => {
       
       
       <Text  pl={4} mb={5} color={'#B07095'} fontFamily={'texts'} fontSize={{base: "2xl",sm: "2xl", md: "2xl", lg: "2xl",xl: "2xl"}}>
-      <Link  href="https://doi.org/10.1101/2023.12.11.571101"  > Callum M Ives and Ojas Singh et al. Restoring Protein Glycosylation with GlycoShape 
-          bioRxiv (2023).</Link>
+      <Link  href="https://doi.org/10.1038/s41592-024-02464-7"  > Ives, C.M., Singh, O. et al. Restoring protein glycosylation with GlycoShape. Nat Methods (2024).</Link>
         </Text>
         
          

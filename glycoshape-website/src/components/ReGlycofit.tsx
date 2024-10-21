@@ -104,6 +104,8 @@ const ReGlyco = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
 
+  const [searchTerm, setSearchTerm] = React.useState('');
+
   const [uniprotID, setUniprotID] = useState<string>("");
   const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
   const [isUpload, setIsUpload] = useState<boolean>(false);
@@ -146,6 +148,23 @@ const ReGlyco = () => {
       scrollToRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [outputPath]); // Depend on yourVariable to trigger effect
+
+  type GlytoucanMapping = { [key: string]: string | null }; // Allow string indexing with string keys and values of type string or null
+  const [glytoucanMapping, setGlytoucanMapping] = useState<GlytoucanMapping>({}); // Properly typed state  useEffect(() => {
+    useEffect(() => {  
+  // Fetch the mapping JSON file
+    const fetchGlytoucanMapping = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/database/iupac_glytoucan_mapping.json`);
+        const mappingData = await response.json();
+        setGlytoucanMapping(mappingData);
+      } catch (error) {
+        console.error("Error fetching GlyTouCan mapping:", error);
+      }
+    };
+
+    fetchGlytoucanMapping();
+  }, [] ); // Empty dependencies array to run once on component mount
 
 
 
@@ -278,7 +297,7 @@ const ReGlyco = () => {
     const file = event.target.files?.[0];
     if (file) {
 
-      const allowedExtensions = [".dat",".mrc",".ccp4", ".map"]; // Example extensions
+      const allowedExtensions = [".dat",".mrc",".ccp4", ".map", ".mtz"]; // Example extensions
       const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
 
       if (!allowedExtensions.includes("." + fileExtension)) {
@@ -686,19 +705,14 @@ const ReGlyco = () => {
               </Box>
             </Flex>
 
-            <Accordion marginTop={"-2rem"} w="90%" defaultIndex={[0]} allowMultiple>
-
-              <AccordionItem>
-
-                <h2>
-                  <AccordionButton margin={"1rem"} marginLeft={"0"} >
+            <Box w="90%" justifyContent="center" alignItems="center" p={2} marginTop={"0"}>
+            <h2>
                     <Box as="span" flex='1' textAlign='left'>
-                      <Heading as='h4' size='md' color={"#2C7A7B"}>Structure Information</Heading>
+                      <Heading as='h4' size='md' color={"#B07095"}>Structure Information</Heading>
                     </Box>
-                    <AccordionIcon />
-                  </AccordionButton>
+
                 </h2>
-                <AccordionPanel>
+                   
                   {!isUpload ? (
                     <SimpleGrid alignSelf="center" justifyItems="center" templateColumns={{ base: '1fr', lg: '30% 70%' }} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
 
@@ -758,9 +772,7 @@ const ReGlyco = () => {
                       title="Protein Structure"
                     /></SimpleGrid>)}
 
-                </AccordionPanel>
-              </AccordionItem>
-
+               
               
                 <div>
 
@@ -793,49 +805,79 @@ const ReGlyco = () => {
                               </Heading>
 
 
-
                               <Menu>
-                                <MenuButton as={Button} bgColor={"#81D8D0"} _hover={{
-                                  backgroundColor: "#008081"
-                                }} width="70%" color={"#1A202C"}>
-                                  {selectedGlycanImage[glycoConf.residueTag] ? selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..." : 'select Glycan'}
-                                </MenuButton>
-                                <MenuList maxHeight="300px" overflowY="auto">
-                                  {glycoConf.glycanIDs.map((glycanID, glycanIndex) => (
-                                    <MenuItem
-                                      key={glycanIndex}
-                                      value={glycanID}
-                                      onClick={() =>
-                                        handleSelectChange(
-                                          { target: { value: glycanID } } as any,
-                                          `${glycoConf.residueID}_${glycoConf.residueChain}`,
-                                          glycoConf.residueTag
-                                        )
-                                      }
+  <MenuButton
+    as={Button}
+    bgColor={"#B07095"}
+    _hover={{ backgroundColor: "#CF6385" }}
+    width="70%"
+    color={"#1A202C"}
+  >
+    {/* Display glytoucanID if available */}
+    {selectedGlycanOption
+      ? (glytoucanMapping[selectedGlycanOption]
+        ? (glytoucanMapping[selectedGlycanOption]?.substring(0, trimLength) || "") 
+        : selectedGlycanOption.substring(0, trimLength) + "...")
+      : 'select Glycan'}
+  </MenuButton>
+  <MenuList
+    maxHeight="300px"
+    overflowY="auto"
+    width="900px"  // Fixed width
+    minWidth="400px"  // Ensures the menu does not go below this width
+    maxWidth="100%"  // Ensures the menu does not exceed this width
+  >
+    {/* Search Input */}
+    <MenuItem>
+      <Input
+        placeholder="Search Glycans"
+        onClick={(e) => e.stopPropagation()} // Prevents menu from closing
+        onChange={(e) => setSearchTerm(e.target.value)}
+        mb={2}
+        width="100%"
+      />
+    </MenuItem>
 
-                                    >
-                                      <Image
-                                        src={`${apiUrl}/database/${glycanID}/${glycanID}.svg`}
-                                        alt="Glycan Image"
-                                        height="80px"
-                                        maxWidth={"90%"}
-                                        mr={2}
-                                      />
-                                      {/* {glycanID.length > 40 ? glycanID.substring(0, trimLength) + "..." : glycanID} */}
-                                      {glycanID}
-                                    </MenuItem>
-                                  ))}
-                                </MenuList>
-                              </Menu>
+    {/* Filtered List */}
+    {glycanOptions
+      .filter(option => {
+        const glytoucanID = glytoucanMapping[option] || option;
+        return glytoucanID.toLowerCase().includes(searchTerm.toLowerCase());
+      })
+      .map((option, index) => {
+        const glytoucanID = glytoucanMapping[option] || option; // Use glytoucanID if it exists, otherwise use glycanID
+        return (
+          <MenuItem
+            key={index}
+            onClick={() => {
+              setSelectedGlycanOption(option);
+            }}
+          >
+            <Image
+              src={`${apiUrl}/database/${option}/${option}.svg`}
+              alt="Glycan Image"
+              height="80px"
+              maxWidth={"90%"}
+              mr={2}
+            />
+            {glytoucanID.length > 40 ? glytoucanID.substring(0, 40) + "..." : glytoucanID}
+          </MenuItem>
+        );
+      })}
+  </MenuList>
+</Menu>
 
-                              {selectedGlycanImage[glycoConf.residueTag] && (
-                                <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`}>
-                                  <Image
-                                    src={`${apiUrl}/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
-                                    alt="Glycan Image"
-                                    width="150px"
-                                  /></Link>
-                              )}
+{selectedGlycanOption && (
+                                    <Link href={`/glycan?IUPAC=${selectedGlycanOption}`} target="_blank" rel="noopener noreferrer">
+
+                                            <Image
+                                              src={`${apiUrl}/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
+                                              alt="Selected Glycan Image"
+                                              height="80px"
+                                              maxWidth={"90%"}
+                                              ml={2}
+                                            /></Link>
+                                          )}
                             </HStack>
                           </div>
                         ) : null;
@@ -866,7 +908,7 @@ const ReGlyco = () => {
           />
 </Box>
 <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-              Based on uploaded file extenstion  (.dat or .ccp4) Re-Glyco-Fit will do SAXS data fitting from generated ensembles or fit the glycans in the density map.  </Text>
+              Based on uploaded file extenstion  (.dat or .ccp4/.map/.mrc/.mtz) Re-Glyco-Fit will do SAXS data fitting from generated ensembles or fit the glycans in the density map.  </Text>
 
                       <Button
                         position={"relative"}
@@ -1014,8 +1056,7 @@ const ReGlyco = () => {
                   </Code>
                 </Box>
               )}
-            </Accordion>
-
+      </Box>
 
           </Flex>
         )}
@@ -1086,17 +1127,7 @@ const ReGlyco = () => {
                   Re-Glyco-Fit is a tool we designed to accurately restores missing glycans, aligning them within experimental constraints such as SAXS or CCP4 density maps. Significantly enhances the accuracy and reliability of glycoprotein models, bridging the gap between computational predictions and experimental data. To get started, upload your protein structure file and SAXS(.dat) or density(.ccp4) file and let Re-Glyco-Fit do the rest! 
 
                 </Text>
-{/* 
-                <Text fontFamily={'texts'}>
-                  <Button margin='0rem' onClick={(e) => (setUniprotID('Q9BXJ4'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>Q9BXJ4</Button>
-                  <Button margin='0rem' onClick={(e) => (setUniprotID('P29016'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P29016</Button>
-                  <Button margin='0rem' onClick={(e) => (setUniprotID('O15552'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>O15552</Button>
-                  <Button margin='0rem' onClick={(e) => (setUniprotID('P27918'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P27918</Button>
-                  <Button margin='0rem' onClick={(e) => (setUniprotID('B0YJ81'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>B0YJ81</Button>
 
-                </Text> */}
-                {/* <Text fontFamily={'texts'} paddingTop="0rem" color='#B195A2' alignSelf={"left"} fontSize={'lg'}>
-                  and press fetch!</Text> */}
 
                 <Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
                   Currently supported function includes :<br />
@@ -1107,7 +1138,8 @@ const ReGlyco = () => {
                   O-Mannosylation<br />
                   O-Glucosylation<br />
                   O-Xylosylation<br />
-                  C-Mannosylation</Text>
+                  C-Mannosylation<br />
+                  O-Arabinosylation</Text>
 
 
               </Box>
