@@ -59,16 +59,27 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl, seq }) => {
   const computeStatistics = (data: CSVData[], column: string): Statistic[] => {
     const groupedByCluster = d3.group(data, d => d['cluster']);
     const stats: Statistic[] = [];
-
+  
     groupedByCluster.forEach((values, cluster) => {
-      const numericValues = values.map(d => +d[column]).filter(v => !isNaN(v));
-      const mean = d3.mean(numericValues) || 0;
-      const std = d3.deviation(numericValues) || 0;
-      stats.push({ cluster, mean, std });
+      const angles = values.map(d => +d[column]).filter(v => !isNaN(v));
+      const sinSum = d3.sum(angles, angle => Math.sin(angle * (Math.PI / 180)));
+      const cosSum = d3.sum(angles, angle => Math.cos(angle * (Math.PI / 180)));
+      const meanAngle = Math.atan2(sinSum, cosSum) * (180 / Math.PI);
+      
+      // Standard deviation computation on cyclic angles with fallback
+      const stdAngle = Math.sqrt(
+        d3.mean(angles.map(angle => {
+          const diff = Math.abs(angle - meanAngle);
+          return Math.pow(Math.min(diff, 360 - diff), 2);
+        })) || 0  // default to 0 if `d3.mean` is undefined
+      );
+  
+      stats.push({ cluster, mean: meanAngle, std: stdAngle });
     });
-
+  
     return stats;
   };
+  
   const statistics: Statistic[] = computeStatistics(data, selectedColumns.x);
   const sortedStatistics = [...statistics].sort((a, b) =>
     parseInt(a.cluster, 10) - parseInt(b.cluster, 10)
