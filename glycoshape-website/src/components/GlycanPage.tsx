@@ -193,7 +193,7 @@ const GlycanPage: React.FC = () => {
   console.log("transformed clusters:", transformedClusters);
 
   const generateIframeSrc = (sequence: string, clusterLength: number) => {
-    const baseClusterURL = `${apiUrl}/database/${sequence}/PDB_format_HETATM/${sequence}_cluster`;
+    const baseClusterURL = `${apiUrl}/database/${sequence}/PDB_format_HETATM/cluster`;
 
     // Generate an array of cluster URLs based on the clusterLength
     const clusterUrls = Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.PDB.pdb`);
@@ -205,7 +205,7 @@ const GlycanPage: React.FC = () => {
   };
 
   const generateDownloadUrls = (sequence: string, clusterLength: number) => {
-    const baseClusterURL = `${apiUrl}/database/${sequence}/PDB_format_HETATM/${sequence}_cluster`;
+    const baseClusterURL = `${apiUrl}/database/${sequence}/PDB_format_HETATM/cluster`;
 
     // Generate an array of cluster URLs based on the clusterLength
     return Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.PDB.pdb`);
@@ -408,7 +408,7 @@ const GlycanPage: React.FC = () => {
                               <Hide below='lg'>
                                 <iframe
                                   style={{ width: '35vw', height: '50vh' }}
-                                  src={`/viewer/embedded.html?pdbUrl=${apiUrl}/database/${sequence}//PDB_format_HETATM/${sequence}_cluster0_alpha.PDB.pdb&format=pdb`}
+                                  src={`/viewer/embedded.html?pdbUrl=${apiUrl}/database/${sequence}//PDB_format_HETATM/cluster0_alpha.PDB.pdb&format=pdb`}
                                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                   allowFullScreen
                                   title="Protein Structure"
@@ -416,7 +416,7 @@ const GlycanPage: React.FC = () => {
                               <Show below='lg'>
                                 <iframe
                                   style={{ width: '100%', height: '50vh' }}
-                                  src={`/viewer/embedded.html?pdbUrl=${apiUrl}/database/${sequence}/PDB_format_HETATM/${sequence}_cluster0_alpha.PDB.pdb&format=pdb`}
+                                  src={`/viewer/embedded.html?pdbUrl=${apiUrl}/database/${sequence}/PDB_format_HETATM/cluster0_alpha.PDB.pdb&format=pdb`}
                                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                   allowFullScreen
                                   title="Protein Structure"
