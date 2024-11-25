@@ -813,12 +813,13 @@ const ReGlyco = () => {
     width="70%"
     color={"#1A202C"}
   >
-    {/* Display glytoucanID if available */}
-    {selectedGlycanOption
-      ? (glytoucanMapping[selectedGlycanOption]
-        ? (glytoucanMapping[selectedGlycanOption]?.substring(0, trimLength) || "") 
-        : selectedGlycanOption.substring(0, trimLength) + "...")
-      : 'select Glycan'}
+     {/* Display glytoucanID if available */}
+     {selectedGlycanImage[glycoConf.residueTag] 
+      ? (
+        glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]
+        ? glytoucanMapping[selectedGlycanImage[glycoConf.residueTag]]?.substring(0, trimLength) || ""
+        : selectedGlycanImage[glycoConf.residueTag].substring(0, trimLength) + "..."
+      ) : 'select Glycan'}
   </MenuButton>
   <MenuList
     maxHeight="300px"
@@ -849,9 +850,17 @@ const ReGlyco = () => {
         return (
           <MenuItem
             key={index}
-            onClick={() => {
-              setSelectedGlycanOption(option);
-            }}
+            value={option}
+            // onClick={() => {
+            //   setSelectedGlycanOption(option);
+            // }}
+            onClick={() =>
+              handleSelectChange(
+                { target: { value: option } } as any,
+                `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                glycoConf.residueTag
+              )
+            }
           >
             <Image
               src={`${apiUrl}/database/${option}/${option}.svg`}
@@ -867,11 +876,11 @@ const ReGlyco = () => {
   </MenuList>
 </Menu>
 
-{selectedGlycanOption && (
-                                    <Link href={`/glycan?IUPAC=${selectedGlycanOption}`} target="_blank" rel="noopener noreferrer">
+{selectedGlycanImage[glycoConf.residueTag] && (
+                                    <Link href={`/glycan?IUPAC=${selectedGlycanImage[glycoConf.residueTag]}`} target="_blank" rel="noopener noreferrer">
 
                                             <Image
-                                              src={`${apiUrl}/database/${selectedGlycanOption}/${selectedGlycanOption}.svg`}
+                                              src={`${apiUrl}/database/${selectedGlycanImage[glycoConf.residueTag]}/${selectedGlycanImage[glycoConf.residueTag]}.svg`}
                                               alt="Selected Glycan Image"
                                               height="80px"
                                               maxWidth={"90%"}
