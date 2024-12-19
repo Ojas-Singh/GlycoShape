@@ -1,0 +1,13 @@
+numba
+numpy
+pandas
+thefuzz
+biopython
+gunicorn
+flask
+flask_cors
+requests
+thefuzz
+geocoder
+glycowork[draw]
+glycowork[chem]

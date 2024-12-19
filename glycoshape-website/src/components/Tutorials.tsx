@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Heading, Link,
-  IconButton , keyframes, useStyleConfig , Flex, Image, Stack, Button, Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Text,
+  IconButton , useStyleConfig , Flex, Image, Stack, Button, Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Text,
   VStack,
   HStack,
   Spacer,
   UnorderedList,
   ListItem,
 } from "@chakra-ui/react";
+import { keyframes } from "@emotion/react";
 import { ChevronRightIcon, ChevronLeftIcon } from '@chakra-ui/icons'
 import { useLocation } from 'react-router-dom';
 

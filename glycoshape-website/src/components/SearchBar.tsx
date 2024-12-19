@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import { Link as RouterLink } from 'react-router-dom';
-import { Hide, Link, Highlight, Input, Button, Text, Flex, Modal,ModalFooter, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
+import {Switch, Hide, Link, Highlight, Input, Button, Text, Flex, Modal,ModalFooter, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
 } from "@chakra-ui/react";
 import { SearchIcon} from '@chakra-ui/icons'
 import { Kbd } from '@chakra-ui/react'
@@ -84,7 +84,7 @@ const Bar: React.FC = () => {
 
   return (
     <Flex 
-    width={'100%'}
+    width={{ base: "100%", md: "100%", lg: "80%", xl: "80%" }}
     direction="column" 
     align="center" 
     justify="center" 
@@ -94,8 +94,8 @@ const Bar: React.FC = () => {
   >    
       
       <Flex 
-          width="80%" 
-          minWidth={{ base: "100%", md: "80%" }}
+          // width="80%" 
+          minWidth={{ base: "100%", md: "100%", lg: "100%", xl: "100%" }}
           align="center" 
           position="relative"
           gap="1em" 
@@ -105,9 +105,7 @@ const Bar: React.FC = () => {
           p="0.5rem"
           bg="white"
         >
-          {/* <Button onClick={handleImageClick} variant="unstyled" p={0} m={0} ml={2}>
-            <Image src={draw} alt="Icon Description" w="24px" h="24px" />
-          </Button> */}
+          
 
           <Button transform="translateY(2%)" alignContent={"center"} left={"0.5rem"} type="submit"
             borderRadius="full" 
@@ -178,6 +176,9 @@ const Bar: React.FC = () => {
             userSelect="none"
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
+            &nbsp;  &nbsp; 
+              Motif search
+              <Switch paddingLeft='2'colorScheme='teal' size='lg' />
           </Text>
           </Hide>
           <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"1rem"} type="submit"
@@ -193,7 +194,7 @@ const Bar: React.FC = () => {
           
         </Flex>
         
-        <Flex direction="row" justify="space-between" width="80%" mt={2}>
+        <Flex direction="row" justify="space-between" width="100%" mt={2}>
          
           <Flex align="center">
           <Hide below='lg'>

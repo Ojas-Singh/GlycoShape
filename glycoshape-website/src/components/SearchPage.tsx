@@ -3,7 +3,7 @@ import { useBreakpointValue } from "@chakra-ui/react";
 import { useLocation } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
-  HStack, Hide, Highlight, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack
+  Switch, HStack, Hide, Highlight, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack, ButtonGroup, Select
 } from "@chakra-ui/react";
 import { SearchIcon } from '@chakra-ui/icons'
 import bg from './assets/gly.png';
@@ -17,9 +17,7 @@ const SearchPage = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  // const [results, setResults] = useState<string[]>([]);
-  // const [results, setResults] = useState<{ iupac: string, glytoucan_id: string | null }[]>([]);
-  const [results, setResults] = useState<{ iupac: string, glytoucan_id: string | null, mass: string | null }[]>([]);
+  const [results, setResults] = useState<{ ID: string, glytoucan: string | null, mass: number | null }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchString, setSearchString] = useState<string>(queryParams.get('query') || '');
   const [isWurcsSearch, setIsWurcsSearch] = useState(true);
@@ -28,14 +26,8 @@ const SearchPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const trimLength = useBreakpointValue({
-    base: 30,
-    sm: 40,
-    md: 40,
-    lg: 80,
-    xl: 80
-  }) ?? 40; // Fallback to 40 if undefined
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const fetchWurcsImage = async () => {
@@ -84,7 +76,7 @@ const SearchPage = () => {
         });
       } else if (searchString) {
         setIsWurcsSearch(false);
-        
+
         url = `${apiUrl}/api/search`;
         body = JSON.stringify({
           search_string: searchString,
@@ -110,8 +102,7 @@ const SearchPage = () => {
       }
 
       const data = await response.json();
-
-      if (data.results) {
+      if (data) {
         setResults(data.results);
         setIsLoading(false);
       } else {
@@ -135,6 +126,67 @@ const SearchPage = () => {
     setIsModalOpen(true);
   }
 
+  const indexOfLastItem = currentPage * pageSize;
+  const indexOfFirstItem = indexOfLastItem - pageSize;
+  const currentItems = results.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(results.length / pageSize);
+
+  const PaginationControls = () => (
+    <Flex justify="center" align="center" mt={4} mb={8}>
+      <ButtonGroup spacing={2}>
+        <Button
+          onClick={() => setCurrentPage(1)}
+          isDisabled={currentPage === 1}
+          colorScheme="teal"
+          size="sm"
+        >
+          First
+        </Button>
+        <Button
+          onClick={() => setCurrentPage(prev => prev - 1)}
+          isDisabled={currentPage === 1}
+          colorScheme="teal"
+          size="sm"
+        >
+          Previous
+        </Button>
+        <Text mx={4}>
+          Page {currentPage} of {totalPages}
+        </Text>
+        <Button
+          onClick={() => setCurrentPage(prev => prev + 1)}
+          isDisabled={currentPage === totalPages}
+          colorScheme="teal"
+          size="sm"
+        >
+          Next
+        </Button>
+        <Button
+          onClick={() => setCurrentPage(totalPages)}
+          isDisabled={currentPage === totalPages}
+          colorScheme="teal"
+          size="sm"
+        >
+          Last
+        </Button>
+      </ButtonGroup>
+      <Select
+        ml={4}
+        width="100px"
+        value={pageSize}
+        onChange={(e) => {
+          setPageSize(Number(e.target.value));
+          setCurrentPage(1);
+        }}
+      >
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </Select>
+    </Flex>
+  );
+
   return (
     <Flex direction="column" width="100%">
       <Flex
@@ -145,10 +197,6 @@ const SearchPage = () => {
         padding="1em"
         paddingTop="2em"
         minHeight={{ base: "15vh" }}
-        // backgroundImage={`url(${bg})`} 
-        // backgroundSize="cover" 
-        // // backgroundPosition="center"
-        // backgroundRepeat="no-repeat"  
         sx={{
           backgroundImage: `
       radial-gradient(
@@ -165,11 +213,10 @@ const SearchPage = () => {
 
 
         <Flex
-          width="80%"
+          width={{ base: "100%", md: "100%", lg: "80%", xl: "70%" }}
           minWidth={{ base: "100%", md: "80%" }}
           align="center"
           position="relative"
-          // gap="1em" 
           boxShadow="xl"
           borderRadius="full"
           overflow="hidden"
@@ -188,10 +235,10 @@ const SearchPage = () => {
           >
             Draw' &nbsp; <SearchIcon />
           </Button>
-          <Modal isCentered size={'90%'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          
+          <Modal isCentered motionPreset='scale' size={'10px'} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
             <ModalOverlay bg='none'
               backdropFilter='auto'
-              // backdropInvert='80%'
               backdropBlur='3px' />
             <ModalContent  >
               <ModalHeader alignSelf={'center'}> <Text
@@ -208,8 +255,6 @@ const SearchPage = () => {
               <ModalCloseButton />
               <ModalBody>
 
-                {/* <Image src={un} alt="Description" /> */}
-
                 <Draw />
               </ModalBody>
               <ModalFooter paddingTop={"-1"} paddingBottom={"-1"}>
@@ -219,38 +264,42 @@ const SearchPage = () => {
               </ModalFooter>
             </ModalContent>
           </Modal>
+          <Flex style={{ width: '100%', flex: "1" }} >
+            <Input
+              // paddingLeft={"1rem"}
+              value={searchString}
+              onChange={(e) => setSearchString(e.target.value)}
+              width={{ base: "80%", sm: "80%", md: "80%", lg: "80%", xl: "80%" }}
+              fontFamily={'texts'}
+              ref={searchRef}
+              placeholder='Search GLYCAM ID, IUPAC, GlycoCT, WURCS...'
+              size="lg"
+              flex="1"
+              border="none"
+              _hover={{
+                boxShadow: "none"
+              }}
+              _focus={{
+                boxShadow: "none",
+                outline: "none"
+              }}
+            />
+            <Text
+              position="absolute"
+              right={{ base: "2rem", sm: "2rem", md: "2rem", lg: "2rem", xl: "2rem" }}
+              top="50%"
+              transform="translateY(-50%)"
+              color="gray.500"
+              fontSize={{ base: "xs", sm: "xs", md: "sm", lg: "sm", xl: "sm" }}
+              userSelect="none"
+            >
+              <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
+              &nbsp;  &nbsp; 
+              Motif search
+              <Switch paddingLeft='2'colorScheme='teal' size='lg' />
 
-          <Input
-            // paddingLeft={"1rem"}
-            value={searchString}
-            onChange={(e) => setSearchString(e.target.value)}
-            width={{ base: "60%", sm: "80%", md: "80%", lg: "80%", xl: "80%" }}
-            fontFamily={'texts'}
-            ref={searchRef}
-            placeholder='Search GLYCAM ID, IUPAC, GlycoCT, WURCS...'
-            size="lg"
-            flex="1"
-            border="none"
-            _hover={{
-              boxShadow: "none"
-            }}
-            _focus={{
-              boxShadow: "none",
-              outline: "none"
-            }}
-          />
-          <Text
-            position="absolute"
-            right={{ base: "2rem", sm: "2rem", md: "2rem", lg: "2rem", xl: "2rem" }}
-            top="50%"
-            transform="translateY(-50%)"
-            color="gray.500"
-            fontSize={{ base: "xs", sm: "xs", md: "sm", lg: "sm", xl: "sm" }}
-            userSelect="none"
-          >
-            <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
-          </Text>
-
+            </Text>
+          </Flex>
 
         </Flex>
 
@@ -261,24 +310,13 @@ const SearchPage = () => {
               <Highlight query='Browse:' styles={{ alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .2)', color: '#F7FFE6' }}>
                 Browse:
               </Highlight>
-              {/* <Text color="white" marginRight={2}>Examples:</Text> */}
-              {/* <Button 
-              backgroundColor="#7CC9A9" 
-              _hover={{ backgroundColor: "#51BF9D" }} 
-              color="white"
-              onClick={url => window.location.replace('/glycan?IUPAC=GlcNAc(b1-4)Man')}
-            >
-              GlcNAc(b1-4)Man
-            </Button>&nbsp; */}
 
               &nbsp;
               <Button
-                
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
                 onClick={(e) => setSearchString('N-Glycans')}
-                // onClick={url => window.location.replace('/search?query=N-Glycans')}
               >
                 N-Glycans
               </Button>&nbsp;
@@ -287,7 +325,6 @@ const SearchPage = () => {
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
                 onClick={(e) => setSearchString('O-Glycans')}
-                // onClick={url => window.location.replace('/search?query=O-Glycans')}
               >
                 O-Glycans
               </Button>&nbsp;
@@ -296,7 +333,6 @@ const SearchPage = () => {
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
                 onClick={(e) => setSearchString('GAGs')}
-                // onClick={url => window.location.replace('/search?query=GAGs')}
               >
                 GAGs
               </Button>&nbsp;
@@ -305,7 +341,6 @@ const SearchPage = () => {
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
                 onClick={(e) => setSearchString('Oligomannose')}
-                // onClick={url => window.location.replace('/search?query=Oligomannose')}
               >
                 Oligomannose
               </Button>&nbsp;
@@ -314,7 +349,6 @@ const SearchPage = () => {
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
                 onClick={(e) => setSearchString('Complex')}
-                // onClick={url => window.location.replace('/search?query=Complex')}
               >
                 Complex
               </Button>&nbsp;
@@ -322,9 +356,7 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                // to="/search?query=Hybrid"
                 onClick={(e) => setSearchString('Hybrid')}
-                // onClick={url => window.location.replace('/search?query=Hybrid')}
               >
                 Hybrid
               </Button>&nbsp;
@@ -340,66 +372,62 @@ const SearchPage = () => {
         <Text></Text>
       ) : (
         <div>
-      {results.length === 0 && !error && (
-        <Box textAlign={"center"} alignSelf={"center"} py={10} px={6}>
-        <HStack>
-      
-      <Image height="10rem" src={notfound} alt="404" />
-      <Heading
-        display="inline-block"
-        as="h2"
-        size="3xl"
-        bgGradient="linear(to-r,#B72521, #ECC7A1)"
-        backgroundClip="text">
-        The glycan you are looking for is currently not in the database.
-      </Heading>
-      </HStack>
-      
-      <Button 
-              backgroundColor="#7CC9A9" 
-              _hover={{ backgroundColor: "#51BF9D" }} 
-              color="white"
-            >
-             <RouterLink to="mailto:elisa.fadda@soton.ac.uk"> Please contact us if you would like us to add it.
-             </RouterLink>
-            </Button>
+          {results.length === 0 && (
+            <Box textAlign={"center"} alignSelf={"center"} py={10} px={6}>
+              <HStack>
 
-        <Text color="gray.500" textAlign="center" marginBottom="1em">
-        </Text>
-        </Box>
-      )}</div>)}
-      {results.length > 0 && (
-        <Flex direction="column" align="center" width="100%">
+                <Image height="10rem" src={notfound} alt="404" />
+                <Heading
+                  display="inline-block"
+                  as="h2"
+                  size="3xl"
+                  bgGradient="linear(to-r,#B72521, #ECC7A1)"
+                  backgroundClip="text">
+                  The glycan you are looking for is currently not in the database.
+                </Heading>
+              </HStack>
 
+              <Button
+                backgroundColor="#7CC9A9"
+                _hover={{ backgroundColor: "#51BF9D" }}
+                color="white"
+              >
+                <RouterLink to="mailto:elisa.fadda@soton.ac.uk"> Please contact us if you would like us to add it.
+                </RouterLink>
+              </Button>
 
-
-
-          <Flex direction="row" width="100%" padding="2em" paddingTop={'1em'}>
-            {/* Filters on the left */}
-            
-
-            <Box width="30%" paddingTop={'2rem'}>
-              <Text fontSize={{ base: "xs", sm: "xs", md: "2xl", lg: "2xl", xl: "2xl" }} marginBottom="1em">
-                Showing {results.length} search results for {
-                  isWurcsSearch
-                    ? <img src={wurcsImageSrc === null ? undefined : wurcsImageSrc} alt="WURCS" style={{ width: '200px', height: 'auto', objectFit: 'contain' }} />
-
-                    : `"${searchString}"`
-                }
+              <Text color="gray.500" textAlign="center" marginBottom="1em">
               </Text>
             </Box>
-           
+          )}</div>)}
+      {results.length > 0 && (
+        <Flex
+          justify="center"
+          direction="column"
+          width={{ base: "95%", md: "100%", lg: "100%", xl: "80%" }}
+          margin="0 auto"
+        >
+          <Flex
+            direction={{ base: "column", md: "row" }}
+            width="100%"
+            padding="2em"
+            paddingTop={'1em'}
+          >
+            {/* Filters on the left */}
+            <Box
+              width={{ base: "100%", md: "30%" }}
+              paddingTop={'2rem'}
+              marginBottom={{ base: "1rem", md: "0" }}
+            >
+              <Text fontSize={{ base: "xl", md: "2xl" }} marginBottom="1em">
+                Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, results.length)} of {results.length} results
+              </Text>
+            </Box>
 
-            {/* <Box width="30%" padding="0em"> */}
-            {/* Example filter */}
-            {/* <Text>Filter 1</Text> */}
-            {/* Add more filters as needed */}
-            {/* </Box> */}
-            <Box width="70%" >
-              {/* {results.map((glycan, index) => (
+            <Box width={{ base: "100%", md: "70%" }}>
+              {currentItems.map((glycan, index) => (
                 <Box
                   key={index}
-                  // width="100%"
                   padding="1rem"
                   boxShadow="md"
                   marginBottom="1em"
@@ -407,88 +435,49 @@ const SearchPage = () => {
                   borderRadius="md"
                   display="flex"
                   flex='1'
+                >
+                  <VStack align={'stretch'} width="100%">
+                    <Link as={RouterLink} to={`/glycan?glytoucan=${glycan.glytoucan}`}>
 
-                ><VStack align={'left'}>
-                    <Heading fontSize={{ base: "xs", sm: "xs", md: "xl", lg: "xl", xl: "xl" }}>
-                      {glycan.length > trimLength ? glycan.substring(0, trimLength) + '...' : glycan}
-                    </Heading>
+                      <Heading fontSize={{ base: "lg", md: "xl" }}>
+                        {glycan.glytoucan ? glycan.glytoucan : glycan.ID}
+                      </Heading>
+                      <HStack
+                        justify="space-between"
+                        align="center"
+                        width="100%"
+                        paddingRight='3rem'
+                        flexDirection={{ base: "column", sm: "row" }}
+                        spacing={{ base: "1rem", sm: "inherit" }}
+                      >
+                        <Image
+                          src={`${apiUrl}/api/svg/${glycan.glytoucan}`}
+                          alt="Glycan Image"
+                          height="150px"
+                          maxWidth={"200px"}
+                        />
 
-
-
-
-                    <Link as={RouterLink} to={`/glycan?IUPAC=${glycan}`}>
-                      <Image
-
-                        src={`${apiUrl}/database/${glycan}/${glycan}.svg`} // Replace with the path to your dummy image
-                        alt="Glycan Image"
-                        // width="300px"
-                        height="150px"
-
-                        // marginRight="1rem"
-                        maxWidth={"200px"}
-                      /></Link>
-
-
+                        {glycan.mass && (
+                          <Text fontSize="md" color="gray.600">
+                            Mass: {glycan.mass}
+                          </Text>
+                        )}
+                      </HStack>
+                    </Link>
                   </VStack>
                 </Box>
-              ))} */}
-
-
-{results.map((glycan, index) => (
-        <Box
-            key={index}
-            padding="1rem"
-            boxShadow="md"
-            marginBottom="1em"
-            backgroundColor="white"
-            borderRadius="md"
-            display="flex"
-            flex='1'
-        >
-            <VStack align={'stretch'} width="100%">
-                {/* <Heading fontSize={{ base: "xs", sm: "xs", md: "xl", lg: "xl", xl: "xl" }}>
-                    {glycan.iupac.length > trimLength ? glycan.iupac.substring(0, trimLength) + '...' : glycan.iupac}
-                </Heading>
-
-                {glycan.glytoucan_id && (
-                    <Text fontSize="md" color="gray.600">
-                        GlyTouCan ID: {glycan.glytoucan_id}
-                    </Text>
-                )} */}
-
-              <Heading fontSize={{ base: "xs", sm: "xs", md: "xl", lg: "xl", xl: "xl" }}>
-              {glycan.glytoucan_id ? glycan.glytoucan_id : (glycan.iupac.length > trimLength ? glycan.iupac.substring(0, trimLength) + '...' : glycan.iupac)}
-            </Heading>
-            <HStack justify="space-between" align="center" width="100%" paddingRight='3rem'>            
-
-                <Link as={RouterLink} to={`/glycan?IUPAC=${glycan.iupac}`}>
-                    <Image
-                        src={`${apiUrl}/database/${glycan.iupac}/${glycan.iupac}.svg`}
-                        alt="Glycan Image"
-                        height="150px"
-                        maxWidth={"200px"}
-                    />
-                </Link>
-                {glycan.mass && (
-              <Text fontSize="md" color="gray.600">
-                Mass: {glycan.mass}
-              </Text>
-            )}
-            </HStack>
-            </VStack>
-        </Box>
-    ))}
-
-              </Box></Flex>
+              ))}
+              {results.length > pageSize && <PaginationControls />}
+            </Box>
+          </Flex>
         </Flex>
       )}
-      {error && (
+      {/* {error && (
         <Text color="red.500" textAlign="center">
           Please enter a valid search string!
           {error}
         </Text>
-      )}
-
+      )} */}
 
     </Flex>
   );

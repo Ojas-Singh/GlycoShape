@@ -1,0 +1,43 @@
+; Run parameters
+integrator              = md        ; leap-frog integrator
+nsteps                  = 125000    ; 2 * 125000 = 100 ps
+dt                      = 0.002     ; 2 fs
+; Output control
+nstxout                 = 500       ; save coordinates every 1.0 ps
+nstvout                 = 500       ; save velocities every 1.0 ps
+nstenergy               = 500       ; save energies every 1.0 ps
+nstlog                  = 500       ; update log file every 1.0 ps
+; Bond parameters
+continuation            = no        ; first dynamics run
+constraint_algorithm    = LINCS     ; holonomic constraints 
+constraints             = h-bonds   ; bonds involving H are constrained
+lincs_iter              = 1         ; accuracy of LINCS
+lincs_order             = 4         ; also related to accuracy
+; Nonbonded settings 
+cutoff-scheme           = Verlet    ; Buffered neighbor searching
+ns_type                 = grid      ; search neighboring grid cells
+nstlist                 = 10        ; 20 fs, largely irrelevant with Verlet
+rvdw                    = 0.9       ; short-range van der Waals cutoff (in nm)
+rlist                   = 0.9
+DispCorr                = EnerPres  ; account for cut-off vdW scheme
+; Electrostatics
+coulombtype             = PME       ; Particle Mesh Ewald for long-range electrostatics
+rcoulomb                = 0.9       ; short-range electrostatic cutoff (in nm)
+; Temperature coupling is on
+tcoupl                  = Nose-Hoover           ; 
+tc-grps                 = WAT System_&_!WAT     ; two coupling groups - more accurate
+tau_t                   = 1.0     1.0           ; time constant, in ps
+ref_t                   = 300     300           ; reference temperature, one for each group, in K
+; Pressure coupling is off
+pcoupl                  = no        ; no pressure coupling in NVT
+; Periodic boundary conditions
+pbc                     = xyz       ; 3-D PBC
+; Velocity generation
+gen_vel                 = yes       ; assign velocities from Maxwell distribution
+gen_temp                = 300       ; temperature for Maxwell distribution
+gen_seed                = -1        ; generate a random seed
+;
+nstcomm                 = 100
+comm_mode               = linear
+comm_grps               = WAT   System_&_!WAT
+

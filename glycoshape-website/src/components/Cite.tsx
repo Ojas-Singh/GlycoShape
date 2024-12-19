@@ -1,12 +1,15 @@
 // Cite.tsx
 
 import React from 'react';
-import { Box,  Text,Stack, Divider, Link } from '@chakra-ui/react';
+import { Box, Flex, Text,Stack, Divider, Link } from '@chakra-ui/react';
 
 
 const Cite = () => {
   return (
-    <Box p={10} borderWidth="0px" borderRadius="lg" overflow="hidden">
+    <Flex width={{ base: "100%", sm: "100%", md: "100%", lg: "100%", xl: "80%" }}
+    margin="auto">
+    <Box p={10} borderWidth="0px" borderRadius="lg" overflow="hidden"
+    >
         <Stack direction='row' h='80px' p={4}>
   <Divider  size="lg" border= "5px solid" borderColor='#4E6E6D' colorScheme="#44666C" orientation='vertical' />
   <Text
@@ -46,6 +49,7 @@ const Cite = () => {
         should be interpreted carefully.
       </Text>
     </Box>
+    </Flex>
   );
 };
 

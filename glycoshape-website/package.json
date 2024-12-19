@@ -1,12 +1,12 @@
 {
   "name": "glycoshape-website",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "@chakra-ui/icons": "^2.1.0",
-    "@chakra-ui/react": "^2.8.0",
-    "@emotion/react": "^11.11.1",
-    "@emotion/styled": "^11.11.0",
+    "@chakra-ui/react": "^2.10.4",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",
@@ -26,6 +26,8 @@
     "d3-contour": "^4.0.2",
     "express": "^4.18.2",
     "framer-motion": "^6.5.1",
+    "lodash": "^4.17.21",
+    "molstar": "^4.9.1",
     "nodemon": "^3.0.1",
     "plotly.js": "^2.26.0",
     "react": "^18.2.0",
@@ -73,6 +75,11 @@
     "@types/react-select": "^5.0.1",
     "@types/react-syntax-highlighter": "^15.5.11",
     "cross-env": "^7.0.3",
-    "fs-extra": "^11.2.0"
+    "css-loader": "^7.1.2",
+    "fs-extra": "^11.2.0",
+    "postcss-loader": "^8.1.1",
+    "resolve-url-loader": "^5.0.0",
+    "sass": "^1.82.0",
+    "sass-loader": "^16.0.4"
   }
 }

@@ -13,7 +13,10 @@ const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
 const Footer: React.FC = () => {
   return (
     <Box as="footer" padding="1.5rem" paddingBottom={"0.5rem"} backgroundColor="#28363F">
-      <Flex direction="row" justify="space-between" wrap="wrap" marginBottom="0em">
+      <Flex direction="row" justify="space-between" wrap="wrap" marginBottom="0em"
+                  width={{ base: "100%", sm: "100%", md: "100%", lg: "100%", xl: "80%" }}
+                  margin="auto"
+      >
         <Box>
           <Image src={logo} alt="GlycoShape Logo" height="200px" marginBottom="0.2em" paddingLeft={"1.5rem"} paddingBottom={"0.5rem"}/>
           <Text alignSelf="center" color="lightblue">© GlycoShape</Text>

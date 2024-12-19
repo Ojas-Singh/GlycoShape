@@ -25,55 +25,81 @@ import NotFoundPage from './components/NotFoundPage';
 import CookieConsent from './components/CookieConsent';
 import GOTW from './components/GOTW';
 import Stats from './components/Stats';
+import View from './components/View';
+
+// First create a Layout component for the main layout
+const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Flex direction="column" minHeight="100vh">
+    <Navbar />
+    <CookieConsent />
+    <ScrollToTopButton />
+    <Flex direction="column" flex="1">
+      {children}
+    </Flex>
+    <Cite />
+    <Footer />
+  </Flex>
+);
+
+// Minimal layout for View route
+const ViewLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Flex direction="column" minHeight="100vh">
+    {/* <CookieConsent /> */}
+    {children}
+  </Flex>
+);
 
 const App: React.FC = () => {
   useEffect(() => {
-    document.title = "GlycoShape";
+    document.title = "GlycoShape Glycan Structure Database";
   }, []);
+  
   return (
     <Router>
       <ChakraProvider theme={theme}>
         <CSSReset />
-        <Flex direction="column" minHeight="100vh">
-          {/* Navbar, if you have one */}
-          <Navbar />
-          <CookieConsent />
-          <ScrollToTopButton />
-          {/* Main content area */}
-          <Flex direction="column" flex="1">
-            {/* Your main content components, like the ContentSection */}
-            <Routes>
-              <Route path="/" element={<ContentSection />} />
-              <Route path="/faq" element={<div><Search /><FAQ /></div>} />
-              <Route path="/tutorial" element={<div><Search /><Tutorials /></div>} />
-              <Route path="/api-docs" element={<div><Search /><API /></div>} />
-              <Route path="/downloads" element={<div><Search /> <Download /></div>} />
-              <Route path="/reglyco" element={<div><ReGlyco /></div>} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/glycan" element={<div><Search /><GlycanPage /></div>} />
-              <Route path="/elab" element={<div><Search /><Elab /></div>} />
-              <Route path="/team" element={<div><Search /><Elab /></div>} />
-              <Route path="/blog" element={<div><Search /><Elab /></div>} />
-              <Route path="/publications" element={<div><Search /><Elab /></div>} />
-              <Route path="/swap" element={<div><Swap /></div>} />
-              <Route path="/fit" element={<div><Fit /></div>} />
-              <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
-              <Route path="/stats" element={<div><Stats /></div>} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-
-          </Flex>
-          <Cite />
-          {/* Footer */}
-          <Footer />
-        </Flex>
+        <Routes>
+          {/* View route with minimal layout */}
+          <Route 
+            path="/view" 
+            element={
+              <ViewLayout>
+                <View />
+              </ViewLayout>
+            } 
+          />
+          
+          {/* All other routes with main layout */}
+          <Route
+            path="/*"
+            element={
+              <MainLayout>
+                <Routes>
+                  <Route path="/" element={<ContentSection />} />
+                  <Route path="/faq" element={<div><Search /><FAQ /></div>} />
+                  <Route path="/tutorial" element={<div><Search /><Tutorials /></div>} />
+                  <Route path="/api-docs" element={<div><Search /><API /></div>} />
+                  <Route path="/downloads" element={<div><Search /> <Download /></div>} />
+                  <Route path="/reglyco" element={<div><ReGlyco /></div>} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/glycan" element={<div><Search /><GlycanPage /></div>} />
+                  <Route path="/elab" element={<div><Search /><Elab /></div>} />
+                  <Route path="/team" element={<div><Search /><Elab /></div>} />
+                  <Route path="/blog" element={<div><Search /><Elab /></div>} />
+                  <Route path="/publications" element={<div><Search /><Elab /></div>} />
+                  <Route path="/swap" element={<div><Swap /></div>} />
+                  <Route path="/fit" element={<div><Fit /></div>} />
+                  <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
+                  <Route path="/stats" element={<div><Stats /></div>} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </MainLayout>
+            }
+          />
+        </Routes>
       </ChakraProvider>
-
     </Router>
-
   );
 }
-
-
 
 export default App;

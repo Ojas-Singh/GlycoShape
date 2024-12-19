@@ -263,54 +263,59 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl, seq }) => {
 
 
   return (
-    <div>
-      <div>
-
-        <label >
+    <Box flex='1' width={'100%'} p={4}>
+      {/* Axis Selection Controls */}
+      <Box mb={4} textAlign="center">
+        <label>
           X Axis: &nbsp;&nbsp;
           <select
-
-            style={{ width: '150px', height: '30px', borderRadius: '5px', }}
+            style={{
+              width: '150px',
+              height: '30px',
+              borderRadius: '5px',
+              marginRight: '20px'
+            }}
             value={selectedColumns.x}
-
             onChange={(e) => setSelectedColumns((prev) => ({ ...prev, x: e.target.value }))}
           >
             {columns.map((col) => (
-              <option key={col} value={col}>
-                {col}
-              </option>
+              <option key={col} value={col}>{col}</option>
             ))}
           </select>
         </label>
-        &nbsp;&nbsp;&nbsp;&nbsp;
         <label>
           Y Axis: &nbsp;&nbsp;
           <select
-            style={{ width: '150px', height: '30px', borderRadius: '5px' }}
+            style={{
+              width: '150px',
+              height: '30px',
+              borderRadius: '5px'
+            }}
             value={selectedColumns.y}
             onChange={(e) => setSelectedColumns((prev) => ({ ...prev, y: e.target.value }))}
           >
             {columns.map((col) => (
-              <option key={col} value={col}>
-                {col}
-              </option>
+              <option key={col} value={col}>{col}</option>
             ))}
           </select>
         </label>
-      </div>
-      {/* <HStack> */}
-      <SimpleGrid alignSelf="center" justifyItems="center" alignItems={"center "} templateColumns={{ base: '1fr', lg: '30% 70%' }} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
+      </Box>
 
-        {renderStatisticsTable(selectedColumns['x'])}
-        {/* <Spacer /> */}
-
-        <svg ref={ref} width="100vh" height="500px" />
+      {/* Content Grid */}
+      <SimpleGrid 
+        columns={{ base: 1, lg: 2 }} 
+        spacing={8}
+        alignItems="start"
+        justifyContent="center"
+      >
+        <Box>
+          {renderStatisticsTable(selectedColumns['x'])}
+        </Box>
+        <Box display="flex" justifyContent="center" minW={'50rem'} minH={'30rem'}>
+          <svg ref={ref} width="100%" height="auto" />
+        </Box>
       </SimpleGrid>
-      {/* </HStack> */}
-
-
-
-    </div>
+    </Box>
   );
 };
 

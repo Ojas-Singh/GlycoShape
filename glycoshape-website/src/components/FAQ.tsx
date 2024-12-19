@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {keyframes, useStyleConfig , Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Text,
+import { useStyleConfig , Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Text,
 
 } from "@chakra-ui/react";
+import { keyframes } from "@emotion/react";
 import { useLocation } from 'react-router-dom';
 
 interface FAQItem {

@@ -22,7 +22,8 @@ import {
   Menu,
   MenuButton,
   MenuList,
-  MenuItem
+  MenuItem,
+  Spacer
 } from "@chakra-ui/react";
 import { HamburgerIcon } from '@chakra-ui/icons';
 import logo from './assets/logo_white.png';
@@ -35,15 +36,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    axios.get(`${apiUrl}/api/log`, { withCredentials: true })
-      .then(response => {
-        // Handle the response if needed
-      })
-      .catch(error => {
-        console.error('Error logging visit:', error);
-      });
-  },); // Empty dependency array
+  
   
   const handleNavigation = (path: string) => {
     console.log(`Current path: ${location.pathname}, Target path: ${path}`);
@@ -60,8 +53,12 @@ const Navbar: React.FC = () => {
   return (
     // <Flex as="nav" position="sticky" top="0" zIndex="1000" bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
     
-    <Flex as="nav"  bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
-      <Box>
+    <Flex 
+   
+    as="nav"  bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
+      
+        <Flex  justify="center" width={{ base: "100%", md: "100%", lg: "100%", xl: "100%" }} margin="0 auto">
+      <Box >
         {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
         <Stack direction='row'>
         
@@ -79,7 +76,7 @@ const Navbar: React.FC = () => {
         {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
         </Stack>
       </Box>
-
+<Spacer />  
       {isMobile ? (
         
 
@@ -151,7 +148,7 @@ const Navbar: React.FC = () => {
           </Drawer>
         </>
       ) : (
-        <Flex align="center">
+        <Flex align="center" >
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }}  marginRight="20px">Database</Link>
           {/* <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link> */}
           
@@ -188,6 +185,7 @@ const Navbar: React.FC = () => {
           
         </Flex>
       )}
+      </Flex>
     </Flex>
   );
 }
