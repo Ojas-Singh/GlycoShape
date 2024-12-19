@@ -26,10 +26,12 @@ import CookieConsent from './components/CookieConsent';
 import GOTW from './components/GOTW';
 import Stats from './components/Stats';
 import View from './components/View';
+import UnderConstruction from './components/UnderConstruction';
 
 // First create a Layout component for the main layout
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Flex direction="column" minHeight="100vh">
+    <UnderConstruction />
     <Navbar />
     <CookieConsent />
     <ScrollToTopButton />
