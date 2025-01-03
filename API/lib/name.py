@@ -3,6 +3,7 @@ import logging
 import subprocess
 from pathlib import Path
 from glycowork.motif.processing import IUPAC_to_SMILES
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -161,6 +162,16 @@ def wurcs2alpha_beta(wurcs):
     alpha = wurcs.replace("x", "a")
     beta = wurcs.replace("x", "b")
     return alpha, beta
+
+def wurcsmatch(wurcs):
+    format_match = re.search(r'WURCS=2\.0/(\d+,\d+,\d+)/', wurcs)
+    format_part = format_match.group(1) if format_match else None
+
+    # Match the residue list part enclosed in square brackets
+    residues_match = re.findall(r'\[([^\]]+)\]', wurcs)
+    residues_list = residues_match if residues_match else []
+
+    return format_part, residues_list
 
 def glycam2wurcs(glycam):
     iupac = glycam2iupac(glycam)

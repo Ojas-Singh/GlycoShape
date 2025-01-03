@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, make_response, send_file
 from flask_cors import CORS
+import pandas as pd
 from pathlib import Path
 import requests
 import sys, time
@@ -9,6 +10,10 @@ from datetime import datetime
 from lib import config, GOTW_script, name
 from glycowork.motif.draw import GlycoDraw
 import tempfile
+import shutil
+import zipfile
+import tempfile
+from thefuzz import fuzz
 
 
 app = Flask(__name__)
@@ -187,14 +192,160 @@ def add_request():
         return jsonify({"error": "No glytoucan provided"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+def zip_directory(folder_path, zip_path):
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, os.path.relpath(file_path, folder_path))
+
+def GOTW_process(url: str):
+    output_folder = "output"
+    output_path = Path(output_folder)
+
+    if output_path.exists():
+        shutil.rmtree(output_folder)
+
+    # Download the zip file
+    response = requests.get(url)
+    if response.status_code == 200:
+        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
+            zip_file.write(response.content)
+            zip_file_path = zip_file.name
+
+        # Create a temporary folder for extracting the files
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Extract the zip file
+            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                zip_ref.extractall(tmpdir)
+
+            # Process each subdirectory
+            for root, dirs, files in os.walk(tmpdir):
+                if "structure.off" in files and "structure.pdb" in files:
+                    json_file = os.path.join(root, "info.json")
+                    off = os.path.join(root, "structure.off")
+                    pdb = os.path.join(root, "structure.pdb")
+
+                    if os.path.exists(json_file):
+                        with open(json_file, 'r') as f:
+                            data = json.load(f)
+
+                        name = data.get("indexOrderedSequence", "output")
+                        conformerID = data.get("conformerID", "output")
+                        output_folder_path = GOTW_script.process_app(f'{name}/{conformerID}', pdb, off, 200)
+
+                        # Move the processed folder to the main output directory
+                        processed_subfolder = Path(output_folder_path)
+                        target_subfolder = output_path / processed_subfolder.name
+                        shutil.move(processed_subfolder, target_subfolder)
+                    else:
+                        print(f"info.json not found in {root}")
+
+    else:
+        return None, None
+
+    return output_path, name
+
+@app.route('/api/gotw', methods=['POST'])
+def gotw():
+    data = request.json
+    url = data.get('url')
+    if not url:
+        return jsonify({"error": "URL is required"}), 400
+
+    output_folder_path, name = GOTW_process(url)
+
+    if not output_folder_path:
+        return jsonify({"error": "Failed to process the URL"}), 500
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zip_path = os.path.join(tmpdir, f"{name}.zip")
+        zip_directory(output_folder_path, zip_path)
+        response = send_file(zip_path, as_attachment=True, download_name=f"{name}.zip")
+        response.headers["Content-Disposition"] = f"attachment; filename={name}.zip"
+        response.headers["X-Filename"] = f"{name}.zip"
+        response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Filename"
+        return response
+
+
+@app.route('/api/submit', methods=['POST'])
+def submit_form():
+    downloadLocation = config.glycoshape_data
+    csvLocation = config.glycoshape_csv
+
+    try:
+        # Retrieve form data
+        form_data = request.form.to_dict()
+
+        # Retrieve files
+        simulation_file = request.files.get('simulationFile')
+        mol_file = request.files.get('molFile')
+
+        if not simulation_file or not mol_file:
+            return jsonify({'error': 'Both files are required'}), 400
+
+         # Create a folder named after the glycamName inside the downloadLocation
+        glycam_name = form_data.get('glycamName', '')
+        glycam_folder = os.path.join(downloadLocation, glycam_name)
+
+        if not os.path.exists(glycam_folder):
+            os.makedirs(glycam_folder)
+
+        # Save the simulation file with glycamName as the filename and original extension
+        if simulation_file.filename != '':
+            simulation_extension = os.path.splitext(simulation_file.filename)[1]  # Get the file extension
+            simulation_filename = glycam_name + simulation_extension
+            simulation_file_path = os.path.join(glycam_folder, simulation_filename)
+            simulation_file.save(simulation_file_path)
+
+        # Save the configuration file with glycamName as the filename and original extension
+        if mol_file.filename != '':
+            mol_extension = os.path.splitext(mol_file.filename)[1]  # Get the file extension
+            mol_filename = glycam_name + mol_extension
+            mol_file_path = os.path.join(glycam_folder, mol_filename)
+            mol_file.save(mol_file_path)
+
+        # Load the existing CSV file using pandas
+        csv_data = pd.read_csv(csvLocation)
+
+        # Prepare new data in the same structure as the CSV
+        new_data = {
+            'ID': '',  # Keeping ID empty for now, if needed can be generated or managed separately
+            'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'Email address': form_data.get('email', ''),
+            'Full GLYCAM name of glycan being submitted.': form_data.get('glycamName', ''),
+            'How will the data be transferred?': 'Uploaded via Form',
+            'What is the aggregated length of the simulations?': form_data.get('simulationLength', ''),
+            'What MD package was used for the simulations?': form_data.get('mdPackage', ''),
+            'What force field was used for the simulations?': form_data.get('forceField', ''),
+            'What temperature target was used for the simulations? ': form_data.get('temperature', ''),
+            'What pressure target was used for the simulations?': form_data.get('pressure', ''),
+            'What NaCl concentration was used for the simulations?': form_data.get('saltConcentration', ''),
+            'Any comments that should be noted with the submission?': form_data.get('comments', ''),
+            'What is the GlyTouCan ID of the glycan?': form_data.get('glyTouCanID', '')
+        }
+
+        # Convert the new data to a DataFrame and append it to the existing data
+        new_df = pd.DataFrame([new_data])
+        updated_csv_data = pd.concat([csv_data, new_df], ignore_index=True)
+
+        # Save the updated DataFrame back to the CSV file
+        updated_csv_data.to_csv(csvLocation, index=False)
+
+        return jsonify({'message': 'Files uploaded and form data saved successfully', 'form_data': form_data}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/search', methods=['POST'])
 def search():
     search_result = []
     data = request.get_json()
     search_string = data['search_string']
-    # search_type = data['search_type'] 
-    if search_string != 'dada':
+    search_type = data.get('search_type', None)
+
+    if search_string == 'all':
         for _, glycan_data in GDB_data.items():
             entry = {
                 'glytoucan': glycan_data['archetype']['glytoucan'],
@@ -203,6 +354,76 @@ def search():
             }
             search_result.append(entry)
         return jsonify({'search_string': search_string, 'results': search_result})
+    elif search_string == "N-Glycans":
+        for _, glycan_data in GDB_data.items():
+            if glycan_data['archetype']['iupac'] and (glycan_data['archetype']['iupac'].endswith('Man(b1-4)GlcNAc(b1-4)GlcNAc') or glycan_data['archetype']['iupac'].endswith('Man(b1-4)GlcNAc(b1-4)[Fuc(a1-6)]GlcNAc')):
+                entry = {
+                    'glytoucan': glycan_data['archetype']['glytoucan'],
+                    'ID': glycan_data['archetype']['ID'],
+                    'mass': glycan_data['archetype']['mass']
+                }
+                search_result.append(entry)
+        return jsonify({'search_string': search_string, 'results': search_result})
+    
+    elif search_string == "O-Glycans":
+        for _, glycan_data in GDB_data.items():
+            if glycan_data['archetype']['iupac'] and (glycan_data['archetype']['iupac'].endswith('GalNAc(a1-3)[Gal(b1-3)]GalNAc') or glycan_data['archetype']['iupac'].endswith('GalNAc(a1-3)[Gal(b1-3)]GalNAc')):
+                entry = {
+                    'glytoucan': glycan_data['archetype']['glytoucan'],
+                    'ID': glycan_data['archetype']['ID'],
+                    'mass': glycan_data['archetype']['mass']
+                }
+                search_result.append(entry)
+        return jsonify({'search_string': search_string, 'results': search_result})
+
+    elif search_string == "GAGs":
+        for _, glycan_data in GDB_data.items():
+            if glycan_data['archetype']['iupac'] and (glycan_data['archetype']['iupac'].startswith('GlcA(b1-3)Gal(b1-3)Gal(b1-4)Xyl') or glycan_data['archetype']['iupac'].startswith('GlcA(b1-3)Gal(b1-3)Gal(b1-4)Xyl')):
+                entry = {
+                    'glytoucan': glycan_data['archetype']['glytoucan'],
+                    'ID': glycan_data['archetype']['ID'],
+                    'mass': glycan_data['archetype']['mass']
+                }
+                search_result.append(entry)
+        return jsonify({'search_string': search_string, 'results': search_result})
+    
+    # elif search_string == "Oligomannose":
+        
+
+    # elif search_string == "Complex":
+    
+    # elif search_string == "Hybrid":
+
+    elif search_type == 'wurcs':
+        WURCS = search_string.lower()
+
+        format_part, residues_list = name.wurcsmatch(WURCS)
+        wurcs_0 = f'WURCS=2.0/{format_part}/{residues_list}'
+        # Store tuples of (score, entry) for sorting
+        scored_results = []
+        
+
+        for _, glycan_data in GDB_data.items():
+            wurcs = glycan_data['archetype']['wurcs']
+            if wurcs:
+                format_part_i, residues_list_i = name.wurcsmatch(wurcs)
+                wurcs_i = f'WURCS=2.0/{format_part_i}/{residues_list_i}'
+                score = fuzz.partial_ratio(wurcs_0, wurcs_i.lower())
+                entry = {
+                    'glytoucan': glycan_data['archetype']['glytoucan'],
+                    'ID': glycan_data['archetype']['ID'],
+                    'mass': glycan_data['archetype']['mass'],
+                    'score': score
+                }
+                scored_results.append((score, entry))
+        
+        # Sort by score descending and take top 10
+        scored_results.sort(key=lambda x: x[0], reverse=True)
+        search_result = [entry for score, entry in scored_results[:10]]
+        return jsonify({'search_string': search_string, 'results': search_result})
+
+    
+
     else:
         return jsonify({'search_string': search_string, 'results': search_result})
 
