@@ -25,7 +25,7 @@ CORS(app, supports_credentials=True)
 
 # load directory 
 GLYCOSHAPE_DIR = Path(config.glycoshape_database_dir)
-GLYCOSHAPE_CSV = Path(config.glycoshape_csv)
+GLYCOSHAPE_CSV = Path(config.glycoshape_inventory_csv)
 GLYCOSHAPE_RAWDATA_DIR = Path(config.glycoshape_rawdata_dir)
 GLYCOSHAPE_UPLOAD_DIR = Path(config.glycoshape_upload_dir)
 
