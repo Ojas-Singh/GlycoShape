@@ -25,7 +25,7 @@ CORS(app, supports_credentials=True)
 
 # load directory 
 GLYCOSHAPE_DIR = Path(config.glycoshape_database_dir)
-# GLYCOSHAPE_CSV = Path(config.glycoshape_csv)
+GLYCOSHAPE_CSV = Path(config.glycoshape_csv)
 GLYCOSHAPE_RAWDATA_DIR = Path(config.glycoshape_rawdata_dir)
 GLYCOSHAPE_UPLOAD_DIR = Path(config.glycoshape_upload_dir)
 
@@ -271,8 +271,8 @@ def gotw():
 
 @app.route('/api/submit', methods=['POST'])
 def submit_form():
-    downloadLocation = config.glycoshape_data
-    csvLocation = config.glycoshape_csv
+    downloadLocation = GLYCOSHAPE_UPLOAD_DIR
+    csvLocation = GLYCOSHAPE_CSV
 
     try:
         # Retrieve form data
@@ -421,9 +421,6 @@ def search():
         scored_results.sort(key=lambda x: x[0], reverse=True)
         search_result = [entry for score, entry in scored_results[:10]]
         return jsonify({'search_string': search_string, 'results': search_result})
-
-    
-
     else:
         return jsonify({'search_string': search_string, 'results': search_result})
 
@@ -436,6 +433,16 @@ def check_pin(pin):
         return jsonify({"authenticated": False})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/ptm/<residue>', methods=['GET'])
+def get_ptm(residue):
+    try:
+        ptm = name.get_ptm(residue)
+        if ptm:
+            return jsonify(ptm)
+        return jsonify({"error": "PTM not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  
 
 if __name__ == '__main__':
     app.run()
