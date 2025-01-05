@@ -70,9 +70,10 @@ const SearchPage = () => {
       setIsLoading(true);
       let url, body;
       if (wurcsString && !searchString) {
-        url = `${apiUrl}/api/wurcs`;
+        url = `${apiUrl}/api/search`;
         body = JSON.stringify({
-          wurcs_string: wurcsString,
+          search_string: wurcsString,
+          search_type: 'wurcs',
         });
       } else if (searchString) {
         setIsWurcsSearch(false);
@@ -419,9 +420,13 @@ const SearchPage = () => {
               paddingTop={'2rem'}
               marginBottom={{ base: "1rem", md: "0" }}
             >
-              <Text fontSize={{ base: "xl", md: "2xl" }} marginBottom="1em">
-                Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, results.length)} of {results.length} results
-              </Text>
+                <Text fontSize={{ base: "xl", md: "2xl" }} marginBottom="1em">
+                Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, results.length)} of {results.length} results for {
+                  isWurcsSearch
+                  ? <img src={wurcsImageSrc === null ? undefined : wurcsImageSrc} alt="WURCS" style={{ width: '200px', height: 'auto', objectFit: 'contain' }} />
+                  : `"${searchString}"`
+                }
+                </Text>
             </Box>
 
             <Box width={{ base: "100%", md: "70%" }}>

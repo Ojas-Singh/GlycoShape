@@ -47,3 +47,7 @@ docs/_build/
 
 # macOS specific
 .DS_Store
+
+
+#custom
+request.txt

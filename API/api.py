@@ -14,6 +14,7 @@ import shutil
 import zipfile
 import tempfile
 from thefuzz import fuzz
+import geocoder
 
 
 app = Flask(__name__)
@@ -23,11 +24,88 @@ CORS(app)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 CORS(app, supports_credentials=True)
 
+
 # load directory 
 GLYCOSHAPE_DIR = Path(config.glycoshape_database_dir)
 GLYCOSHAPE_CSV = Path(config.glycoshape_inventory_csv)
 GLYCOSHAPE_RAWDATA_DIR = Path(config.glycoshape_rawdata_dir)
 GLYCOSHAPE_UPLOAD_DIR = Path(config.glycoshape_upload_dir)
+
+
+# Define the path to the CSV file
+CSV_FILE_PATH = 'visitors.csv'
+
+# Ensure the CSV file exists; if not, create it with headers
+if not os.path.exists(CSV_FILE_PATH):
+    # Create a new CSV file with headers (timestamp, ip_address, latitude, longitude)
+    pd.DataFrame(columns=['timestamp', 'ip_address', 'latitude', 'longitude']).to_csv(CSV_FILE_PATH, index=False)
+
+def get_geolocation(ip):
+    """Get geolocation for the given IP address using geocoder."""
+    try:
+        g = geocoder.ip(ip)
+        if g.ok:
+            return g.latlng  # Returns [latitude, longitude]
+        return None, None  # If no geolocation is found
+    except Exception as e:
+        print(f"Error getting geolocation for IP {ip}: {e}")
+        return None, None
+
+@app.route('/api/log', methods=['GET'])
+def log_visitor():
+    # Check for existing cookie
+    if request.cookies.get('visited'):
+        return 'Already logged today', 200
+
+    # Get client IP address
+    if request.headers.getlist("X-Forwarded-For"):
+        ip = request.headers.getlist("X-Forwarded-For")[0]
+    else:
+        ip = request.remote_addr
+
+    # Log IP and timestamp
+    timestamp = datetime.now()
+    print(f"Logging IP {ip} at {timestamp}")
+    print(get_geolocation(ip))
+    latitude, longitude = get_geolocation(ip)
+
+    
+    # Check if file exists, to write headers if not
+    file_exists = os.path.exists(CSV_FILE_PATH)
+
+    # Open the file in append mode
+    with open(CSV_FILE_PATH, 'a') as f:
+        # Write headers if the file is new
+        if not file_exists:
+            f.write("timestamp,ip_address,latitude,longitude\n")
+
+        # Write the new entry
+        f.write(f"{timestamp},{ip},{latitude},{longitude}\n")
+
+    # Create a response and set a cookie with 24-hour expiration
+    response = make_response("Logged", 200)
+    response.set_cookie('visited', 'yes', max_age=86400)  # 86400 seconds = 24 hours
+    return response
+
+
+
+@app.route('/api/visitors', methods=['GET'])
+def get_visitors():
+    """API to fetch the CSV data."""
+    if os.path.exists(CSV_FILE_PATH):
+        # Load the CSV file
+        df = pd.read_csv(CSV_FILE_PATH)
+        # Drop the 'ip_address' column if it exists
+        if 'ip_address' in df.columns:
+            df = df.drop(columns=['ip_address'])
+        # Drop rows with any NaN values
+        df = df.dropna()
+        # Convert to list of dictionaries and return as JSON
+        visitor_data = df.to_dict(orient='records')
+        return jsonify(visitor_data)
+    else:
+        return jsonify({'error': 'CSV file not found'}), 404
+    
 
 with open(GLYCOSHAPE_DIR / 'GLYCOSHAPE.json', 'r') as file:
     GDB_data = json.load(file)
@@ -436,77 +514,7 @@ def check_pin(pin):
         return jsonify({"error": str(e)}), 500
     
 
-# Define the path to the CSV file
-CSV_FILE_PATH = 'visitors.csv'
 
-# Ensure the CSV file exists; if not, create it with headers
-if not os.path.exists(CSV_FILE_PATH):
-    # Create a new CSV file with headers (timestamp, ip_address, latitude, longitude)
-    pd.DataFrame(columns=['timestamp', 'ip_address', 'latitude', 'longitude']).to_csv(CSV_FILE_PATH, index=False)
-
-def get_geolocation(ip):
-    """Get geolocation for the given IP address using geocoder."""
-    try:
-        g = geocoder.ip(ip)
-        if g.ok:
-            return g.latlng  # Returns [latitude, longitude]
-        return None, None  # If no geolocation is found
-    except Exception as e:
-        print(f"Error getting geolocation for IP {ip}: {e}")
-        return None, None
-
-@app.route('/api/log', methods=['GET'])
-def log_visitor():
-    # Check for existing cookie
-    if request.cookies.get('visited'):
-        return 'Already logged today', 200
-
-    # Get client IP address
-    if request.headers.getlist("X-Forwarded-For"):
-        ip = request.headers.getlist("X-Forwarded-For")[0]
-    else:
-        ip = request.remote_addr
-
-    # Log IP and timestamp
-    timestamp = datetime.now()
-    latitude, longitude = get_geolocation(ip)
-
-    
-    # Check if file exists, to write headers if not
-    file_exists = os.path.exists(CSV_FILE_PATH)
-
-    # Open the file in append mode
-    with open(CSV_FILE_PATH, 'a') as f:
-        # Write headers if the file is new
-        if not file_exists:
-            f.write("timestamp,ip_address,latitude,longitude\n")
-
-        # Write the new entry
-        f.write(f"{timestamp},{ip},{latitude},{longitude}\n")
-
-    # Create a response and set a cookie with 24-hour expiration
-    response = make_response("Logged", 200)
-    response.set_cookie('visited', 'yes', max_age=86400)  # 86400 seconds = 24 hours
-    return response
-
-
-
-@app.route('/api/visitors', methods=['GET'])
-def get_visitors():
-    """API to fetch the CSV data."""
-    if os.path.exists(CSV_FILE_PATH):
-        # Load the CSV file
-        df = pd.read_csv(CSV_FILE_PATH)
-        # Drop the 'ip_address' column if it exists
-        if 'ip_address' in df.columns:
-            df = df.drop(columns=['ip_address'])
-        # Drop rows with any NaN values
-        df = df.dropna()
-        # Convert to list of dictionaries and return as JSON
-        visitor_data = df.to_dict(orient='records')
-        return jsonify(visitor_data)
-    else:
-        return jsonify({'error': 'CSV file not found'}), 404
     
 @app.route('/api/ptm/<residue>', methods=['GET'])
 def get_ptm(residue):
