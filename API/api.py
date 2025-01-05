@@ -500,9 +500,22 @@ def search():
         scored_results.sort(key=lambda x: x[0], reverse=True)
         search_result = [entry for score, entry in scored_results[:10]]
         return jsonify({'search_string': search_string, 'results': search_result})
+    
+    elif search_type == 'end':
+        end_residue = search_string
+        for _, glycan_data in GDB_data.items():
+            if glycan_data['archetype']['iupac'] and glycan_data['archetype']['iupac'].endswith(end_residue):
+                entry = {
+                    'glytoucan': glycan_data['archetype']['glytoucan'],
+                    'ID': glycan_data['archetype']['ID'],
+                    'mass': glycan_data['archetype']['mass']
+                }
+                search_result.append(entry)
+        search_result.sort(key=lambda x: x['mass'])
+        return jsonify({'search_string': search_string, 'results': search_result})  
+    
     else:
         return jsonify({'search_string': search_string, 'results': search_result})
-
 
 @app.route('/api/access/<pin>', methods=['GET'])
 def check_pin(pin):
@@ -513,9 +526,6 @@ def check_pin(pin):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-
-
-    
 @app.route('/api/ptm/<residue>', methods=['GET'])
 def get_ptm(residue):
     try:
@@ -525,6 +535,8 @@ def get_ptm(residue):
         return jsonify({"error": "PTM not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500  
+    
+
 
 if __name__ == '__main__':
     app.run()
