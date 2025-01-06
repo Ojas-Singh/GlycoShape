@@ -15,6 +15,7 @@ import zipfile
 import tempfile
 from thefuzz import fuzz
 import geocoder
+import io
 
 
 app = Flask(__name__)
@@ -526,15 +527,74 @@ def check_pin(pin):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/api/ptm/<residue>', methods=['GET'])
-def get_ptm(residue):
-    try:
-        ptm = name.get_ptm(residue)
-        if ptm:
-            return jsonify(ptm)
-        return jsonify({"error": "PTM not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500  
+@app.route('/api/load/<glytoucan>', methods=['GET'])
+def get_glycan_for_reglyco(glytoucan):
+    """
+    Downloads all PDB files in the PDB_format_ATOM folder along with
+    associated .npz and .json files from the output folder for a given glytoucan ID.
+    """
+    glycoshape_entry = None
+
+    # Determine the glycoshape_entry based on the glytoucan ID
+    for glycan_id, glycan_data in GDB_data.items():
+        if glycan_data.get('alpha', {}).get('glytoucan') == glytoucan:
+            glycoshape_entry = glycan_data['archetype']['ID']
+            break
+        elif glycan_data.get('beta', {}).get('glytoucan') == glytoucan:
+            glycoshape_entry = glycan_data['archetype']['ID']
+            break
+        elif glycan_data.get('archetype', {}).get('glytoucan') == glytoucan:
+            glycoshape_entry = glycan_data['archetype']['ID']
+            break
+
+    if not glycoshape_entry:
+        return jsonify({"error": "Glycan not found"}), 404
+
+    # Define paths to the PDB_format_ATOM and output directories
+    pdb_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'PDB_format_ATOM'
+    output_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'output'
+
+    if not pdb_dir.exists():
+        return jsonify({"error": "PDB_format_ATOM directory not found"}), 404
+
+    if not output_dir.exists():
+        return jsonify({"error": "Output directory not found"}), 404
+
+    # Collect all .pdb files
+    pdb_files = list(pdb_dir.glob('*.pdb'))
+    if not pdb_files:
+        return jsonify({"error": "No PDB files found"}), 404
+
+    # Collect all .npz and .json files
+    npz_files = list(output_dir.glob('*.npz'))
+    json_files = list(output_dir.glob('*.json'))
+
+    # Create an in-memory ZIP archive
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # Add PDB files
+        for pdb_file in pdb_files:
+            zip_file.write(pdb_file, arcname=pdb_file.name)
+
+        # Add NPZ files
+        for npz_file in npz_files:
+            zip_file.write(npz_file, arcname=npz_file.name)
+
+        # Add JSON files
+        for json_file in json_files:
+            zip_file.write(json_file, arcname=json_file.name)
+
+    zip_buffer.seek(0)  # Reset buffer pointer to the beginning
+
+    # Define a filename for the ZIP archive
+    zip_filename = f"{glycoshape_entry}_files.zip"
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=zip_filename  # For Flask >=2.0, use 'download_name' instead of 'attachment_filename'
+    )
     
 
 
