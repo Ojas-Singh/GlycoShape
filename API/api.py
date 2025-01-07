@@ -527,7 +527,7 @@ def check_pin(pin):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/api/load/<glytoucan>', methods=['GET'])
+@app.route('/api/download/<glytoucan>', methods=['GET'])
 def get_glycan_for_reglyco(glytoucan):
     """
     Downloads all PDB files in the PDB_format_ATOM folder along with
