@@ -20,7 +20,7 @@ import io
 
 app = Flask(__name__)
 
-app.config['MAX_CONTENT_LENGTH'] = 2000 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 5000 * 1024 * 1024
 CORS(app)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 CORS(app, supports_credentials=True)
