@@ -553,6 +553,7 @@ def get_glycan_for_reglyco(glytoucan):
     # Define paths to the PDB_format_ATOM and output directories
     pdb_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'PDB_format_ATOM'
     output_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'output'
+    data_json = GLYCOSHAPE_DIR / glycoshape_entry / 'data.json' 
 
     if not pdb_dir.exists():
         return jsonify({"error": "PDB_format_ATOM directory not found"}), 404
@@ -583,6 +584,9 @@ def get_glycan_for_reglyco(glytoucan):
         # Add JSON files
         for json_file in json_files:
             zip_file.write(json_file, arcname=json_file.name)
+
+        # Add data.json file
+        zip_file.write(data_json, arcname='data.json')
 
     zip_buffer.seek(0)  # Reset buffer pointer to the beginning
 
