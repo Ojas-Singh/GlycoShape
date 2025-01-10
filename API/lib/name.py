@@ -175,9 +175,6 @@ def wurcsmatch(wurcs):
 
 def glycam2wurcs(glycam):
     iupac = glycam2iupac(glycam)
-    
     id, wurcs = iupac2wurcs_glytoucan(iupac)
-    print(id,wurcs)
     smiles = IUPAC_to_SMILES([iupac])[0]
-    print(smiles)
     return smiles2wurcs(smiles)

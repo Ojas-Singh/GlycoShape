@@ -281,51 +281,58 @@ def zip_directory(folder_path, zip_path):
                 zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
 def GOTW_process(url: str):
-    output_folder = "output"
-    output_path = Path(output_folder)
+    # Create a temporary directory for output
+    with tempfile.TemporaryDirectory() as output_folder:
+        output_path = Path(output_folder)
 
-    if output_path.exists():
-        shutil.rmtree(output_folder)
+        # Download the zip file
+        response = requests.get(url)
+        if response.status_code == 200:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
+                zip_file.write(response.content)
+                zip_file_path = zip_file.name
 
-    # Download the zip file
-    response = requests.get(url)
-    if response.status_code == 200:
-        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
-            zip_file.write(response.content)
-            zip_file_path = zip_file.name
+            # Create a temporary folder for extracting the files
+            with tempfile.TemporaryDirectory() as tmpdir:
+                # Extract the zip file
+                with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                    zip_ref.extractall(tmpdir)
 
-        # Create a temporary folder for extracting the files
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Extract the zip file
-            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-                zip_ref.extractall(tmpdir)
+                glycam_name = None  # Initialize name variable
+                # Process each subdirectory
+                for root, dirs, files in os.walk(tmpdir):
+                    if "structure.off" in files and "structure.pdb" in files:
+                        json_file = os.path.join(root, "info.json")
+                        off = os.path.join(root, "structure.off")
+                        pdb = os.path.join(root, "structure.pdb")
 
-            # Process each subdirectory
-            for root, dirs, files in os.walk(tmpdir):
-                if "structure.off" in files and "structure.pdb" in files:
-                    json_file = os.path.join(root, "info.json")
-                    off = os.path.join(root, "structure.off")
-                    pdb = os.path.join(root, "structure.pdb")
+                        if os.path.exists(json_file):
+                            with open(json_file, 'r') as f:
+                                data = json.load(f)
 
-                    if os.path.exists(json_file):
-                        with open(json_file, 'r') as f:
-                            data = json.load(f)
+                            glycam_name = data.get("indexOrderedSequence", "output")
+                            conformerID = data.get("conformerID", "output")
+                            output_folder_path = GOTW_script.process_app(f'{glycam_name}/{conformerID}', pdb, off, 200)
 
-                        name = data.get("indexOrderedSequence", "output")
-                        conformerID = data.get("conformerID", "output")
-                        output_folder_path = GOTW_script.process_app(f'{name}/{conformerID}', pdb, off, 200)
+                            # Move the processed folder to the temp output directory
+                            processed_subfolder = Path(output_folder_path)
+                            target_subfolder = output_path / processed_subfolder.glycam_name
+                            shutil.move(processed_subfolder, target_subfolder)
+                        else:
+                            print(f"info.json not found in {root}")
 
-                        # Move the processed folder to the main output directory
-                        processed_subfolder = Path(output_folder_path)
-                        target_subfolder = output_path / processed_subfolder.name
-                        shutil.move(processed_subfolder, target_subfolder)
-                    else:
-                        print(f"info.json not found in {root}")
+                # Create a new temp directory for the final result
+                result_dir = tempfile.mkdtemp()
+                # Copy the contents from output_path to result_dir
+                shutil.copytree(output_path, result_dir, dirs_exist_ok=True)
+                # Create PNG file for name
+                iupac = name.glycam2iupac(glycam_name)
+                image_path = os.path.join(result_dir, f"snfg.png")
+                GlycoDraw(iupac, show_linkage=True, filepath=image_path)
+        else:
+            return None, None
 
-    else:
-        return None, None
-
-    return output_path, name
+        return Path(result_dir), name
 
 @app.route('/api/gotw', methods=['POST'])
 def gotw():
