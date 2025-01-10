@@ -286,7 +286,7 @@ def GOTW_process(url: str):
         output_path = Path(output_folder)
 
         # Download the zip file
-        response = requests.get(url)
+        response = requests.get(url ,stream=True, timeout=(10, 60))
         if response.status_code == 200:
             with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
                 zip_file.write(response.content)
