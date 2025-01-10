@@ -9,6 +9,8 @@
 #               4) Display help usage (`-h` or `--help`).
 #               5) Fetch WURCS from GlyTouCan ID, convert to GLYCAM, and show 
 #                  a condensed GLYCAM URL in the terminal (`glytoucan`).
+#               6) Convert a WURCS string to a condensed GLYCAM URL (`wurcs`).
+#               7) Cleanup folders that already exist on the server (`cleanup`).
 # Author      : Ojas Singh
 # Version     : 1.1.0
 ###############################################################################
