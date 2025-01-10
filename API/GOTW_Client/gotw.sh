@@ -31,6 +31,7 @@ Commands:
   update              Update this script in place from the GitHub RAW URL.
   glytoucan <GTCID>   Fetch the WURCS from GlyTouCan ID via the GlyCosmos API, 
                       convert to GLYCAM, and print a condensed GLYCAM URL.
+  cleanup             Delete folders if they already exist on the server.
   -h, --help          Display this help message.
 
 Options for 'submit' (optional):
