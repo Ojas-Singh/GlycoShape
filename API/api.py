@@ -280,16 +280,34 @@ def zip_directory(folder_path, zip_path):
                 file_path = os.path.join(root, file)
                 zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
-def GOTW_process(url: str):
-    # Create a temporary directory for output
-    with tempfile.TemporaryDirectory() as output_folder:
-        output_path = Path(output_folder)
 
-        # Download the zip file
-        response = requests.get(url ,stream=True, timeout=(10, 60))
-        if response.status_code == 200:
+
+def GOTW_process(url: str):
+    """
+    Process a given URL for GOTW data, extract and process files, and generate output.
+
+    Args:
+        url (str): URL to the zip file.
+
+    Returns:
+        tuple: Path to the result directory and the glycam name.
+    """
+    try:
+        # Create a temporary directory for output
+        with tempfile.TemporaryDirectory() as output_folder:
+            output_path = Path(output_folder)
+
+            # Download the zip file with streaming
+            response = requests.get(url, stream=True, timeout=(10, 60))
+            if response.status_code != 200:
+                print(f"Error: Failed to download the file. Status code: {response.status_code}")
+                return None, None
+
+            # Save the streamed content to a temporary zip file
             with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
-                zip_file.write(response.content)
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:  # Filter out keep-alive new chunks
+                        zip_file.write(chunk)
                 zip_file_path = zip_file.name
 
             # Create a temporary folder for extracting the files
@@ -303,36 +321,55 @@ def GOTW_process(url: str):
                 for root, dirs, files in os.walk(tmpdir):
                     if "structure.off" in files and "structure.pdb" in files:
                         json_file = os.path.join(root, "info.json")
-                        off = os.path.join(root, "structure.off")
-                        pdb = os.path.join(root, "structure.pdb")
+                        off_file = os.path.join(root, "structure.off")
+                        pdb_file = os.path.join(root, "structure.pdb")
 
                         if os.path.exists(json_file):
                             with open(json_file, 'r') as f:
                                 data = json.load(f)
 
                             glycam_name = data.get("indexOrderedSequence", "output")
-                            conformerID = data.get("conformerID", "output")
-                            output_folder_path = GOTW_script.process_app(f'{glycam_name}/{conformerID}', pdb, off, 200)
+                            conformer_id = data.get("conformerID", "output")
+                            output_folder_path = GOTW_script.process_app(f'{glycam_name}/{conformer_id}', pdb_file, off_file, 200)
 
                             # Move the processed folder to the temp output directory
                             processed_subfolder = Path(output_folder_path)
-                            target_subfolder = output_path / processed_subfolder.glycam_name
+                            target_subfolder = output_path / glycam_name
                             shutil.move(processed_subfolder, target_subfolder)
                         else:
                             print(f"info.json not found in {root}")
 
                 # Create a new temp directory for the final result
                 result_dir = tempfile.mkdtemp()
+
                 # Copy the contents from output_path to result_dir
                 shutil.copytree(output_path, result_dir, dirs_exist_ok=True)
-                # Create PNG file for name
-                iupac = name.glycam2iupac(glycam_name)
-                image_path = os.path.join(result_dir, f"snfg.png")
-                GlycoDraw(iupac, show_linkage=True, filepath=image_path)
-        else:
-            return None, None
 
-        return Path(result_dir), name
+                # Create PNG file for the glycam name
+                if glycam_name:
+                    iupac = name.glycam2iupac(glycam_name)
+                    image_path = os.path.join(result_dir, "snfg.png")
+                    GlycoDraw(iupac, show_linkage=True, filepath=image_path)
+                else:
+                    print("Error: Glycam name not found. Unable to generate image.")
+
+        # Return the final result directory and glycam name
+        return Path(result_dir), glycam_name
+
+    except requests.exceptions.RequestException as e:
+        print(f"Network error: {e}")
+        return None, None
+    except zipfile.BadZipFile:
+        print("Error: The downloaded file is not a valid zip file.")
+        return None, None
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None, None
+    finally:
+        # Ensure the temporary zip file is deleted
+        if 'zip_file_path' in locals() and os.path.exists(zip_file_path):
+            os.remove(zip_file_path)
+
 
 @app.route('/api/gotw', methods=['POST'])
 def gotw():
