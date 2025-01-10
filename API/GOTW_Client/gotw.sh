@@ -27,10 +27,11 @@ Usage:
 Commands:
   run <GLYCAM URL>    Download simulation files from the GlycoShape API, unpack it,
                       and sbatch 'gotw_iridis.sh' submission script.
-  submit [OPTIONS]    Submit the resulting folder(s) for simulation via the GlycoShape API.
+  submit [OPTIONS]    Submit the finished simulation folder(s) to GlycoShape Server.
   update              Update this script in place from the GitHub RAW URL.
   glytoucan <GTCID>   Fetch the WURCS from GlyTouCan ID via the GlyCosmos API, 
                       convert to GLYCAM, and print a condensed GLYCAM URL.
+  wurcs <WURCS>       Convert a WURCS string to a condensed GLYCAM URL.
   cleanup             Delete folders if they already exist on the server.
   -h, --help          Display this help message.
 
@@ -55,6 +56,12 @@ Examples:
 
   4) Convert a GlyTouCan ID to a GLYCAM condensed URL:
        $0 glytoucan G30370YC
+  
+  5) Convert Wurcs to GLYCAM condensed URL:
+       $0 wurcs WURCS=2.0/5,9,8/[a2122h-1b_1-5_2*NCC/3=O][a1122h-1b_1-5][a1122h-1a_1-5][a2112h-1b_1-5][Aad21122h-2a_2-6_5*NCCO/3=O]/1-1-2-3-1-4-5-3-1/a4-b1_b4-c1_c3-d1_c6-h1_d2-e1_e4-f1_f6-g2_h2-i1
+  
+  6) Cleanup folders that already exist on the server:
+       $0 cleanup
 EOF
 }
 
@@ -333,6 +340,35 @@ glytoucan_func() {
 }
 
 # -----------------------------------------------------------------------------
+# WURCS TO GLYCAM FUNCTION: Convert WURCS to GLYCAM URL
+# -----------------------------------------------------------------------------
+wurcs_to_glycam_func() {
+    local wurcs="$1"
+    if [ -z "$wurcs" ]; then
+        echo "Error: missing WURCS string."
+        echo "Usage: $0 wurcs <WURCS>"
+        exit 1
+    fi
+
+    # Convert WURCS to GLYCAM using Glycosmos API
+    local glycam_response
+    glycam_response=$(curl -s -d "[\"$wurcs\"]" https://api.glycosmos.org/glycanformatconverter/2.10.4/wurcs2glycam)
+
+    # Extract the GLYCAM string from the response
+    local glycam
+    glycam=$(echo "$glycam_response" | grep -oP '"GLYCAM":\s*"\K[^"]+')
+
+    if [ -z "$glycam" ]; then
+        echo "Error: No GLYCAM found for WURCS: $wurcs"
+        exit 1
+    fi
+
+    # Print the condensed GLYCAM URL
+    echo "https://glycam.org/url/condensed/${glycam}"
+}
+
+
+# -----------------------------------------------------------------------------
 # CLEANUP FUNCTION: Delete folders if they already exist on the server
 # -----------------------------------------------------------------------------
 cleanup_func() {
@@ -387,6 +423,9 @@ case "$command" in
         ;;
     glytoucan)
         glytoucan_func "$@"
+        ;;
+     wurcs)
+        wurcs_to_glycam_func "$@"
         ;;
     cleanup)
         cleanup_func
