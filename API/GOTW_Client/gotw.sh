@@ -166,6 +166,12 @@ merge_pdbs() {
     local output_file=$1
     shift
 
+    # Skip if output file already exists
+    if [ -f "$output_file" ]; then
+        echo "Output file $output_file already exists, skipping merge."
+        return 0
+    fi
+
     # Initialize output file
     > "$output_file"
 
@@ -279,6 +285,7 @@ submit_func() {
             continue
         fi
 
+        echo "Uploading ${dir}..."
         curl -X POST https://glycoshape.io/api/submit \
             -F "simulationFile=@${simulation_file}" \
             -F "molFile=@${mol_file}" \
@@ -291,9 +298,10 @@ submit_func() {
             -F "pressure=${pressure}" \
             -F "saltConcentration=${salt_concentration}" \
             -F "comments=${comments}" \
-            -F "glyTouCanID=TODO"
+            -F "glyTouCanID=TODO" \
+            --output /dev/null --write-out "%{http_code}\n" --progress-bar
 
-        echo "Form submission completed for ${dir}."
+        echo -e "\nForm submission completed for ${dir}."
     done
 }
 
