@@ -346,12 +346,12 @@ def GOTW_process(url: str):
                 shutil.copytree(output_path, result_dir, dirs_exist_ok=True)
 
                 # Create PNG file for the glycam name
-                if glycam_name:
+                try:
                     iupac = name.glycam2iupac(glycam_name)
                     image_path = os.path.join(result_dir, "snfg.png")
                     GlycoDraw(iupac, show_linkage=True, filepath=image_path)
-                else:
-                    print("Error: Glycam name not found. Unable to generate image.")
+                except Exception as e:
+                    print("Error: Unable to generate image.")
 
         # Return the final result directory and glycam name
         return Path(result_dir), glycam_name
