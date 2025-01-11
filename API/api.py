@@ -315,7 +315,7 @@ def GOTW_process(url: str):
                 with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
                     zip_ref.extractall(tmpdir)
 
-                glycam_name = None  # Initialize name variable
+                glycan_name = None  # Initialize name variable
                 # Process each subdirectory
                 for root, dirs, files in os.walk(tmpdir):
                     if "structure.off" in files and "structure.pdb" in files:
@@ -331,7 +331,7 @@ def GOTW_process(url: str):
                             iupac = name.glycam2iupac(glycam_tidy)
                             glytoucan = name.iupac2wurcs_glytoucan(iupac)[0]
                             if glytoucan is not None:
-                                glycam_name = glytoucan
+                                glycan_name = glytoucan
                             else:
                                 glycan_name = glycam
                             conformer_id = data.get("conformerID", "output")
