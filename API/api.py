@@ -326,20 +326,22 @@ def GOTW_process(url: str):
                         if os.path.exists(json_file):
                             with open(json_file, 'r') as f:
                                 data = json.load(f)
-                            
-                            wurcs = name.pdb2wurcs(pdb_file)
-                            glytoucan = name.wurcs2glytoucan(wurcs)
+                            glycam = data.get("indexOrderedSequence", "output")
+                            glycam_tidy = glycam[:-5]
+                            iupac = name.glycam2iupac(glycam_tidy)
+                            glytoucan = name.iupac2wurcs_glytoucan(iupac)[0]
                             if glytoucan is not None:
                                 glycam_name = glytoucan
                             else:
-                                glycam_name = data.get("indexOrderedSequence", "output")
+                                glycan_name = glycam
                             conformer_id = data.get("conformerID", "output")
-                            output_folder_path = GOTW_script.process_app(f'{glycam_name}/{conformer_id}', pdb_file, off_file, 200)
+                            output_folder_path = GOTW_script.process_app(f'{glycan_name}/{conformer_id}', pdb_file, off_file, 200)
 
                             # Move the processed folder to the temp output directory
                             processed_subfolder = Path(output_folder_path)
-                            target_subfolder = output_path / glycam_name
+                            target_subfolder = output_path / glycan_name
                             shutil.move(processed_subfolder, target_subfolder)
+                            shutil.move(json_file, target_subfolder / "info.json")
                         else:
                             print(f"info.json not found in {root}")
 
@@ -348,14 +350,6 @@ def GOTW_process(url: str):
 
                 # Copy the contents from output_path to result_dir
                 shutil.copytree(output_path, result_dir, dirs_exist_ok=True)
-
-                # Create PNG file for the glycam name
-                try:
-                    iupac = name.glycam2iupac(glycam_name)
-                    image_path = os.path.join(result_dir, "snfg.png")
-                    GlycoDraw(iupac, show_linkage=True, filepath=image_path)
-                except Exception as e:
-                    print("Error: Unable to generate image.")
 
         # Return the final result directory and glycam name
         return Path(result_dir), glycam_name
