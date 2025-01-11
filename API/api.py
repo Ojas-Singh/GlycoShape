@@ -281,7 +281,6 @@ def zip_directory(folder_path, zip_path):
                 zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
 
-
 def GOTW_process(url: str):
     """
     Process a given URL for GOTW data, extract and process files, and generate output.
@@ -327,8 +326,13 @@ def GOTW_process(url: str):
                         if os.path.exists(json_file):
                             with open(json_file, 'r') as f:
                                 data = json.load(f)
-
-                            glycam_name = data.get("indexOrderedSequence", "output")
+                            
+                            wurcs = name.pdb2wurcs(pdb_file)
+                            glytoucan = name.wurcs2glytoucan(wurcs)
+                            if glytoucan is not None:
+                                glycam_name = glytoucan
+                            else:
+                                glycam_name = data.get("indexOrderedSequence", "output")
                             conformer_id = data.get("conformerID", "output")
                             output_folder_path = GOTW_script.process_app(f'{glycam_name}/{conformer_id}', pdb_file, off_file, 200)
 

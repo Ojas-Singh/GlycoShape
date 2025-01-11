@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 from glycowork.motif.processing import IUPAC_to_SMILES
 import re
+from rdkit import Chem
 
 
 logger = logging.getLogger(__name__)
@@ -178,3 +179,51 @@ def glycam2wurcs(glycam):
     id, wurcs = iupac2wurcs_glytoucan(iupac)
     smiles = IUPAC_to_SMILES([iupac])[0]
     return smiles2wurcs(smiles)
+
+
+def pdb2wurcs(pdb_path):
+    try:
+        # Read the PDB file and convert it to an RDKit molecule
+        mol = Chem.MolFromPDBFile(pdb_path, removeHs=False)
+        if mol is None:
+            logger.error(f"Failed to read PDB file: {pdb_path}")
+            return None
+        
+        # Convert the RDKit molecule to a SMILES string
+        smiles = Chem.MolToSmiles(mol)
+        
+        # Convert the SMILES string to WURCS format
+        wurcs = smiles2wurcs(smiles)
+        return wurcs
+    except Exception as e:
+        logger.error(f"Failed to convert PDB to WURCS: {str(e)}")
+        return None
+
+def wurcs2glytoucan(wurcs):
+    """Convert WURCS to GlyTouCan ID using GlyCosmos API.
+    
+    Args:
+        wurcs (str): WURCS format string
+        
+    Returns:
+        str: GlyTouCan ID or None if request fails
+    """
+    try:
+        # URL encode the WURCS string
+        encoded_wurcs = requests.utils.quote(wurcs)
+        url = f"https://api.glycosmos.org/sparqlist/wurcs2gtcids?wurcs={encoded_wurcs}"
+        
+        # Make the request
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        # Parse response
+        data = response.json()
+        if data and isinstance(data, list) and len(data) > 0:
+            return data[0].get("id")
+            
+        return None
+        
+    except Exception as e:
+        logger.error(f"Failed to convert WURCS to GlyTouCan ID: {str(e)}")
+        return None
