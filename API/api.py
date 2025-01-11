@@ -304,7 +304,7 @@ def GOTW_process(url: str):
 
             # Save the streamed content to a temporary zip file
             with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
-                for chunk in response.iter_content(chunk_size=8192):
+                for chunk in response.iter_content(chunk_size=1024):
                     if chunk:  # Filter out keep-alive new chunks
                         zip_file.write(chunk)
                 zip_file_path = zip_file.name
