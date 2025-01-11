@@ -352,7 +352,7 @@ def GOTW_process(url: str):
                 shutil.copytree(output_path, result_dir, dirs_exist_ok=True)
 
         # Return the final result directory and glycam name
-        return Path(result_dir), glycam_name
+        return Path(result_dir), glycan_name
 
     except requests.exceptions.RequestException as e:
         print(f"Network error: {e}")
