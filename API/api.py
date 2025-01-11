@@ -339,7 +339,7 @@ def GOTW_process(url: str):
 
                             # Move the processed folder to the temp output directory
                             processed_subfolder = Path(output_folder_path)
-                            target_subfolder = output_path / glycan_name
+                            target_subfolder = output_path / processed_subfolder.name
                             shutil.move(processed_subfolder, target_subfolder)
                             shutil.move(json_file, target_subfolder / "info.json")
                         else:
