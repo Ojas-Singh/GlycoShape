@@ -330,7 +330,7 @@ def GOTW_process(url: str):
                             glycam_tidy = glycam[:-5]
                             iupac = name.glycam2iupac(glycam_tidy)
                             glytoucan = name.iupac2wurcs_glytoucan(iupac)[0]
-                            if glytoucan is not None:
+                            if glytoucan is not None and len(glycam) > 250 :
                                 glycan_name = glytoucan
                             else:
                                 glycan_name = glycam
