@@ -11,6 +11,7 @@
 #                  a condensed GLYCAM URL in the terminal (`glytoucan`).
 #               6) Convert a WURCS string to a condensed GLYCAM URL (`wurcs`).
 #               7) Cleanup folders that already exist on the server (`cleanup`).
+#               8) Check if a Glycam string exists on the GlycoShape server (`exist`).
 # Author      : Ojas Singh
 # Version     : 1.1.0
 ###############################################################################
@@ -35,6 +36,7 @@ Commands:
                       convert to GLYCAM, and print a condensed GLYCAM URL.
   wurcs <WURCS>       Convert a WURCS string to a condensed GLYCAM URL.
   cleanup             Delete folders if they already exist on the server.
+  exist <GLYCAM>      Check if a Glycam string exists on the server.
   -h, --help          Display this help message.
 
 Options for 'submit' (optional):
@@ -434,12 +436,15 @@ case "$command" in
     glytoucan)
         glytoucan_func "$@"
         ;;
-     wurcs)
+    wurcs)
         wurcs_to_glycam_func "$@"
         ;;
     cleanup)
         cleanup_func
         ;;
+    exist)
+        check_exists "$@"
+        ;;  
     *)
         echo "Error: Unknown command '$command'"
         echo "Try '$0 --help' for usage."

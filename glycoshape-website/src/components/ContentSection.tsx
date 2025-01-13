@@ -51,7 +51,7 @@ const ContentSection: React.FC = () => {
         paddingLeft={{ base: "0.5rem", sm: "0.5rem", md: "5rem", lg: "5rem", xl: "5rem" }}
         paddingRight={{ base: "0.5rem", sm: "0.5rem", md: "5rem", lg: "5rem", xl: "5rem" }}
         paddingBottom={{ base: "3rem", sm: "3rem", md: "3rem", lg: "3rem", xl: "3rem" }}
-        paddingTop={{ base: "5rem", sm: "5rem", md: "5rem", lg: "8rem", xl: "10rem" }}
+        paddingTop={{ base: "5rem", sm: "5rem", md: "5rem", lg: "6rem", xl: "6rem" }}
         minHeight={{ base: "50vh", sm: "50vh", md: "50vh", lg: "45vh", xl: "30vh" }}
 
         // backgroundImage={`radial-gradient(circle, #fdfcfb 0%, #F7F9E5 60%),url(${bg})`}
@@ -101,7 +101,7 @@ const ContentSection: React.FC = () => {
 
         </Heading>
 
-        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{ base: "3xl", sm: "4xl", md: "4xl", lg: "4xl", xl: "5xl" }} fontWeight='bold' marginBottom="0.7em">
+        <Heading lineHeight={'tall'} bgGradient='linear(to-l, #FDFDA1, #E2FCC5 )' bgClip='text' fontSize={{ base: "3xl", sm: "4xl", md: "4xl", lg: "4xl", xl: "4xl" }} fontWeight='bold' marginBottom="0.7em">
 
           <Highlight query='Glycan Structure Database' styles={{ alignSelf: 'center', px: '3', py: '1', rounded: 'full', bg: 'rgba(40, 54, 63, .45)', color: '#F7FFE6' }}>
             Glycan Structure Database
@@ -126,10 +126,10 @@ const ContentSection: React.FC = () => {
           align={"center"}
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
-          fontSize={{ base: "xl", sm: "xl", md: "2xl", lg: "3xl", xl: "3xl" }}
+          fontSize={{ base: "xl", sm: "xl", md: "2xl", lg: "2xl", xl: "2xl" }}
           fontWeight='bold'
           fontFamily={'texts'}
-          width={{ base: "100%", sm: "100%", md: "100%", lg: "100%", xl: "80%" }}
+          width={{ base: "100%", sm: "100%", md: "100%", lg: "100%", xl: "100%" }}
 
         >
           
