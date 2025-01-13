@@ -28,13 +28,13 @@ Usage:
   $0 [COMMAND] [OPTIONS]
 
 Commands:
-  run <GLYCAM URL>    Download simulation files from the GlycoShape API, unpack it,
-                      and sbatch 'gotw_iridis.sh' submission script.
-  submit [OPTIONS]    Submit the finished simulation folder(s) to GlycoShape Server.
-  update              Update this script in place from the GitHub RAW URL.
+  run <GLYCAM URL>    Download simulation files from the GlycoShape API,
+                      and sbatch all replicas. (need GLYCAM json URL, when all minimizations are done, the link of "Download All")
+  submit [OPTIONS]    Submit all finished simulation folder(s) to GlycoShape Server.
+  update              Update this script to newer version.
   glytoucan <GTCID>   Fetch the WURCS from GlyTouCan ID via the GlyCosmos API, 
-                      convert to GLYCAM, and print a condensed GLYCAM URL.
-  wurcs <WURCS>       Convert a WURCS string to a condensed GLYCAM URL.
+                      convert to GLYCAM, and print a condensed GLYCAM URL. (Glytoucan should have all defined linakge)
+  wurcs <WURCS>       Convert a WURCS string to a condensed GLYCAM URL. (WURCS should have all defined linakge)
   cleanup             Delete folders if they already exist on the server.
   exist <GLYCAM>      Check if a Glycam string exists on the server.
   -h, --help          Display this help message.
