@@ -400,14 +400,17 @@ def submit_form():
         # Retrieve form data
         form_data = request.form.to_dict()
 
-        # Retrieve files
+        # Retrieve required files
         simulation_file = request.files.get('simulationFile')
         mol_file = request.files.get('molFile')
 
-        if not simulation_file or not mol_file:
-            return jsonify({'error': 'Both files are required'}), 400
+        # Optionally retrieve the infoJson file
+        info_file = request.files.get('infoJson')  # <- New
 
-         # Create a folder named after the glycamName inside the downloadLocation
+        if not simulation_file or not mol_file:
+            return jsonify({'error': 'simulationFile and molFile are required'}), 400
+
+        # Create a folder named after the glycamName inside the downloadLocation
         glycam_name = form_data.get('glycamName', '')
         glycam_folder = os.path.join(downloadLocation, glycam_name)
 
@@ -416,27 +419,36 @@ def submit_form():
 
         # Save the simulation file with glycamName as the filename and original extension
         if simulation_file.filename != '':
-            simulation_extension = os.path.splitext(simulation_file.filename)[1]  # Get the file extension
+            simulation_extension = os.path.splitext(simulation_file.filename)[1]
             simulation_filename = glycam_name + simulation_extension
             simulation_file_path = os.path.join(glycam_folder, simulation_filename)
             simulation_file.save(simulation_file_path)
 
-        # Save the configuration file with glycamName as the filename and original extension
+        # Save the mol file with glycamName as the filename and original extension
         if mol_file.filename != '':
-            mol_extension = os.path.splitext(mol_file.filename)[1]  # Get the file extension
+            mol_extension = os.path.splitext(mol_file.filename)[1]
             mol_filename = glycam_name + mol_extension
             mol_file_path = os.path.join(glycam_folder, mol_filename)
             mol_file.save(mol_file_path)
+
+        # -----------------------------------------
+        #  Optionally save info.json if it exists
+        # -----------------------------------------
+        if info_file and info_file.filename != '':
+            info_extension = os.path.splitext(info_file.filename)[1]
+            info_filename = glycam_name + info_extension  # e.g. glycanName.json
+            info_file_path = os.path.join(glycam_folder, info_filename)
+            info_file.save(info_file_path)
 
         # Load the existing CSV file using pandas
         csv_data = pd.read_csv(csvLocation)
 
         # Prepare new data in the same structure as the CSV
         new_data = {
-            'ID': '',  # Keeping ID empty for now, if needed can be generated or managed separately
+            'ID': '',
             'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Email address': form_data.get('email', ''),
-            'Full GLYCAM name of glycan being submitted.': form_data.get('glycamName', ''),
+            'Full GLYCAM name of glycan being submitted.': glycam_name,
             'How will the data be transferred?': 'Uploaded via Form',
             'What is the aggregated length of the simulations?': form_data.get('simulationLength', ''),
             'What MD package was used for the simulations?': form_data.get('mdPackage', ''),
@@ -455,7 +467,10 @@ def submit_form():
         # Save the updated DataFrame back to the CSV file
         updated_csv_data.to_csv(csvLocation, index=False)
 
-        return jsonify({'message': 'Files uploaded and form data saved successfully', 'form_data': form_data}), 200
+        return jsonify({
+            'message': 'Files uploaded and form data saved successfully',
+            'form_data': form_data
+        }), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
