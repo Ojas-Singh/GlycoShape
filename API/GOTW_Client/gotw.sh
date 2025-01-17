@@ -211,9 +211,9 @@ submit_func() {
             sc) salt_concentration="$OPTARG" ;;
             c) comments="$OPTARG" ;;
             *)
-               usage
-               exit 1
-               ;;
+                usage
+                exit 1
+                ;;
         esac
     done
 
@@ -233,16 +233,22 @@ submit_func() {
 
         local pdb_files=()
         local mol2_file_found=false
+        local info_json_found=false
         local subfolder_count=0
         local all_have_glycan=true
 
+        # --------------------------------------------
+        #  Gather pdb, mol2, and optionally info.json
+        # --------------------------------------------
         for subdir in "${dir}"*/; do
             [ -d "$subdir" ] || continue
 
             local glycan_pdb_path="${subdir}glycan.dry.pdb"
             local glycan_mol2_path="${subdir}glycan.dry.mol2"
+            local glycan_info_json_path="${subdir}info.json"
             ((subfolder_count++))
 
+            # Check for glycan.dry.pdb
             if [ -f "$glycan_pdb_path" ]; then
                 pdb_files+=("$glycan_pdb_path")
             else
@@ -251,10 +257,18 @@ submit_func() {
                 break
             fi
 
+            # Copy the first glycan.dry.mol2 to outer directory if found
             if [ -f "$glycan_mol2_path" ] && [ "$mol2_file_found" = false ]; then
                 cp "$glycan_mol2_path" "$dir"
                 mol2_file_found=true
                 echo "Copied ${glycan_mol2_path} to ${dir}"
+            fi
+
+            # Copy the first info.json to outer directory if found
+            if [ -f "$glycan_info_json_path" ] && [ "$info_json_found" = false ]; then
+                cp "$glycan_info_json_path" "$dir"
+                info_json_found=true
+                echo "Copied ${glycan_info_json_path} to ${dir}"
             fi
         done
 
@@ -263,6 +277,9 @@ submit_func() {
             continue
         fi
 
+        # --------------------------------------------
+        #  Merge PDBs and handle simulation length
+        # --------------------------------------------
         if ! merge_pdbs "${dir}output.pdb" "${pdb_files[@]}"; then
             echo "Failed to merge PDB files for ${dir}"
             continue
@@ -271,6 +288,7 @@ submit_func() {
         local simulation_length
         simulation_length=$(echo "$subfolder_count * 0.5" | bc)
 
+        # Check if we have the .mol2 in the outer directory (or fallback search)
         local mol_file
         if [ "$mol2_file_found" = false ]; then
             mol_file=$(find "$dir" -name "glycan.dry.mol2" -type f | head -n 1)
@@ -283,27 +301,49 @@ submit_func() {
             continue
         fi
 
+        # Check if we have info.json in the outer directory
+        local info_json_file
+        info_json_file=$(find "$dir" -maxdepth 1 -name "info.json" -type f)
+
         local simulation_file="${dir}output.pdb"
         if [ ! -f "$simulation_file" ]; then
             echo "Simulation file not found at ${simulation_file}"
             continue
         fi
 
+        # --------------------------------------------
+        #  Upload
+        # --------------------------------------------
         echo "Uploading ${dir}..."
-        curl -X POST https://glycoshape.io/api/submit \
-            -F "simulationFile=@${simulation_file}" \
-            -F "molFile=@${mol_file}" \
-            -F "email=${email}" \
-            -F "glycamName=${folder_name}" \
-            -F "simulationLength=${simulation_length}" \
-            -F "mdPackage=${md_package}" \
-            -F "forceField=${force_field}" \
-            -F "temperature=${temperature}" \
-            -F "pressure=${pressure}" \
-            -F "saltConcentration=${salt_concentration}" \
-            -F "comments=${comments}" \
-            -F "glyTouCanID=TODO" \
-            --output /dev/null --write-out "%{http_code}\n" --progress-bar
+
+        # Build the curl command
+        # We'll add -F infoJson=... only if info_json_file is non-empty
+        curl_cmd=(
+            curl -X POST https://glycoshape.io/api/submit
+            -F "simulationFile=@${simulation_file}"
+            -F "molFile=@${mol_file}"
+            -F "email=${email}"
+            -F "glycamName=${folder_name}"
+            -F "simulationLength=${simulation_length}"
+            -F "mdPackage=${md_package}"
+            -F "forceField=${force_field}"
+            -F "temperature=${temperature}"
+            -F "pressure=${pressure}"
+            -F "saltConcentration=${salt_concentration}"
+            -F "comments=${comments}"
+            -F "glyTouCanID=TODO"
+            --output /dev/null
+            --write-out "%{http_code}\n"
+            --progress-bar
+        )
+
+        # If info.json exists, add it
+        if [ -n "$info_json_file" ]; then
+            curl_cmd+=( -F "infoJson=@${info_json_file}" )
+        fi
+
+        # Execute the curl command
+        "${curl_cmd[@]}"
 
         echo -e "\nForm submission completed for ${dir}."
     done

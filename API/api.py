@@ -626,6 +626,7 @@ def get_glycan_for_reglyco(glytoucan):
     # Collect all .npz and .json files
     npz_files = list(output_dir.glob('*.npz'))
     json_files = list(output_dir.glob('*.json'))
+    mol2_files = list(output_dir.glob('*.mol2'))
 
     # Create an in-memory ZIP archive
     zip_buffer = io.BytesIO()
@@ -641,6 +642,10 @@ def get_glycan_for_reglyco(glytoucan):
         # Add JSON files
         for json_file in json_files:
             zip_file.write(json_file, arcname=json_file.name)
+
+        # Add MOL2 files
+        for mol2_file in mol2_files:
+            zip_file.write(mol2_file, arcname=mol2_file.name)
 
         # Add data.json file
         zip_file.write(data_json, arcname='data.json')
