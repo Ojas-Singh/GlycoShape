@@ -37,6 +37,8 @@ Commands:
   wurcs <WURCS>       Convert a WURCS string to a condensed GLYCAM URL. (WURCS should have all defined linakge)
   cleanup             Delete folders if they already exist on the server.
   exist <GLYCAM>      Check if a Glycam string exists on the server.
+  backup <folder> <username> <password> <destination>
+                      Upload a folder to the user's ownCloud (drive.glycoshape.io) drive using WebDAV.
   -h, --help          Display this help message.
 
 Options for 'submit' (optional):
@@ -447,6 +449,52 @@ cleanup_func() {
 }
 
 
+# -----------------------------------------------------------------------------
+# UPLOAD FUNCTION: Upload a folder to the user's ownCloud drive using WebDAV
+# -----------------------------------------------------------------------------
+upload_func() {
+    local folder="$1"
+    local username="$2"
+    local password="$3"
+    local destination="$4"
+
+    # Check if inputs are provided
+    if [ -z "$folder" ] || [ -z "$username" ] || [ -z "$password" ] || [ -z "$destination" ]; then
+        echo "Error: Missing required arguments."
+        echo "Usage: $0 upload <folder> <username> <password> <destination>"
+        exit 1
+    fi
+
+    # Check if the folder exists
+    if [ ! -d "$folder" ]; then
+        echo "Error: Folder '$folder' does not exist."
+        exit 1
+    fi
+
+    # WebDAV URL
+    local webdav_url="https://drive.glycoshape.io/remote.php/dav/files/$username/$destination/"
+
+    # Upload files recursively
+    echo "Uploading folder '$folder' to '$webdav_url'..."
+
+    find "$folder" -type f | while read -r file; do
+        # Get the relative path and ensure correct destination structure
+        local relative_path="${file#$folder/}"
+        local remote_path="${webdav_url}${relative_path}"
+
+        # Create directories on the server if needed
+        local remote_dir
+        remote_dir=$(dirname "$remote_path")
+        curl -u "$username:$password" -X MKCOL "$remote_dir" 2>/dev/null || true
+
+        # Upload the file
+        curl -u "$username:$password" -T "$file" "$remote_path" --progress-bar
+    done
+
+    echo "Upload completed."
+}
+
+
 
 # =============================================================================
 # MAIN DISPATCH
@@ -485,6 +533,10 @@ case "$command" in
     exist)
         check_exists "$@"
         ;;  
+    backup)
+        upload_func "$@"
+        ;;
+
     *)
         echo "Error: Unknown command '$command'"
         echo "Try '$0 --help' for usage."
