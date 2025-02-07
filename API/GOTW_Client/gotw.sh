@@ -458,42 +458,59 @@ upload_func() {
     local password="$3"
     local destination="$4"
 
-    # Check if inputs are provided
+    # Validate inputs
     if [ -z "$folder" ] || [ -z "$username" ] || [ -z "$password" ] || [ -z "$destination" ]; then
-        echo "Error: Missing required arguments."
-        echo "Usage: $0 upload <folder> <username> <password> <destination>"
-        exit 1
+        echo "Error: Missing required arguments"
+        echo "Usage: $0 backup <folder> <username> <password> <destination>"
+        return 1
     fi
 
-    # Check if the folder exists
+    # Ensure folder exists
     if [ ! -d "$folder" ]; then
-        echo "Error: Folder '$folder' does not exist."
-        exit 1
+        echo "Error: Folder '$folder' not found"
+        return 1
     fi
 
-    # WebDAV URL
-    local webdav_url="https://drive.glycoshape.io/remote.php/dav/files/$username/$destination/"
+    # Base WebDAV URL
+    local base_url="https://drive.glycoshape.io/remote.php/dav/files/${username}/${destination}"
+    
+    # Create base directory
+    curl -s -u "${username}:${password}" -X MKCOL "${base_url}" || true
 
-    # Upload files recursively
-    echo "Uploading folder '$folder' to '$webdav_url'..."
+    # Upload files
+    find "$folder" -type f -print0 | while IFS= read -r -d '' file; do
+        # Get relative path
+        local rel_path="${file#$folder/}"
+        local dir_path=$(dirname "$rel_path")
+        
+        # Create remote directory structure
+        if [ "$dir_path" != "." ]; then
+            local current_path=""
+            local IFS='/'
+            read -ra DIRS <<< "$dir_path"
+            for dir in "${DIRS[@]}"; do
+                current_path="${current_path}${dir}/"
+                local dir_url="${base_url}/${current_path}"
+                dir_url=$(echo "$dir_url" | sed 's/ /%20/g' | sed 's/\[/%5B/g' | sed 's/\]/%5D/g')
+                curl -s -u "${username}:${password}" -X MKCOL "$dir_url" || true
+            done
+        fi
 
-    find "$folder" -type f | while read -r file; do
-        # Get the relative path and ensure correct destination structure
-        local relative_path="${file#$folder/}"
-        local remote_path="${webdav_url}${relative_path}"
+        # Prepare upload URL, encode special chars
+        local upload_url="${base_url}/${rel_path}"
+        upload_url=$(echo "$upload_url" | sed 's/ /%20/g; s/\[/%5B/g; s/\]/%5D/g; s/#/%23/g')
 
-        # Create directories on the server if needed
-        local remote_dir
-        remote_dir=$(dirname "$remote_path")
-        curl -u "$username:$password" -X MKCOL "$remote_dir" 2>/dev/null || true
-
-        # Upload the file
-        curl -u "$username:$password" -T "$file" "$remote_path" --progress-bar
+        echo "Uploading: $file -> $upload_url"
+        # Only show progress bar and success/failure messages
+        if curl --globoff --progress-bar -u "${username}:${password}" -T "$file" "$upload_url" -H "Overwrite: T" \
+            2> >(awk '!/^</' >&2) \
+            > /dev/null 2>/dev/null; then
+            echo "✓ Uploaded: $file"
+        else 
+            echo "✗ Failed to upload: $file"
+        fi
     done
-
-    echo "Upload completed."
 }
-
 
 
 # =============================================================================
