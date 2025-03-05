@@ -14,6 +14,7 @@ import Search from './components/SearchTop';
 import API from './components/API';
 import Download from './components/Download';
 import ReGlyco from './components/ReGlyco';
+import Ensemble from './components/ReGlycoEnsemble';
 import Swap from './components/Swap';
 import Elab from './components/eLab/Elab';
 import SearchPage from './components/SearchPage';
@@ -91,6 +92,7 @@ const App: React.FC = () => {
                   <Route path="/publications" element={<div><Search /><Elab /></div>} />
                   <Route path="/swap" element={<div><Swap /></div>} />
                   <Route path="/fit" element={<div><Fit /></div>} />
+                  <Route path="/ensemble" element={<div><Ensemble /></div>} />
                   <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
                   <Route path="/stats" element={<div><Stats /></div>} />
                   <Route path="*" element={<NotFoundPage />} />

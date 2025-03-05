@@ -160,6 +160,7 @@ const Navbar: React.FC = () => {
         </MenuButton>
         <MenuList bg="#28363F" borderColor="#28363F">
           <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/ensemble" onClick={() =>  handleNavigation('/ensemble')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Ensemble</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() =>  handleNavigation('/fit')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/swap" onClick={() =>  handleNavigation('/swap')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
         </MenuList>
