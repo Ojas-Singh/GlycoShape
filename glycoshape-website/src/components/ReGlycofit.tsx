@@ -815,7 +815,7 @@ const ReGlyco = () => {
                     key={isUpload ? "uploaded" : protData.requestURL}
                     width="100%"
                     height="400px"
-                    src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'cif'}`}
+                    src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'mmcif'}`}
                     allowFullScreen
                     title="Protein Structure"
                   />

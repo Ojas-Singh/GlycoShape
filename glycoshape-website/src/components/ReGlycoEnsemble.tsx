@@ -569,7 +569,7 @@ import React, {
             fontSize={{ base: "4xl", sm: "4xl", md: "5xl", lg: "5xl", xl: "5xl" }}
             marginBottom="0.2em"
           >
-            <Link fontWeight="bold" fontFamily={'heading'} href="/fit" marginRight="20px">
+            <Link fontWeight="bold" fontFamily={'heading'} href="/ensemble" marginRight="20px">
               Re-Glyco Ensemble
             </Link>
           </Text>
@@ -767,7 +767,7 @@ import React, {
                       key={isUpload ? "uploaded" : protData.requestURL}
                       width="100%"
                       height="400px"
-                      src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'cif'}`}
+                      src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'mmcif'}`}
                       allowFullScreen
                       title="Protein Structure"
                     />
