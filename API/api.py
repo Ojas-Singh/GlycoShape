@@ -93,19 +93,44 @@ def log_visitor():
 @app.route('/api/visitors', methods=['GET'])
 def get_visitors():
     """API to fetch the CSV data."""
-    if os.path.exists(CSV_FILE_PATH):
-        # Load the CSV file
-        df = pd.read_csv(CSV_FILE_PATH)
-        # Drop the 'ip_address' column if it exists
-        if 'ip_address' in df.columns:
-            df = df.drop(columns=['ip_address'])
-        # Drop rows with any NaN values
-        df = df.dropna()
-        # Convert to list of dictionaries and return as JSON
-        visitor_data = df.to_dict(orient='records')
-        return jsonify(visitor_data)
-    else:
-        return jsonify({'error': 'CSV file not found'}), 404
+    try:
+        if os.path.exists(CSV_FILE_PATH):
+            # Read the CSV file manually to handle malformed rows
+            with open(CSV_FILE_PATH, 'r') as f:
+                lines = f.readlines()
+            
+            header = lines[0]
+            valid_lines = [header]
+            
+            # Filter lines with exactly 3 commas (4 fields)
+            for line in lines[1:]:
+                if line.count(',') == 3:
+                    valid_lines.append(line)
+            
+            # Create a temporary file with valid lines
+            with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp:
+                tmp.writelines(valid_lines)
+                tmp_path = tmp.name
+            
+            # Read the valid data with pandas
+            df = pd.read_csv(tmp_path)
+            os.unlink(tmp_path)  # Delete the temporary file
+            
+            # Drop the 'ip_address' column
+            if 'ip_address' in df.columns:
+                df = df.drop(columns=['ip_address'])
+            
+            # Convert 'None' strings to NaN and drop rows with NaN values
+            df = df.replace('None', pd.NA)
+            df = df.dropna()
+            
+            # Convert to list of dictionaries and return as JSON
+            visitor_data = df.to_dict(orient='records')
+            return jsonify(visitor_data)
+        else:
+            return jsonify({'error': 'CSV file not found'}), 404
+    except Exception as e:
+        return jsonify({'error': f'Error processing visitor data: {str(e)}'}), 500
     
 
 with open(GLYCOSHAPE_DIR / 'GLYCOSHAPE.json', 'r') as file:
