@@ -27,6 +27,7 @@ import CookieConsent from './components/CookieConsent';
 import GOTW from './components/GOTW';
 import Stats from './components/Stats';
 import View from './components/View';
+import JobView from './components/JobView';
 import UnderConstruction from './components/UnderConstruction';
 
 // First create a Layout component for the main layout
@@ -92,6 +93,7 @@ const App: React.FC = () => {
                   <Route path="/publications" element={<div><Search /><Elab /></div>} />
                   <Route path="/swap" element={<div><Swap /></div>} />
                   <Route path="/fit" element={<div><Fit /></div>} />
+                  <Route path="/job" element={<div><Search /><JobView /></div>} />
                   <Route path="/ensemble" element={<div><Ensemble /></div>} />
                   <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
                   <Route path="/stats" element={<div><Stats /></div>} />

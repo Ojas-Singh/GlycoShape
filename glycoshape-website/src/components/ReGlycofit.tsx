@@ -27,8 +27,12 @@ import {
   AlertIcon,
   Menu, MenuButton, MenuItem, MenuList,
   Checkbox,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb,
 } from '@chakra-ui/react';
-import { AttachmentIcon } from '@chakra-ui/icons'
+import { AttachmentIcon, AddIcon } from '@chakra-ui/icons'
 import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
 import fit from './assets/fit.png'
@@ -101,23 +105,32 @@ interface protData {
 // for a given residue. It is memoized so that it does not re-render unless its own props change.
 interface ResidueMenuProps {
   glycoConf: Glycosylation;
-  selectedGlycan: string | undefined;
-  onSelect: (residueID: string, residueTag: number, glycanValue: string) => void;
+  selectedGlycans: string[] | undefined;
+  onSelect: (
+    residueID: string, 
+    residueTag: number, 
+    glycanValue: string, 
+    isAdd?: boolean,
+    fullReplaceArray?: string[]
+  ) => void;
   glycans: Glycan[];
   apiUrl: string;
   residueKey: number;
 }
 const ResidueMenu: React.FC<ResidueMenuProps> = React.memo(({
   glycoConf,
-  selectedGlycan,
+  selectedGlycans,
   onSelect,
   glycans,
   apiUrl,
   residueKey,
 }) => {
+  // Keep existing state variables and hooks
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-
+  const [showNewGlycanSelector, setShowNewGlycanSelector] = useState(false);
+  
+  // Use your existing useDebounce, filteredGlycans, etc.
   const useDebounce = <T,>(value: T, delay: number): T => {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
   
@@ -151,122 +164,315 @@ const ResidueMenu: React.FC<ResidueMenuProps> = React.memo(({
     );
   }, [debouncedSearchTerm, glycans]);
 
+  // Handle removing a specific glycan
+  const handleRemoveGlycan = (indexToRemove: number) => {
+    const newGlycans = [...(selectedGlycans || [])];
+    newGlycans.splice(indexToRemove, 1);
+    
+    onSelect(
+      `${glycoConf.residueID}_${glycoConf.residueChain}`,
+      glycoConf.residueTag,
+      "", // empty string as placeholder
+      false,
+      newGlycans // pass the full array
+    );
+  };
+
   return (
     <Flex
       key={residueKey}
       w="100%"
-      align="center" 
-      justify="space-between"
-      p={2}
-      gap={2}
+      direction="column"
+      p={3}
+      borderWidth="1px"
+      borderRadius="md"
+      borderColor="gray.200"
+      mb={4}
     >
-      <Box minW="200px" >
+      {/* Residue Header */}
       <Heading
         fontSize={{ base: "lg", md: "lg" }}
-        // fontFamily="texts"
-        noOfLines={1}
+        mb={3}
+        color="#2C7A7B"
       >
-        {`Residue ${glycoConf.residueName} ${glycoConf.residueID}  ${glycoConf.residueChain}`}
+        {`Residue ${glycoConf.residueName} ${glycoConf.residueID} ${glycoConf.residueChain}`}
       </Heading>
-      </Box>
-
-      <Box flex="1"> {/* Changed from w="50%" to flex="1" */}
-      <Menu onOpen={handleMenuOpen}>
-        <MenuButton
-        as={Button}
-        bgColor="#B07095"
-        _hover={{ backgroundColor: "#CF6385" }}
-        w="100%"
-        color="#1A202C"
-        >
-        {selectedGlycan || "Select Glycan"}
-        </MenuButton>
-        <MenuList
-        maxH="300px"
-        overflowY="auto"
-        w="900px"
-        minW="400px"
-        borderRadius="xl"
-        sx={{
-          '&::-webkit-scrollbar': {
-          width: '8px',
-          borderRadius: '8px',
-          backgroundColor: `rgba(0, 0, 0, 0.05)`,
-          },
-          '&::-webkit-scrollbar-thumb': {
-          borderRadius: '8px',
-          backgroundColor: `rgba(0, 0, 0, 0.15)`,
-          },
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.05)',
-        }}
-        >
-        <Box
-          position="sticky"
-          top={-2}
-          bg="white"
-          zIndex={2}
-          borderTopRadius="xl"
-          borderBottom="1px solid #e2e8f0"
-          p={4}
-        >
-          <Input
-          ref={searchInputRef}
-          placeholder="Search Glycans"
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => setLocalSearchTerm(e.target.value)}
-          size="md"
-          width="100%"
-          />
-        </Box>
-
-        <Box pt={2}>
-          {filteredGlycans.map((glycan) => (
-          <MenuItem
-            key={glycan.ID}
-            onClick={() =>
-            onSelect(
-              `${glycoConf.residueID}_${glycoConf.residueChain}`,
-              glycoConf.residueTag,
-              glycan.glytoucan || ""
-            )
-            }
-          >
-            <Image
-            src={`${apiUrl}/database/${glycan.ID}/snfg.svg`}
-            alt="Glycan Image"
-            h="80px"
-            maxW="90%"
-            mr={2}
-            />
-            {`${glycan.glytoucan} (ID: ${glycan.ID}, Mass: ${glycan.mass})`}
-          </MenuItem>
+      
+      {/* Display selected glycans with remove buttons */}
+      {selectedGlycans && selectedGlycans.length > 0 ? (
+        <VStack alignItems="flex-start" spacing={3} w="100%" mb={3}>
+          <Text fontWeight="medium">Selected glycans:</Text>
+          {selectedGlycans.map((glycan, index) => (
+            <Flex 
+              key={`${glycan}-${index}`} 
+              w="100%" 
+              alignItems="center" 
+              p={2}
+              bg="gray.50"
+              borderRadius="md"
+            >
+              <Box flex={1}>
+                {glycan === "no_glycan" ? (
+                  <Flex alignItems="center">
+                    <Box 
+                      width="60px" 
+                      height="60px" 
+                      display="flex" 
+                      alignItems="center" 
+                      justifyContent="center" 
+                      border="1px dashed"
+                      borderColor="gray.300"
+                      borderRadius="md"
+                      mr={3}
+                    >
+                      <Text fontSize="sm" fontWeight="bold">No Glycan</Text>
+                    </Box>
+                    <Text>No glycosylation</Text>
+                  </Flex>
+                ) : (
+                  <Link
+                    href={`/glycan?glytoucan=${glycan}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    display="inline-flex"
+                    alignItems="center"
+                  >
+                    <Image
+                      src={`${apiUrl}/api/svg/${glycan}`}
+                      alt="Selected Glycan"
+                      h="60px"
+                      objectFit="contain"
+                      mr={3}
+                    />
+                    <Text>{glycan}</Text>
+                  </Link>
+                )}
+              </Box>
+              <Button
+                size="sm"
+                colorScheme="red"
+                variant="ghost"
+                onClick={() => handleRemoveGlycan(index)}
+              >
+                Remove
+              </Button>
+            </Flex>
           ))}
-        </Box>
-        </MenuList>
-      </Menu>
-      </Box>
+        </VStack>
+      ) : (
+        // If no glycans selected, show the primary selector
+        <Box w="100%" mb={4}>
+          <Menu onOpen={handleMenuOpen}>
+            <MenuButton
+              as={Button}
+              bgColor="#B07095"
+              _hover={{ backgroundColor: "#CF6385" }}
+              w="100%"
+              color="#1A202C"
+            >
+              Select a glycan
+            </MenuButton>
+            <MenuList
+              maxH="300px"
+              overflowY="auto"
+              w="900px"
+              minW="400px"
+              borderRadius="xl"
+              sx={{
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                  borderRadius: '8px',
+                  backgroundColor: `rgba(0, 0, 0, 0.05)`,
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  borderRadius: '8px',
+                  backgroundColor: `rgba(0, 0, 0, 0.15)`,
+                },
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <Box
+                position="sticky"
+                top={-2}
+                bg="white"
+                zIndex={2}
+                borderTopRadius="xl"
+                borderBottom="1px solid #e2e8f0"
+                p={4}
+              >
+                <Input
+                  ref={searchInputRef}
+                  placeholder="Search Glycans"
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setLocalSearchTerm(e.target.value)}
+                  size="md"
+                  width="100%"
+                />
+              </Box>
 
-      {selectedGlycan && (
-      <Box w="10%" h="80px"> {/* Changed from w="30%" to w="20%" */}
-        <Link
-        href={`/glycan?glytoucan=${selectedGlycan}`}
-        target="_blank"
-        rel="noopener noreferrer"
+              {/* No Glycan Option with a custom image */}
+                <MenuItem
+                  key="no_glycan"
+                  onClick={() => {
+                    onSelect(
+                      `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                      glycoConf.residueTag,
+                      "no_glycan"
+                    );
+                  }}
+                >
+                  <Box 
+                    width="80px" 
+                    height="80px" 
+                    display="flex" 
+                    alignItems="center" 
+                    justifyContent="center" 
+                    border="1px dashed"
+                    borderColor="gray.300"
+                    borderRadius="md"
+                    mr={2}
+                  >
+                    <Text fontSize="sm" fontWeight="bold">No Glycan</Text>
+                  </Box>
+                  <Text>No Glycan (No glycosylation will be added)</Text>
+                </MenuItem>
+
+              {/* Glycan list */}
+              <Box pt={2}>
+                {filteredGlycans.map((glycan) => (
+                  <MenuItem
+                    key={glycan.ID}
+                    onClick={() => {
+                      onSelect(
+                        `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                        glycoConf.residueTag,
+                        glycan.glytoucan || ""
+                      );
+                    }}
+                  >
+                    <Image
+                      src={`${apiUrl}/database/${glycan.ID}/snfg.svg`}
+                      alt="Glycan Image"
+                      h="80px"
+                      maxW="90%"
+                      mr={2}
+                    />
+                    {`${glycan.glytoucan} (ID: ${glycan.ID}, Mass: ${glycan.mass})`}
+                  </MenuItem>
+                ))}
+              </Box>
+            </MenuList>
+          </Menu>
+        </Box>
+      )}
+      
+      {/* Show "Add Another Glycan" button if glycans are already selected */}
+      {selectedGlycans && selectedGlycans.length > 0 && !showNewGlycanSelector && (
+        <Button
+          leftIcon={<AddIcon />}
+          colorScheme="teal"
+          variant="outline"
+          size="md"
+          onClick={() => setShowNewGlycanSelector(true)}
         >
-        <Image
-          src={`${apiUrl}/api/svg/${selectedGlycan}`}
-          alt="Selected Glycan Image"
-          h="100%"
-          objectFit="contain"
-        />
-        </Link>
-      </Box>
+          Add Another Glycan
+        </Button>
+      )}
+      
+      {/* New glycan selector that appears when adding another glycan */}
+      {showNewGlycanSelector && (
+        <Box w="100%" mt={3}>
+          <Text mb={2}>Add another glycan:</Text>
+          <Menu onOpen={handleMenuOpen}>
+            <MenuButton
+              as={Button}
+              bgColor="#81D8D0"
+              _hover={{ backgroundColor: "#008081" }}
+              w="100%"
+              color="#1A202C"
+            >
+              Select additional glycan
+            </MenuButton>
+            <MenuList
+              maxH="300px"
+              overflowY="auto"
+              w="900px"
+              minW="400px"
+              borderRadius="xl"
+              sx={{
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                  borderRadius: '8px',
+                  backgroundColor: `rgba(0, 0, 0, 0.05)`,
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  borderRadius: '8px',
+                  backgroundColor: `rgba(0, 0, 0, 0.15)`,
+                },
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <Box
+                position="sticky"
+                top={-2}
+                bg="white"
+                zIndex={2}
+                borderTopRadius="xl"
+                borderBottom="1px solid #e2e8f0"
+                p={4}
+              >
+                <Input
+                  placeholder="Search Glycans"
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setLocalSearchTerm(e.target.value)}
+                  size="md"
+                  width="100%"
+                  autoFocus
+                />
+              </Box>
+
+              <Box pt={2}>
+                {filteredGlycans.map((glycan) => (
+                  <MenuItem
+                    key={glycan.ID}
+                    onClick={() => {
+                      onSelect(
+                        `${glycoConf.residueID}_${glycoConf.residueChain}`,
+                        glycoConf.residueTag,
+                        glycan.glytoucan || "",
+                        true
+                      );
+                      setShowNewGlycanSelector(false);
+                    }}
+                  >
+                    <Image
+                      src={`${apiUrl}/database/${glycan.ID}/snfg.svg`}
+                      alt="Glycan Image"
+                      h="80px"
+                      maxW="90%"
+                      mr={2}
+                    />
+                    {`${glycan.glytoucan} (ID: ${glycan.ID}, Mass: ${glycan.mass})`}
+                  </MenuItem>
+                ))}
+              </Box>
+            </MenuList>
+          </Menu>
+          <Button 
+            size="sm" 
+            mt={2} 
+            colorScheme="gray" 
+            onClick={() => setShowNewGlycanSelector(false)}
+          >
+            Cancel
+          </Button>
+        </Box>
       )}
     </Flex>
   );
 });
-// Optionally, you could add a custom props comparison function as the second argument to React.memo if needed.
 
 // ───────────────────────────────────────────────
 // Main Component: ReGlyco
@@ -291,19 +497,20 @@ const ReGlyco = () => {
   });
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [isCcp4File, setIsCcp4File] = useState(false);
-
-  const [occupancyAnalysis, setOccupancyAnalysis] = useState<boolean>(true);
-  const [informationAnalysis, setInformationAnalysis] = useState<boolean>(false);
-
+  const [raySize, setRaySize] = useState<number>(50);
+  const [occupancyAnalysis, setOccupancyAnalysis] = useState<boolean>(false);
+  const [informationAnalysis, setInformationAnalysis] = useState<boolean>(true);
+  const [optimization, setOptimization] = useState<boolean>(true);
   const [showOccupancyToggle, setShowOccupancyToggle] = useState<boolean>(false);
-  const [selectedGlycans, setSelectedGlycans] = useState<{ [key: string]: string }>({});
+  
   const [jobId, setJobId] = useState<string>("");
   const [outputPath, setOutputPath] = useState("");
   const [fitPath, setFitPath] = useState(""); 
   const [plotPath, setPlotPath] = useState("");
   const [clashValue, setClashValue] = useState(false);
   const [boxValue, setBoxValue] = useState("");
-  const [selectedGlycanImage, setSelectedGlycanImage] = useState<{ [key: number]: string }>({});
+  const [selectedGlycans, setSelectedGlycans] = useState<{ [key: string]: string[] }>({});
+  const [selectedGlycanImage, setSelectedGlycanImage] = useState<{ [key: number]: string[] }>({});
   const toast = useToast();
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -522,18 +729,43 @@ const ReGlyco = () => {
   // Use a memoized callback to update the selected glycan for a residue.
   // This ensures that the function reference is stable, so that memoized menu components are not forced to update.
   const handleResidueSelect = useCallback(
-    (residueID: string, residueTag: number, glycanValue: string) => {
-      setSelectedGlycans(prevState => ({
-        ...prevState,
-        [residueID]: glycanValue
-      }));
-      setSelectedGlycanImage(prevState => ({
-        ...prevState,
-        [residueTag]: glycanValue
-      }));
+    (residueID: string, residueTag: number, glycanValue: string, isAdd: boolean = false, fullReplaceArray?: string[]) => {
+      // If we're getting a full replacement array (for deletion cases)
+      if (fullReplaceArray !== undefined) {
+        setSelectedGlycans(prevState => ({
+          ...prevState,
+          [residueID]: fullReplaceArray
+        }));
+        setSelectedGlycanImage(prevState => ({
+          ...prevState,
+          [residueTag]: fullReplaceArray
+        }));
+        return;
+      }
+      
+      // Remove special handling for "no_glycan" and treat it like a normal glycan
+      setSelectedGlycans(prevState => {
+        const currentGlycans = prevState[residueID] || [];
+        // If isAdd is true, add to the array, otherwise replace
+        const newGlycans = isAdd ? [...currentGlycans, glycanValue] : [glycanValue];
+        return {
+          ...prevState,
+          [residueID]: newGlycans
+        };
+      });
+      
+      setSelectedGlycanImage(prevState => {
+        const currentGlycans = prevState[residueTag] || [];
+        const newGlycans = isAdd ? [...currentGlycans, glycanValue] : [glycanValue];
+        return {
+          ...prevState,
+          [residueTag]: newGlycans
+        };
+      });
     },
     []
   );
+  
 
   // ───────────────────────────────────────────────
   const handleProcessFit = async () => {
@@ -551,7 +783,9 @@ const ReGlyco = () => {
       customPDB: isUpload,
       fitFile: uploadedFileName,
       occupancyAnalysis: occupancyAnalysis, // Added toggle field
-      informationAnalysis: informationAnalysis // Added toggle field
+      informationAnalysis: informationAnalysis, // Added toggle field
+      optimization: optimization,
+      raySize: raySize
     };
   
     try {
@@ -868,26 +1102,36 @@ const ReGlyco = () => {
                   }))}
                 />
 
+              <Heading
+                  margin={'1rem'}
+                  marginBottom={'1rem'}
+                  // fontFamily={'texts'}
+                  color='#2C7A7B'
+                  fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}
+                >
+                  Select glycans search space
+                </Heading>
+
                 {/* Use the new memoized ResidueMenu component.
                     Only render menus for residues that the user has selected. */}
-                {protData?.glycosylation?.available &&
-                  Array.isArray(protData.glycosylation.available) &&
-                  protData.glycosylation.available.map((glycoConf: Glycosylation) => {
-                    const isSelected = value.find((option) => option.value === glycoConf.residueTag);
-                    if (!isSelected) return null;
-                    return (
-                      <ResidueMenu
-                        key={glycoConf.residueTag}
-                        glycoConf={glycoConf}
-                        selectedGlycan={selectedGlycanImage[glycoConf.residueTag]}
-                        onSelect={handleResidueSelect}
-                        glycans={protData.configurations[glycoConf.residueName]}
-                        apiUrl={apiUrl}
-                        residueKey={glycoConf.residueTag}
-                      />
-                    );
-                  })
-                }
+                            {protData?.glycosylation?.available &&
+              Array.isArray(protData.glycosylation.available) &&
+              protData.glycosylation.available.map((glycoConf: Glycosylation) => {
+                const isSelected = value.find((option) => option.value === glycoConf.residueTag);
+                if (!isSelected) return null;
+                return (
+                  <ResidueMenu
+                    key={glycoConf.residueTag}
+                    glycoConf={glycoConf}
+                    selectedGlycans={selectedGlycanImage[glycoConf.residueTag] || []}
+                    onSelect={handleResidueSelect}
+                    glycans={protData.configurations[glycoConf.residueName]}
+                    apiUrl={apiUrl}
+                    residueKey={glycoConf.residueTag}
+                  />
+                );
+              })
+            }
 
                 <br />
 
@@ -911,6 +1155,7 @@ const ReGlyco = () => {
                     />
                     
       {showOccupancyToggle && (
+        <VStack align="left">
         <Flex align="center" p='2' m={4}>
           <Checkbox
             padding={'2'}
@@ -918,7 +1163,7 @@ const ReGlyco = () => {
             isChecked={informationAnalysis}
             onChange={(e) => setInformationAnalysis(e.target.checked)}
           >
-            Information Analysis
+            Rank configurations
           </Checkbox>
           <Checkbox
             padding={'2'}
@@ -928,9 +1173,44 @@ const ReGlyco = () => {
           >
             Occupancy Analysis
           </Checkbox>
+          <Checkbox
+            padding={'2'}
+            colorScheme='teal'
+            isChecked={optimization}
+            onChange={(e) => setOptimization(e.target.checked)}
+          >
+            Optimization
+          </Checkbox>
+          
+          
           
 
-        </Flex>)}
+        </Flex>
+        <Flex align="center" p='2'paddingTop={'0'} m={4} marginTop={'0'}>
+        <Text color="#B195A2" fontFamily={'heading'} fontWeight={'bold'}>
+              Ray Size: {raySize}
+          </Text>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          <Slider width={'50rem'}
+              aria-label="Ray Size"
+              defaultValue={50}
+              min={1}
+              max={100}
+              step={1}
+              colorScheme="teal"
+              onChange={(val) => setRaySize(val)}
+          >
+              <SliderTrack>
+              <SliderFilledTrack />
+              </SliderTrack>
+              <SliderThumb />
+          </Slider>
+          </Flex>
+          <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+          Rank configurations will rank the glycan configurations based on the SAXS data fit. Optimization will optimize the rank 1 glycan configurations.
+          Occupacny Analysis is under construction
+                  </Text>
+        </VStack>)}
 
                   </Box>
                   
@@ -1027,7 +1307,7 @@ const ReGlyco = () => {
                       </a>
                       {!isCcp4File && (
                         <div>
-                          <a href={`${apiUrl}/output/${fitPath}`} download>
+                          {/* <a href={`${apiUrl}/output/${fitPath}`} download>
                             <Button
                               position={"relative"}
                               margin={'1rem'}
@@ -1039,12 +1319,26 @@ const ReGlyco = () => {
                             >
                               Download SAXS Fit File
                             </Button>
-                          </a>
+                          </a> */}
+
+                          <a href={`${apiUrl}/api/reglyco/download/${jobId}`} download>
+                                                    <Button
+                                                      position={"relative"}
+                                                      margin={'1rem'}
+                                                      borderRadius="full"
+                                                      isDisabled={isLoading}
+                                                      backgroundColor="#81D8D0"
+                                                      _hover={{ backgroundColor: "#008081" }}
+                                                      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                                                    >
+                                                      Download full job Files
+                                                    </Button>
+                                                  </a>
                           <Image
                             width={'auto'}
                             maxHeight={"40rem"}
                             src={`${apiUrl}/output/${plotPath}`}
-                            alt="FOXS SAXS Fit"
+                            alt="Pepsi-SAXS Fit"
                           />
                         </div>
                       )}
@@ -1153,14 +1447,14 @@ const ReGlyco = () => {
                 <Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
                   Currently supported function includes :<br />
                   N-GlcNAcylation<br />
-                  O-GalNAcylation<br />
+                  {/* O-GalNAcylation<br />
                   O-GlcNAcylation<br />
                   O-Fucosylation<br />
                   O-Mannosylation<br />
                   O-Glucosylation<br />
                   O-Xylosylation<br />
                   C-Mannosylation<br />
-                  O-Arabinosylation
+                  O-Arabinosylation */}
                 </Text>
               </Box>
             </SimpleGrid>
