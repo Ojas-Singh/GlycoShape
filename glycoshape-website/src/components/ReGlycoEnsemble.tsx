@@ -535,6 +535,14 @@ import React, {
     };
   
     // ───────────────────────────────────────────────
+    // Add this type guard function at the top level
+    const isValidProtData = (data: protData | null): data is protData => {
+      return data !== null && 
+             typeof data === 'object' && 
+             'requestURL' in data && 
+             typeof data.requestURL === 'string';
+    };
+  
     // Render
     return (
       <>
@@ -763,14 +771,28 @@ import React, {
                         AlphaFold produces a per-residue confidence score (pLDDT) between 0 and 100. Some regions below 50 pLDDT may be unstructured in isolation.
                       </Text>
                     </Box>
-                    <iframe
-                      key={isUpload ? "uploaded" : protData.requestURL}
-                      width="100%"
-                      height="400px"
-                      src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'mmcif'}`}
-                      allowFullScreen
-                      title="Protein Structure"
-                    />
+                    {isValidProtData(protData) ? (
+                      <iframe
+                        key={isUpload ? "uploaded" : protData.requestURL}
+                        width="100%"
+                        height="400px"
+                        src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'mmcif'}`}
+                        allowFullScreen
+                        title="Protein Structure"
+                      />
+                    ) : (
+                      <Box
+                        width="100%"
+                        height="400px"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        backgroundColor="gray.100"
+                        borderRadius="md"
+                      >
+                        <Text color="gray.500">Loading structure viewer...</Text>
+                      </Box>
+                    )}
                   </SimpleGrid>
                 ) : (
                   <SimpleGrid
@@ -781,15 +803,28 @@ import React, {
                     paddingTop={'0rem'}
                     paddingBottom={'2rem'}
                   >
-                    <iframe
-                      key={isUpload ? "uploaded" : protData.requestURL}
-                      width="100%"
-                      height="400px"
-                      src={ `/viewer/embeddedfit.html?pdbUrl=${protData.requestURL}`
-                      }
-                      allowFullScreen
-                      title="Protein Structure"
-                    />
+                    {isValidProtData(protData) ? (
+                      <iframe
+                        key={isUpload ? "uploaded" : protData.requestURL}
+                        width="100%"
+                        height="400px"
+                        src={`/viewer/embeddedfit.html?pdbUrl=${protData.requestURL}`}
+                        allowFullScreen
+                        title="Protein Structure"
+                      />
+                    ) : (
+                      <Box
+                        width="100%"
+                        height="400px"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        backgroundColor="gray.100"
+                        borderRadius="md"
+                      >
+                        <Text color="gray.500">Loading structure viewer...</Text>
+                      </Box>
+                    )}
                   </SimpleGrid>
                 )}
   

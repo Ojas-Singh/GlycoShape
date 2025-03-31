@@ -604,6 +604,13 @@ const ReGlyco = () => {
     fetchData();
   }, [isUpload, protID]);
 
+  const isValidProtData = (data: protData | null): data is protData => {
+    return data !== null && 
+           typeof data === 'object' && 
+           'requestURL' in data && 
+           typeof data.requestURL === 'string';
+  };
+
   const fetchProteinData = async () => {
     try {
       const response = await fetch(`${apiUrl}/api/reglyco/init`, {
@@ -614,6 +621,11 @@ const ReGlyco = () => {
         body: JSON.stringify({ protID: protID, isUpload: isUpload })
       });
       const data: protData = await response.json();
+      console.log('API Response:', data); // Add this log
+      if (!isValidProtData(data)) {
+        console.error('Invalid data structure:', data);
+        throw new Error('Invalid data structure received from API');
+      }
       setprotData(data);
       setIsUpload(false);
       setSelectedGlycans({});
@@ -1045,14 +1057,28 @@ const ReGlyco = () => {
                       AlphaFold produces a per-residue confidence score (pLDDT) between 0 and 100. Some regions below 50 pLDDT may be unstructured in isolation.
                     </Text>
                   </Box>
-                  <iframe
-                    key={isUpload ? "uploaded" : protData.requestURL}
-                    width="100%"
-                    height="400px"
-                    src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'mmcif'}`}
-                    allowFullScreen
-                    title="Protein Structure"
-                  />
+                  {isValidProtData(protData) && protData.requestURL ? (
+      <iframe
+        key={isUpload ? "uploaded" : protData.requestURL}
+        width="100%"
+        height="400px"
+        src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'mmcif'}`}
+        allowFullScreen
+        title="Protein Structure"
+      />
+    ) : (
+      <Box
+        width="100%"
+        height="400px"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        backgroundColor="gray.100"
+        borderRadius="md"
+      >
+        <Text color="gray.500">Loading structure...</Text>
+      </Box>
+    )}
                 </SimpleGrid>
               ) : (
                 <SimpleGrid
@@ -1063,18 +1089,32 @@ const ReGlyco = () => {
                   paddingTop={'0rem'}
                   paddingBottom={'2rem'}
                 >
-                  <iframe
-                    key={isUpload ? "uploaded" : protData.requestURL}
-                    width="100%"
-                    height="400px"
-                    src={
-                      isCcp4File
-                        ? `/viewer/embeddedfit.html?pdbUrl=${protData.requestURL}&densityUrl=${apiUrl}/output/${uploadedFileName}`
-                        : `/viewer/embeddedfit.html?pdbUrl=${protData.requestURL}`
-                    }
-                    allowFullScreen
-                    title="Protein Structure"
-                  />
+                   {isValidProtData(protData) && protData.requestURL ? (
+      <iframe
+        key={isUpload ? "uploaded" : protData.requestURL}
+        width="100%"
+        height="400px"
+        src={
+          isCcp4File
+            ? `/viewer/embeddedfit.html?pdbUrl=${protData.requestURL}&densityUrl=${apiUrl}/output/${uploadedFileName}`
+            : `/viewer/embeddedfit.html?pdbUrl=${protData.requestURL}`
+        }
+        allowFullScreen
+        title="Protein Structure"
+      />
+    ) : (
+      <Box
+        width="100%"
+        height="400px"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        backgroundColor="gray.100"
+        borderRadius="md"
+      >
+        <Text color="gray.500">Loading structure...</Text>
+      </Box>
+    )}
                 </SimpleGrid>
               )}
 
