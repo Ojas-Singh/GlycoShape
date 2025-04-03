@@ -312,7 +312,7 @@ const ContourPlot: React.FC<ContourPlotProps> = ({ dataUrl, seq }) => {
           {renderStatisticsTable(selectedColumns['x'])}
         </Box>
         <Box display="flex" justifyContent="center" minW={'50rem'} minH={'30rem'}>
-          <svg ref={ref} width="100%" height="auto" />
+          <svg ref={ref} width="100%" height="450px" style={{ display: 'block' }} />
         </Box>
       </SimpleGrid>
     </Box>

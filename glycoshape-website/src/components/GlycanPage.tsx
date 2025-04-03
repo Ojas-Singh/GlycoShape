@@ -15,6 +15,33 @@ import axios from 'axios';
 import MolstarViewer from "./MolstarViewer"
 import Biological from './Biological';
 
+const CopyButton: React.FC<{ text: string }> = ({ text }) => {
+  const [hasCopied, setHasCopied] = useState(false);
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text)
+      .then(() => setHasCopied(true))
+      .catch(err => console.error('Failed to copy:', err));
+    
+    setTimeout(() => setHasCopied(false), 800);
+  };
+  
+  return (
+    <Button
+      flexShrink={0}
+      type="submit"
+      borderRadius="full"
+      size="sm"
+      backgroundColor="#7CC9A9"
+      _hover={{
+        backgroundColor: "#51BF9D"
+      }}
+      onClick={handleCopy}
+    >
+      {hasCopied ? <CheckIcon /> : <CopyIcon />}
+    </Button>
+  );
+};
 
 
 const GlycanPage: React.FC = () => {
@@ -221,20 +248,35 @@ const GlycanPage: React.FC = () => {
   const [data, setData] = useState<GlycanData | null>(null);
   const clusterLength = data?.archetype.clusters ? Object.keys(data.archetype.clusters).length : 0;
 
-  // const transformedClusters = data?.archetype.clusters || {};
-
   const transformedClusters = Object.fromEntries(
     Object.entries(data?.archetype.clusters || {}).map(([key, value]) => [key, value])
   );
 
+  const [clustersVisibility, setClustersVisibility] = useState<boolean[]>([]);
 
-  const generateDownloadUrls = (sequence: string, clusterLength: number) => {
+  useEffect(() => {
+    if (clusterLength > 0) {
+      setClustersVisibility(new Array(clusterLength).fill(true));
+    }
+  }, [clusterLength]);
+
+  const generateDownloadUrls = (): string[] => {
     const baseClusterURL = `${apiUrl}/database/${data?.archetype.ID}/PDB_format_HETATM/cluster`;
-    return Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.PDB.pdb`);
+    return Array.from({ length: clusterLength }, (_, i) =>
+      `${baseClusterURL}${i}_alpha.PDB.pdb`
+    );
   };
 
-  const downloadUrls = generateDownloadUrls(sequence, clusterLength);
+  const filteredUrls = Array.from({ length: clusterLength }, (_, i) => ({
+  url: `${apiUrl}/database/${data?.archetype.ID}/PDB_format_HETATM/cluster${i}_alpha.PDB.pdb`,
+  format: 'pdb' as 'pdb'
+})).filter((_, i) => clustersVisibility[i]);
 
+  const toggleCluster = (index: number) => {
+    const newVisibility = [...clustersVisibility];
+    newVisibility[index] = !newVisibility[index];
+    setClustersVisibility(newVisibility);
+  };
 
   return (
 
@@ -549,7 +591,8 @@ const GlycanPage: React.FC = () => {
                                     {item.value}
                                   </Code>
                                 </Box>
-                                <Button
+                                <CopyButton text={item.value || ''} />
+                                {/* <Button
                                   flexShrink={0}
                                   type="submit"
                                   borderRadius="full"
@@ -561,7 +604,7 @@ const GlycanPage: React.FC = () => {
                                   onClick={() => handleCopyClick(item.value || '')}
                                 >
                                   {hasCopied ? <CheckIcon /> : <CopyIcon />}
-                                </Button>
+                                </Button> */}
                               </Flex>
                             ))}
                           </VStack>
@@ -826,25 +869,35 @@ const GlycanPage: React.FC = () => {
                           <Box width="100%" height="50vh" position="relative" zIndex={'10'}>
                             {data?.archetype.ID && (
                               <MolstarViewer
-                                urls={Array.from({ length: clusterLength }, (_, i) => ({
-                                  url: `${apiUrl}/database/${data.archetype.ID}/PDB_format_HETATM/cluster${i}_alpha.PDB.pdb`,
-                                  format: 'pdb'
-                                }))}
+                                urls={filteredUrls}
                                 backgroundColor="#FCFBF9"
                               />
                             )}
+                            <HStack spacing={2} paddingTop="1rem">
+                            {Array.from({ length: clusterLength }, (_, i) => (
+                              <Button
+                                key={i}
+                                colorScheme="teal"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleCluster(i)}
+                              >
+                                {clustersVisibility[i] ? `Hide Cluster ${i }` : `Show Cluster ${i }`}
+                              </Button>
+                            ))}
+                          </HStack>
                           </Box>
 
-                          <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                            All major cluster conformations are displayed above. Aligned with residue 1 to 3 in the glycan sequence.
-                          </Text>
+                          
+
+                          
                           <Box paddingTop={"2rem"} >
                             <SimpleGrid alignItems="center" justifyItems="center" columns={[1, 2]} spacing={0} paddingTop={'0rem'} paddingBottom={'2rem'}>
 
                               <VStack >
                                 <HStack paddingTop={"5rem"}>
                                   <Text size={'md'}>Download Clusters : </Text>
-                                  {downloadUrls.map((url, index) => (
+                                  {generateDownloadUrls().map((url, index) => (
                                     <Button colorScheme='purple' variant='link' key={index} style={{ color: colors[index % colors.length] }}>
                                       <a href={url} download>
                                         Cluster {index}&nbsp;&nbsp;&nbsp;

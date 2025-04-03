@@ -28,8 +28,13 @@ def glytoucan2iupac(glytoucan_ac):
             verify=False
         )
         response.raise_for_status()
-        if response.json().get('iupac'):
-            return response.json()['iupac']
+        data = response.json()
+        if data.get('iupac'):
+            iupac = data['iupac']
+            if iupac.endswith("-(1→"):
+                return iupac
+            else:
+                return iupac + "-(1→"
     except Exception as e:
         logger.error(f"Failed to get Glygen data: {str(e)}")
         return None

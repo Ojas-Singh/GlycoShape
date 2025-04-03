@@ -634,6 +634,8 @@ def get_glycan_for_reglyco(glytoucan):
 
     # Define paths to the PDB_format_ATOM and output directories
     pdb_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'PDB_format_ATOM'
+    glycam_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'GLYCAM_format_ATOM'
+    charmm_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'CHARMM_format_ATOM'
     output_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'output'
     data_json = GLYCOSHAPE_DIR / glycoshape_entry / 'data.json' 
 
@@ -644,7 +646,7 @@ def get_glycan_for_reglyco(glytoucan):
         return jsonify({"error": "Output directory not found"}), 404
 
     # Collect all .pdb files
-    pdb_files = list(pdb_dir.glob('*.pdb'))
+    pdb_files = list(pdb_dir.glob('*.pdb')) + list(glycam_dir.glob('*.pdb')) + list(charmm_dir.glob('*.pdb'))
     if not pdb_files:
         return jsonify({"error": "No PDB files found"}), 404
 
