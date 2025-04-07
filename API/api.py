@@ -311,7 +311,7 @@ def zip_directory(folder_path, zip_path):
 def GOTW_process(url: str):
     """
     Process a given URL for GOTW data, extract and process files, and generate output.
-    Uses robust download mechanism with retries.
+    Uses robust download mechanism with retries and resume support.
 
     Args:
         url (str): URL to the zip file.
@@ -337,26 +337,58 @@ def GOTW_process(url: str):
         with tempfile.TemporaryDirectory() as output_folder:
             output_path = Path(output_folder)
 
-            # Download the zip file with streaming and retry mechanism
+            # Create a temp file for the zip download that persists until we're done with it
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
+                zip_file_path = zip_file.name
+            
+            # Check if we have a partial download already
+            resume_position = 0
+            if os.path.exists(zip_file_path):
+                resume_position = os.path.getsize(zip_file_path)
+                print(f"Partial download found. Resuming from byte {resume_position}")
+
+            # Set the range header to resume download if needed
+            headers = {}
+            if resume_position > 0:
+                headers["Range"] = f"bytes={resume_position}-"
+            else:
+                headers["Range"] = "bytes=0-"  # Ensure full file is requested if starting fresh
+
+            # Download the zip file with streaming and resume capability
             response = session.get(
                 url,
                 stream=True,
                 timeout=(10, 60),  # Connect timeout: 10s, Read timeout: 60s
-                headers={"Range": "bytes=0-"}  # Ensure full file is requested
+                headers=headers
             )
             response.raise_for_status()  # Raise an exception for bad status codes
 
             # Get the total file size from headers (if available)
-            total_size = int(response.headers.get("Content-Length", 0))
+            total_size = 0
+            if "Content-Range" in response.headers:
+                # Extract total size from Content-Range: bytes X-Y/TOTAL
+                content_range = response.headers.get("Content-Range", "")
+                total_size_match = content_range.split("/")[-1]
+                if total_size_match.isdigit():
+                    total_size = int(total_size_match)
+            elif "Content-Length" in response.headers:
+                if resume_position > 0:
+                    # If resuming, Content-Length is just the remaining bytes
+                    total_size = resume_position + int(response.headers.get("Content-Length", 0))
+                else:
+                    total_size = int(response.headers.get("Content-Length", 0))
 
-            # Save the streamed content to a temporary zip file
-            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
-                bytes_written = 0
+            # Determine file mode based on resume state
+            file_mode = "ab" if resume_position > 0 else "wb"
+            
+            # Save the streamed content to the temporary zip file
+            with open(zip_file_path, file_mode) as f:
+                bytes_written = resume_position
                 for chunk in response.iter_content(chunk_size=1024 * 1024):  # 1MB chunks
                     if chunk:  # Filter out keep-alive new chunks
-                        zip_file.write(chunk)
+                        f.write(chunk)
                         bytes_written += len(chunk)
-                zip_file_path = zip_file.name
+                        print(f"Downloaded {bytes_written} bytes of {total_size if total_size > 0 else 'unknown size'}")
 
             # Verify the download size matches the expected size (if provided)
             if total_size > 0 and bytes_written != total_size:
@@ -415,6 +447,9 @@ def GOTW_process(url: str):
         return None, None
     except zipfile.BadZipFile:
         print("Error: The downloaded file is not a valid zip file.")
+        # If we have a bad zip file, remove it so we don't try to resume from it
+        if zip_file_path and os.path.exists(zip_file_path):
+            os.remove(zip_file_path)
         return None, None
     except ValueError as e:
         print(f"Download validation error: {e}")
