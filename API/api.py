@@ -16,6 +16,8 @@ import tempfile
 from thefuzz import fuzz
 import geocoder
 import io
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 app = Flask(__name__)
@@ -309,6 +311,7 @@ def zip_directory(folder_path, zip_path):
 def GOTW_process(url: str):
     """
     Process a given URL for GOTW data, extract and process files, and generate output.
+    Uses robust download mechanism with retries.
 
     Args:
         url (str): URL to the zip file.
@@ -316,23 +319,51 @@ def GOTW_process(url: str):
     Returns:
         tuple: Path to the result directory and the glycam name.
     """
+    zip_file_path = None
     try:
+        # Configure a session with retry logic
+        session = requests.Session()
+        retry_strategy = Retry(
+            total=3,  # Maximum number of retries
+            backoff_factor=1.5,  # Exponential backoff: 1.5s, 3s, 4.5s, etc.
+            status_forcelist=[500, 502, 503, 504, 408, 429],  # Retry on these HTTP errors
+            allowed_methods=["GET"]
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
         # Create a temporary directory for output
         with tempfile.TemporaryDirectory() as output_folder:
             output_path = Path(output_folder)
 
-            # Download the zip file with streaming
-            response = requests.get(url, stream=True, timeout=(10, 60))
-            if response.status_code != 200:
-                print(f"Error: Failed to download the file. Status code: {response.status_code}")
-                return None, None
+            # Download the zip file with streaming and retry mechanism
+            response = session.get(
+                url,
+                stream=True,
+                timeout=(10, 60),  # Connect timeout: 10s, Read timeout: 60s
+                headers={"Range": "bytes=0-"}  # Ensure full file is requested
+            )
+            response.raise_for_status()  # Raise an exception for bad status codes
+
+            # Get the total file size from headers (if available)
+            total_size = int(response.headers.get("Content-Length", 0))
 
             # Save the streamed content to a temporary zip file
             with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
-                for chunk in response.iter_content(chunk_size=1024):
+                bytes_written = 0
+                for chunk in response.iter_content(chunk_size=1024 * 1024):  # 1MB chunks
                     if chunk:  # Filter out keep-alive new chunks
                         zip_file.write(chunk)
+                        bytes_written += len(chunk)
                 zip_file_path = zip_file.name
+
+            # Verify the download size matches the expected size (if provided)
+            if total_size > 0 and bytes_written != total_size:
+                raise ValueError(
+                    f"Download incomplete: {bytes_written} bytes received, "
+                    f"expected {total_size} bytes"
+                )
 
             # Create a temporary folder for extracting the files
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -376,8 +407,8 @@ def GOTW_process(url: str):
                 # Copy the contents from output_path to result_dir
                 shutil.copytree(output_path, result_dir, dirs_exist_ok=True)
 
-        # Return the final result directory and glycam name
-        return Path(result_dir), glycan_name
+            # Return the final result directory and glycam name
+            return Path(result_dir), glycan_name
 
     except requests.exceptions.RequestException as e:
         print(f"Network error: {e}")
@@ -385,13 +416,19 @@ def GOTW_process(url: str):
     except zipfile.BadZipFile:
         print("Error: The downloaded file is not a valid zip file.")
         return None, None
+    except ValueError as e:
+        print(f"Download validation error: {e}")
+        return None, None
     except Exception as e:
         print(f"Unexpected error: {e}")
         return None, None
     finally:
         # Ensure the temporary zip file is deleted
-        if 'zip_file_path' in locals() and os.path.exists(zip_file_path):
-            os.remove(zip_file_path)
+        if zip_file_path and os.path.exists(zip_file_path):
+            try:
+                os.remove(zip_file_path)
+            except Exception as e:
+                print(f"Failed to remove temporary file {zip_file_path}: {e}")
 
 
 @app.route('/api/gotw', methods=['POST'])
@@ -609,28 +646,43 @@ def check_pin(pin):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/api/download/<glytoucan>', methods=['GET'])
-def get_glycan_for_reglyco(glytoucan):
+@app.route('/api/download/<identifier>', methods=['GET'])
+def get_glycan_for_reglyco(identifier):
     """
     Downloads all PDB files in the PDB_format_ATOM folder along with
-    associated .npz and .json files from the output folder for a given glytoucan ID.
+    associated .npz and .json files from the output folder for a given identifier 
+    (either glytoucan ID or IUPAC).
     """
     glycoshape_entry = None
+    is_iupac = False
 
-    # Determine the glycoshape_entry based on the glytoucan ID
-    for glycan_id, glycan_data in GDB_data.items():
-        if glycan_data.get('alpha', {}).get('glytoucan') == glytoucan:
-            glycoshape_entry = glycan_data['archetype']['ID']
-            break
-        elif glycan_data.get('beta', {}).get('glytoucan') == glytoucan:
-            glycoshape_entry = glycan_data['archetype']['ID']
-            break
-        elif glycan_data.get('archetype', {}).get('glytoucan') == glytoucan:
-            glycoshape_entry = glycan_data['archetype']['ID']
-            break
+    # First check if it's an IUPAC identifier
+    if "(" in identifier:
+        is_iupac = True
+        # Try to find the glycan based on IUPAC
+        for glycan_id, glycan_data in GDB_data.items():
+            if (glycan_data.get('archetype', {}).get('iupac') == identifier or 
+                glycan_data.get('alpha', {}).get('iupac') == identifier or 
+                glycan_data.get('beta', {}).get('iupac') == identifier):
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+    
+    # If not found as IUPAC or is GlyTouCan ID
+    if not glycoshape_entry:
+        # Try to find the glycan based on GlyTouCan ID
+        for glycan_id, glycan_data in GDB_data.items():
+            if glycan_data.get('alpha', {}).get('glytoucan') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+            elif glycan_data.get('beta', {}).get('glytoucan') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+            elif glycan_data.get('archetype', {}).get('glytoucan') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
 
     if not glycoshape_entry:
-        return jsonify({"error": "Glycan not found"}), 404
+        return jsonify({"error": f"Glycan not found for {'IUPAC' if is_iupac else 'GlyTouCan'}: {identifier}"}), 404
 
     # Define paths to the PDB_format_ATOM and output directories
     pdb_dir = GLYCOSHAPE_DIR / glycoshape_entry / 'PDB_format_ATOM'
@@ -675,7 +727,8 @@ def get_glycan_for_reglyco(glytoucan):
             zip_file.write(mol2_file, arcname=mol2_file.name)
 
         # Add data.json file
-        zip_file.write(data_json, arcname='data.json')
+        if data_json.exists():
+            zip_file.write(data_json, arcname='data.json')
 
     zip_buffer.seek(0)  # Reset buffer pointer to the beginning
 
