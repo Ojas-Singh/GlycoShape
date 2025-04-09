@@ -53,9 +53,10 @@ const GlycanPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [sequence, setsequence] = useState<string>(queryParams.get('IUPAC') || '');
   const [sequenceGlytoucan, setSequenceGlytoucan] = useState<string>(queryParams.get('glytoucan') || '');
+  const [sequenceId, setSequenceId] = useState<string>(queryParams.get('id') || '');
 
-  // Define the async function outside the useEffect with explicit type for the parameter
-  async function fetchData(sequenceGlytoucan: string) {
+  // Define the async function to fetch data by glytoucan ID
+  async function fetchDataByGlytoucan(sequenceGlytoucan: string) {
     try {
       const response = await axios.get(`${apiUrl}/api/glycan/${sequenceGlytoucan}`);
       if (response) {
@@ -63,18 +64,62 @@ const GlycanPage: React.FC = () => {
         setsequence(response.data.archetype.glytoucan);
         setTimeout(() => {
           scrollToContent(contentRef1)
-        }, 300);  // 1000 milliseconds = 0.5 second
+        }, 300);
       }
     } catch (error) {
       console.error('Failed to fetch glytoucan data', error);
+      setError('Failed to fetch data for this glytoucan ID');
+    }
+  }
+
+  // Define the async function to fetch data by database ID
+  async function fetchDataById(id: string) {
+    try {
+      const response = await axios.get(`${apiUrl}/api/glycan/${id}`);
+      if (response) {
+        setData(response.data);
+        setsequence(response.data.archetype.ID);
+        setTimeout(() => {
+          scrollToContent(contentRef1)
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Failed to fetch ID data', error);
+      setError('Failed to fetch data for this database ID');
+    }
+  }
+
+  // Define the async function to fetch data by IUPAC
+  async function fetchDataByIUPAC(iupac: string) {
+    try {
+      const response = await axios.get(`${apiUrl}/api/glycan/${iupac}`);
+      if (response) {
+        setData(response.data);
+        setsequence(response.data.archetype.iupac);
+        setTimeout(() => {
+          scrollToContent(contentRef1)
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Failed to fetch IUPAC data', error);
+      setError('Failed to fetch data for this IUPAC notation');
     }
   }
 
   useEffect(() => {
-    if (sequenceGlytoucan) {
-      fetchData(sequenceGlytoucan);
+    // First priority: ID parameter
+    if (sequenceId) {
+      fetchDataById(sequenceId);
     }
-  }, [sequenceGlytoucan]);  // Dependency on sequenceGlytoucan
+    // Second priority: Glytoucan parameter
+    else if (sequenceGlytoucan) {
+      fetchDataByGlytoucan(sequenceGlytoucan);
+    }
+    // Third priority: IUPAC parameter
+    else if (sequence) {
+      fetchDataByIUPAC(sequence);
+    }
+  }, [sequenceId, sequenceGlytoucan, sequence]);  // Dependencies for all three parameters
 
   const backgroundPulseAnimation = keyframes`
   0% { background-color: transparent; }

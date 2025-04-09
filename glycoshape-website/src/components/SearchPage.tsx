@@ -442,33 +442,35 @@ const SearchPage = () => {
                   flex='1'
                 >
                   <VStack align={'stretch'} width="100%">
-                    <Link as={RouterLink} to={`/glycan?glytoucan=${glycan.glytoucan}`}>
+                  <Link as={RouterLink} to={glycan.glytoucan 
+                    ? `/glycan?glytoucan=${glycan.glytoucan}` 
+                    : `/glycan?id=${glycan.ID}`}>
 
-                      <Heading fontSize={{ base: "lg", md: "xl" }}>
-                        {glycan.glytoucan ? glycan.glytoucan : glycan.ID}
-                      </Heading>
-                      <HStack
-                        justify="space-between"
-                        align="center"
-                        width="100%"
-                        paddingRight='3rem'
-                        flexDirection={{ base: "column", sm: "row" }}
-                        spacing={{ base: "1rem", sm: "inherit" }}
-                      >
-                        <Image
-                          src={`${apiUrl}/api/svg/${glycan.glytoucan}`}
-                          alt="Glycan Image"
-                          height="150px"
-                          maxWidth={"200px"}
-                        />
+                    <Heading fontSize={{ base: "lg", md: "xl" }}>
+                    {glycan.glytoucan ? glycan.glytoucan : glycan.ID}
+                    </Heading>
+                    <HStack
+                    justify="space-between"
+                    align="center"
+                    width="100%"
+                    paddingRight='3rem'
+                    flexDirection={{ base: "column", sm: "row" }}
+                    spacing={{ base: "1rem", sm: "inherit" }}
+                    >
+                    <Image
+                      src={`${apiUrl}/api/svg/${glycan.glytoucan || glycan.ID}`}
+                      alt="Glycan Image"
+                      height="150px"
+                      maxWidth={"200px"}
+                    />
 
-                        {glycan.mass && (
-                          <Text fontSize="md" color="gray.600">
-                            Mass: {glycan.mass}
-                          </Text>
-                        )}
-                      </HStack>
-                    </Link>
+                    {glycan.mass && (
+                      <Text fontSize="md" color="gray.600">
+                      Mass: {glycan.mass}
+                      </Text>
+                    )}
+                    </HStack>
+                  </Link>
                   </VStack>
                 </Box>
               ))}
