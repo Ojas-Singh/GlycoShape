@@ -179,11 +179,28 @@ def is_exist(glycam):
         return jsonify({'exists': exist})
 
 
-@app.route('/api/glycan/<glytoucan>', methods=['GET'])
-def get_glycan(glytoucan):
+@app.route('/api/glycan/<identifier>', methods=['GET'])
+def get_glycan(identifier):
+    # First check if it's a direct glycan ID match
     for glycan_id, glycan_data in GDB_data.items():
-        if glycan_data['archetype']['glytoucan'] == glytoucan or glycan_data['alpha']['glytoucan'] == glytoucan or glycan_data['beta']['glytoucan'] == glytoucan:
+        if glycan_id == identifier:
             return jsonify(glycan_data)
+        
+    # Check for glytoucan ID match
+    for glycan_id, glycan_data in GDB_data.items():
+        if (glycan_data['archetype']['glytoucan'] == identifier or 
+            glycan_data['alpha']['glytoucan'] == identifier or 
+            glycan_data['beta']['glytoucan'] == identifier):
+            return jsonify(glycan_data)
+    
+    # Check for IUPAC match (if the identifier contains parentheses, likely an IUPAC notation)
+    if "(" in identifier:
+        for glycan_id, glycan_data in GDB_data.items():
+            if (glycan_data['archetype'].get('iupac') == identifier or 
+                glycan_data['alpha'].get('iupac') == identifier or 
+                glycan_data['beta'].get('iupac') == identifier):
+                return jsonify(glycan_data)
+    
     return jsonify({"error": "Glycan not found"}), 404
 
 @app.route('/api/pdb/<glytoucan>', methods=['GET'])
@@ -224,20 +241,42 @@ def get_pdb(glytoucan):
             
     return jsonify({"error": "Glycan not found"}), 404
 
-@app.route('/api/svg/<glytoucan>', methods=['GET'])
-def get_svg(glytoucan):
+@app.route('/api/svg/<identifier>', methods=['GET'])
+def get_svg(identifier):
     glycoshape_entry = None
     
+    # First check if it's a direct glycan ID match
     for glycan_id, glycan_data in GDB_data.items():
-        if glycan_data['alpha']['glytoucan'] == glytoucan:
+        if glycan_id == identifier:
             glycoshape_entry = glycan_data['archetype']['ID']
             break
-        elif glycan_data['beta']['glytoucan'] == glytoucan:
-            glycoshape_entry = glycan_data['archetype']['ID']
-            break
-        elif glycan_data['archetype']['glytoucan'] == glytoucan:
-            glycoshape_entry = glycan_data['archetype']['ID']
-            break
+    
+    # If not found by ID, check for glytoucan ID match
+    if not glycoshape_entry:
+        for glycan_id, glycan_data in GDB_data.items():
+            if glycan_data['alpha']['glytoucan'] == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+            elif glycan_data['beta']['glytoucan'] == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+            elif glycan_data['archetype']['glytoucan'] == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+    
+    # Check for IUPAC match (if the identifier contains parentheses, likely an IUPAC notation)
+    if not glycoshape_entry and "(" in identifier:
+        for glycan_id, glycan_data in GDB_data.items():
+            if glycan_data.get('archetype', {}).get('iupac') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+            elif glycan_data.get('alpha', {}).get('iupac') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+            elif glycan_data.get('beta', {}).get('iupac') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                break
+    
     if glycoshape_entry:
         svg_file_path = GLYCOSHAPE_DIR / f'{glycoshape_entry}/snfg.svg'
         if svg_file_path.exists():
@@ -245,7 +284,7 @@ def get_svg(glytoucan):
         else:
             return jsonify({"error": "SVG file not found"}), 404
             
-    return jsonify({"error": "Glycan not found"}), 404
+    return jsonify({"error": "Glycan not found for identifier: " + identifier}), 404
 
 
 @app.route('/database/<path:filepath>', methods=['GET'])
@@ -384,7 +423,7 @@ def GOTW_process(url: str):
             # Save the streamed content to the temporary zip file
             with open(zip_file_path, file_mode) as f:
                 bytes_written = resume_position
-                for chunk in response.iter_content(chunk_size=1024 * 1024):  # 1MB chunks
+                for chunk in response.iter_content(chunk_size=512 * 1024):  # 512KB chunks
                     if chunk:  # Filter out keep-alive new chunks
                         f.write(chunk)
                         bytes_written += len(chunk)
