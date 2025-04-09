@@ -5,7 +5,7 @@ import { keyframes } from "@emotion/react";
 import throttle from 'lodash/throttle';
 import {
   useTabs, AspectRatio, Link, Show, Hide, Grid, Divider, Spacer, Wrap, WrapItem, Code, HStack, Tab, Tabs, TabList, TabPanels, TabPanel, Button, Text, Flex, Box, Image, VStack, SimpleGrid,
-  space
+  space, CircularProgress, Alert, AlertIcon, AlertTitle, AlertDescription
 } from "@chakra-ui/react";
 import ContourPlot from './ContourPlot';
 import Scatter3D from './Scatter3D';
@@ -54,9 +54,11 @@ const GlycanPage: React.FC = () => {
   const [sequence, setsequence] = useState<string>(queryParams.get('IUPAC') || '');
   const [sequenceGlytoucan, setSequenceGlytoucan] = useState<string>(queryParams.get('glytoucan') || '');
   const [sequenceId, setSequenceId] = useState<string>(queryParams.get('id') || '');
+  const [isLoading, setIsLoading] = useState(true);
 
   // Define the async function to fetch data by glytoucan ID
   async function fetchDataByGlytoucan(sequenceGlytoucan: string) {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${apiUrl}/api/glycan/${sequenceGlytoucan}`);
       if (response) {
@@ -69,11 +71,14 @@ const GlycanPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch glytoucan data', error);
       setError('Failed to fetch data for this glytoucan ID');
+    } finally {
+      setIsLoading(false);
     }
   }
 
   // Define the async function to fetch data by database ID
   async function fetchDataById(id: string) {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${apiUrl}/api/glycan/${id}`);
       if (response) {
@@ -86,11 +91,14 @@ const GlycanPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch ID data', error);
       setError('Failed to fetch data for this database ID');
+    } finally {
+      setIsLoading(false);
     }
   }
 
   // Define the async function to fetch data by IUPAC
   async function fetchDataByIUPAC(iupac: string) {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${apiUrl}/api/glycan/${iupac}`);
       if (response) {
@@ -103,6 +111,8 @@ const GlycanPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch IUPAC data', error);
       setError('Failed to fetch data for this IUPAC notation');
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -327,8 +337,19 @@ const GlycanPage: React.FC = () => {
 
     <Box >
 
-
-      {sequence && (
+      {isLoading ? (
+        <Flex 
+          height="50vh" 
+          width="100%" 
+          justify="center" 
+          align="center" 
+          direction="column"
+          gap={4}
+        >
+          <CircularProgress isIndeterminate color="teal" />
+          <Text>Loading glycan data...</Text>
+        </Flex>
+      ) : sequence && data ? (
         <Flex >
 
           <Box flex='1' width={{ base: "100%", sm: "100%", md: "100%", lg: "100%", xl: "80%" }} margin={'auto'}>
@@ -1027,7 +1048,20 @@ const GlycanPage: React.FC = () => {
 
           </Box>
         </Flex>
+      ) : (
+        <Box textAlign="center" p={8}>
+          <Alert status="error" borderRadius="md">
+            <AlertIcon />
+            <Box>
+              <AlertTitle mb={1}>Failed to load glycan data</AlertTitle>
+              <AlertDescription>
+                {error || "Please check your input and try again."}
+              </AlertDescription>
+            </Box>
+          </Alert>
+        </Box>
       )}
+
       {error && (
         <Text color="red.500" textAlign="center">
           Please enter a valid search string!

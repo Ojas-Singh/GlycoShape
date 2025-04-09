@@ -32,6 +32,8 @@ Commands:
                       and sbatch all replicas. (need GLYCAM json URL, when all minimizations are done, the link of "Download All")
   submit [OPTIONS]    Submit all finished simulation folder(s) to GlycoShape Server.
   update              Update this script to newer version.
+  iupac <IUPAC>       Convert IUPAC condensed notation to GLYCAM via WURCS
+                      and print a condensed GLYCAM URL.
   glytoucan <GTCID>   Fetch the WURCS from GlyTouCan ID via the GlyCosmos API, 
                       convert to GLYCAM, and print a condensed GLYCAM URL. (Glytoucan should have all defined linakge)
   wurcs <WURCS>       Convert a WURCS string to a condensed GLYCAM URL. (WURCS should have all defined linakge)
@@ -68,6 +70,8 @@ Examples:
   
   6) Cleanup folders that already exist on the server:
        $0 cleanup
+  7) Convert IUPAC condensed notation to GLYCAM URL:
+       $0 iupac "Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc(b1-"
 EOF
 }
 
@@ -421,6 +425,59 @@ wurcs_to_glycam_func() {
     echo "https://glycam.org/url/condensed/${glycam}"
 }
 
+# -----------------------------------------------------------------------------
+# IUPAC TO GLYCAM FUNCTION: Convert IUPAC to GLYCAM URL via WURCS
+# -----------------------------------------------------------------------------
+iupac_to_glycam_func() {
+    local iupac="$1"
+    if [ -z "$iupac" ]; then
+        echo "Error: missing IUPAC string."
+        echo "Usage: $0 iupac <IUPAC>"
+        exit 1
+    fi
+    
+    # Ensure the IUPAC string ends with one of (a1-), (a1-, (b1-), or (b1- if it doesn't already
+    if ! [[ "$iupac" =~ \([ab]1-\)$ ]] && ! [[ "$iupac" =~ \([ab]1-$ ]]; then
+        iupac="${iupac}(a1-"
+    fi
+    
+    echo "Processing IUPAC: $iupac"
+    
+    # Step 1: Convert IUPAC to WURCS using Glycosmos API
+    local wurcs_response
+    wurcs_response=$(curl -s -d "[\"$iupac\"]" https://api.glycosmos.org/glycanformatconverter/2.10.4/iupaccondensed2wurcs)
+    
+    # Extract the WURCS string from the response
+    local wurcs
+    wurcs=$(echo "$wurcs_response" | grep -oP '"wurcs":\s*"\K[^"]+')
+    
+    if [ -z "$wurcs" ]; then
+        echo "Error: No WURCS found for IUPAC: $iupac"
+        echo "API Response: $wurcs_response"
+        exit 1
+    fi
+    
+    echo "Converted to WURCS: $wurcs"
+    
+    # Step 2: Convert WURCS to GLYCAM
+    local glycam_response
+    glycam_response=$(curl -s -d "[\"$wurcs\"]" https://api.glycosmos.org/glycanformatconverter/2.10.4/wurcs2glycam)
+    
+    # Extract the GLYCAM string from the response
+    local glycam
+    glycam=$(echo "$glycam_response" | grep -oP '"GLYCAM":\s*"\K[^"]+')
+    
+    if [ -z "$glycam" ]; then
+        echo "Error: No GLYCAM found for WURCS: $wurcs"
+        echo "API Response: $glycam_response"
+        exit 1
+    fi
+    
+    echo "Converted to GLYCAM: $glycam"
+    
+    # Step 3: Print the condensed GLYCAM URL
+    echo "GLYCAM URL: https://glycam.org/url/condensed/${glycam}"
+}
 
 # -----------------------------------------------------------------------------
 # CLEANUP FUNCTION: Delete folders if they already exist on the server
@@ -537,6 +594,9 @@ case "$command" in
         ;;
     submit)
         submit_func "$@"
+        ;;
+    iupac)
+        iupac_to_glycam_func "$@"
         ;;
     glytoucan)
         glytoucan_func "$@"
