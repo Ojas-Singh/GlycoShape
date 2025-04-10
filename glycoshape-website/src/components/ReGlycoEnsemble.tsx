@@ -30,8 +30,17 @@ import React, {
     SliderTrack,
     SliderFilledTrack,
     SliderThumb,
+    AccordionButton,
+    AccordionIcon,
+    AccordionItem,
+    AccordionPanel,
+    FormControl,
+    FormHelperText,
+    FormLabel,
+    Switch,
+    Tooltip,
   } from '@chakra-ui/react';
-  import { AttachmentIcon } from '@chakra-ui/icons'
+  import { AttachmentIcon, AddIcon } from '@chakra-ui/icons'
   import { Kbd } from '@chakra-ui/react';
   import bg from './assets/gly.png';
   import fit from './assets/fit.png'
@@ -294,7 +303,11 @@ import React, {
     });
 
     const [output_sasa, setOutputSasa] = useState("");
-    const [raySize, setRaySize] = useState<number>(50);
+    const [ensembleSize, setensembleSize] = useState<number>(50);
+    const [effortLevel, setEffortLevel] = useState<number>(5);
+    const [checkSteric, setCheckSteric] = useState<boolean>(true);
+    const [calculateSASA, setCalculateSASA] = useState<boolean>(true);
+    const [outputFormat, setOutputFormat] = useState<string>("PDB");
     const [selectedGlycans, setSelectedGlycans] = useState<{ [key: string]: string }>({});
     const [jobId, setJobId] = useState<string>("");
     const [outputPath, setOutputPath] = useState("");
@@ -502,8 +515,12 @@ import React, {
         selectedGlycans: selectedGlycans,
         filename: protData?.filename,
         customPDB: isUpload,
-        jobType: "ensemble",
-        raySize: raySize,
+        jobType: "ensemble_compatible",
+        ensembleSize: ensembleSize,
+        effortLevel: effortLevel,
+        checkSteric: checkSteric,
+        calculateSASA: calculateSASA,
+        outputFormat: outputFormat,
       };
     
       try {
@@ -874,11 +891,134 @@ import React, {
                   }
   
                   <br />
-  
+
+                  {/* Add Advanced Settings Accordion */}
+                  <Accordion allowToggle width="100%" mb={2} borderRadius="md" boxShadow="sm">
+                    <AccordionItem border="1px solid" borderColor="gray.200" borderRadius="md">
+                      <h2>
+                        <AccordionButton bg="gray.50" _hover={{ bg: "gray.100" }} borderRadius="md">
+                          <Box flex="1" textAlign="left" fontWeight="medium" color="#B07095">
+                            Advanced Settings
+                          </Box>
+                          <AccordionIcon />
+                        </AccordionButton>
+                      </h2>
+                      <AccordionPanel pb={4} bg="white">
+                        <VStack spacing={6} align="stretch">
+                          {/* Ray Size Slider */}
+                          <FormControl>
+                            <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                              <Tooltip label="Output ensemble size. Higher values may capture more conformational space but increase computational cost.">
+                              Ensemble Size: {ensembleSize}
+                              </Tooltip>
+                            </FormLabel>
+                            <Slider
+                              aria-label="Ray Size"
+                              defaultValue={50}
+                              value={ensembleSize}
+                              min={1}
+                              max={500}
+                              step={1}
+                              colorScheme="teal"
+                              onChange={(val) => setensembleSize(val)}
+                            >
+                              <SliderTrack>
+                                <SliderFilledTrack />
+                              </SliderTrack>
+                              <SliderThumb />
+                            </Slider>
+                            {/* <FormHelperText >Adjust ray size for glycan ensemble generation</FormHelperText> */}
+                          </FormControl>
+
+                          {/* Effort Level Slider */}
+                          <FormControl>
+                            <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                              <Tooltip label="Controls the computational effort invested in finding optimal glycan conformations. Higher values produce better results but take longer.">
+                                Effort Level: {effortLevel}
+                              </Tooltip>
+                            </FormLabel>
+                            <Slider
+                              aria-label="Effort Level"
+                              defaultValue={2}
+                              value={effortLevel}
+                              min={1}
+                              max={20}
+                              step={1}
+                              colorScheme="teal"
+                              onChange={(val) => setEffortLevel(val)}
+                            >
+                              <SliderTrack>
+                                <SliderFilledTrack />
+                              </SliderTrack>
+                              <SliderThumb />
+                            </Slider>
+                            {/* <FormHelperText fontSize={'xs'}>1 = Fast but less accurate, 10 = Slow but more accurate</FormHelperText> */}
+                          </FormControl>
+
+                          {/* Glycan-Glycan Steric Check */}
+                          <FormControl display="flex" alignItems="center">
+                            <FormLabel htmlFor="glycan-steric-check" mb="0" fontWeight="medium" color="#B07095">
+                              <Tooltip label="Enables checking for steric clashes between different glycans during modeling">
+                                Glycan-Glycan Steric Checks
+                              </Tooltip>
+                            </FormLabel>
+                            <Switch 
+                              id="glycan-steric-check" 
+                              isChecked={checkSteric} 
+                              onChange={(e) => setCheckSteric(e.target.checked)}
+                              colorScheme="teal"
+                              size="md"
+                            />
+                          </FormControl>
+
+                          {/* Calculate SASA */}
+                          <FormControl display="flex" alignItems="center">
+                            <FormLabel htmlFor="calculate-sasa" mb="0" fontWeight="medium" color="#B07095">
+                              <Tooltip label="Calculates Solvent Accessible Surface Area for the final model">
+                                Calculate SASA
+                              </Tooltip>
+                            </FormLabel>
+                            <Switch 
+                              id="calculate-sasa" 
+                              isChecked={calculateSASA} 
+                              onChange={(e) => setCalculateSASA(e.target.checked)}
+                              colorScheme="teal"
+                              size="md"
+                            />
+                          </FormControl>
+
+                            
+                            {/* Output Format */}
+                            <FormControl>
+                            <HStack spacing={2}>
+                            <FormLabel justifySelf={'center'} fontWeight="medium" color="#B07095" mb={2}>
+                              <Tooltip label="Select the output format for the generated structure.">
+                              Output Format
+                              </Tooltip>
+                            </FormLabel>
+                              {["PDB", "GLYCAM", "CHARMM"].map((format) => (
+                              <Button
+                              key={format}
+                              onClick={() => setOutputFormat(format)}
+                              colorScheme={outputFormat === format ? "teal" : "gray"}
+                              variant={outputFormat === format ? "solid" : "outline"}
+                              size="sm"
+                              textTransform="uppercase"
+                              >
+                              {format}
+                              </Button>
+                              ))}
+                            </HStack>
+                            </FormControl>
+                        </VStack>
+                      </AccordionPanel>
+                    </AccordionItem>
+                  </Accordion>
+
                   <VStack align={"self-start"}>
                     
-                  <Text color="#B195A2" fontFamily={'heading'} fontWeight={'bold'}>
-                        Ray Size: {raySize}
+                  {/* <Text color="#B195A2" fontFamily={'heading'} fontWeight={'bold'}>
+                        Ray Size: {ensembleSize}
                     </Text>
                     <Slider width={'50rem'}
                         aria-label="Ray Size"
@@ -887,13 +1027,13 @@ import React, {
                         max={500}
                         step={1}
                         colorScheme="teal"
-                        onChange={(val) => setRaySize(val)}
+                        onChange={(val) => setensembleSize(val)}
                     >
                         <SliderTrack>
                         <SliderFilledTrack />
                         </SliderTrack>
                         <SliderThumb />
-                    </Slider>
+                    </Slider> */}
 
                     <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
                       This will take a few minutes. Please be patient.
@@ -969,20 +1109,33 @@ import React, {
                         allowFullScreen
                         title="Protein Structure"
                       />
-                      <HStack marginTop={"1rem"}>
-                                       <Text  color='#B07095' fontFamily={'heading'} fontWeight={'bold'}>Solvent Accessible Surface Area (SASA):  Accessible</Text> <Box w='100px' h='20px' bgGradient='linear(to-r, #315CD6, #FFFFFF, #AD1F1F)'  /> <Text color='#B07095' fontFamily={'heading'} fontWeight={'bold'}>Not accessible</Text></HStack>
-                      
-                      <iframe
-                    // key={sequence}
-                    width="100%"
-                    height="400px"
-                    src={`/viewer/index_full.html?snapshot-url=${apiUrl}/output/${output_sasa}&snapshot-url-type=molj`} frameBorder="0"
-                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title="Protein Structure"
-                  />
 
-                  <Image src={`${apiUrl}/output/${plotPath}`} alt="Glycoprotein" width="100%" />
+                      {calculateSASA && (
+                        <>
+                          <HStack marginTop={"1rem"}>
+                            <Text color='#B07095' fontFamily={'heading'} fontWeight={'bold'}>
+                              Solvent Accessible Surface Area (SASA): Accessible
+                            </Text>
+                            <Box w='100px' h='20px' bgGradient='linear(to-r, #315CD6, #FFFFFF, #AD1F1F)' />
+                            <Text color='#B07095' fontFamily={'heading'} fontWeight={'bold'}>
+                              Not accessible
+                            </Text>
+                          </HStack>
+
+                          <iframe
+                            width="100%"
+                            height="400px"
+                            src={`/viewer/index_full.html?snapshot-url=${apiUrl}/output/${output_sasa}&snapshot-url-type=molj`}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            title="Protein Structure"
+                          />
+
+                          
+                        </>
+                      )}
+                      <Image padding= {'6'} src={`${apiUrl}/output/${plotPath}`} alt="Glycoprotein" width="100%" />
                       <div>
                         <a href={`${apiUrl}/output/${outputPath}`} download>
                           <Button
@@ -1146,4 +1299,3 @@ import React, {
   };
   
   export default ReGlyco;
-  
