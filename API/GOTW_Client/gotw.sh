@@ -322,12 +322,24 @@ submit_func() {
         # --------------------------------------------
         echo "Uploading ${dir}..."
 
-        # Build the curl command
-        # We'll add -F infoJson=... only if info_json_file is non-empty
+        # Create a temporary directory with no special characters
+        temp_dir=$(mktemp -d)
+        temp_simulation_file="${temp_dir}/simulation.pdb"
+        temp_mol_file="${temp_dir}/molecule.mol2"
+        temp_info_json="${temp_dir}/info.json"
+
+        # Copy files to temporary directory
+        cp "$simulation_file" "$temp_simulation_file"
+        cp "$mol_file" "$temp_mol_file"
+        if [ -n "$info_json_file" ]; then
+            cp "$info_json_file" "$temp_info_json"
+        fi
+
+        # Build the curl command using clean file paths
         curl_cmd=(
             curl -X POST https://glycoshape.io/api/submit
-            -F "simulationFile=@${simulation_file}"
-            -F "molFile=@${mol_file}"
+            -F "simulationFile=@${temp_simulation_file}"
+            -F "molFile=@${temp_mol_file}"
             -F "email=${email}"
             -F "glycamName=${folder_name}"
             -F "simulationLength=${simulation_length}"
@@ -343,13 +355,16 @@ submit_func() {
             --progress-bar
         )
 
-        # If info.json exists, add it
+        # If info.json exists, add it from the temporary location
         if [ -n "$info_json_file" ]; then
-            curl_cmd+=( -F "infoJson=@${info_json_file}" )
+            curl_cmd+=( -F "infoJson=@${temp_info_json}" )
         fi
 
         # Execute the curl command
         "${curl_cmd[@]}"
+
+        # Clean up temporary directory
+        rm -rf "$temp_dir"
 
         echo -e "\nForm submission completed for ${dir}."
     done
