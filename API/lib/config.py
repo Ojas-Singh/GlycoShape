@@ -44,4 +44,4 @@ glycoshape_inventory_csv = variable_value3
 glycoshape_rawdata_dir = variable_value4
 domain_name = variable_name5
 
-pin = ""
+pin = "glycotime"
