@@ -7,7 +7,7 @@ import sys, time
 import os,json
 import time
 from datetime import datetime
-from lib import config, GOTW_script, name
+from lib import config, GOTW_script, name , natural2sparql
 from glycowork.motif.draw import GlycoDraw
 import tempfile
 import shutil
@@ -733,8 +733,15 @@ def search():
         search_result.sort(key=lambda x: x['mass'])
         return jsonify({'search_string': search_string, 'results': search_result})  
     
+    elif search_type == 'ai':
+        results = natural2sparql.search(search_string)
+        return jsonify({'search_string': search_string, 'results': search_result})  
+
     else:
+
         return jsonify({'search_string': search_string, 'results': search_result})
+    
+    
 
 @app.route('/api/access/<pin>', methods=['GET'])
 def check_pin(pin):
