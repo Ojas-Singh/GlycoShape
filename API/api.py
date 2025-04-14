@@ -673,7 +673,20 @@ def search():
     
     elif search_string == "O-Glycans":
         for _, glycan_data in GDB_data.items():
-            if glycan_data['archetype']['iupac'] and (glycan_data['archetype']['iupac'].endswith('GalNAc(a1-3)[Gal(b1-3)]GalNAc') or glycan_data['archetype']['iupac'].endswith('GalNAc(a1-3)[Gal(b1-3)]GalNAc')):
+            # O-glycans typically have GalNAc at the reducing end
+            # Check for common O-glycan patterns: core 1-4 structures
+            if glycan_data['archetype']['iupac'] and (
+                # Check for GalNAc at the reducing end - common in all O-glycans
+                glycan_data['archetype']['iupac'].endswith('GalNAc') or 
+                # Core 1 (T antigen) and extensions
+                'Gal(b1-3)GalNAc' in glycan_data['archetype']['iupac'] or
+                # Core 2 and extensions
+                'GlcNAc(b1-6)[Gal(b1-3)]GalNAc' in glycan_data['archetype']['iupac'] or
+                # Core 3 and extensions
+                'GlcNAc(b1-3)GalNAc' in glycan_data['archetype']['iupac'] or
+                # Core 4 and extensions
+                'GlcNAc(b1-6)[GlcNAc(b1-3)]GalNAc' in glycan_data['archetype']['iupac']
+            ):
                 entry = {
                     'glytoucan': glycan_data['archetype']['glytoucan'],
                     'ID': glycan_data['archetype']['ID'],
@@ -684,7 +697,15 @@ def search():
 
     elif search_string == "GAGs":
         for _, glycan_data in GDB_data.items():
-            if glycan_data['archetype']['iupac'] and (glycan_data['archetype']['iupac'].startswith('GlcA(b1-3)Gal(b1-3)Gal(b1-4)Xyl') or glycan_data['archetype']['iupac'].startswith('GlcA(b1-3)Gal(b1-3)Gal(b1-4)Xyl')):
+            if glycan_data['archetype']['iupac'] and (
+                # Common GAG linkage regions and patterns
+                'GlcA(b1-3)Gal(b1-3)Gal(b1-4)Xyl' in glycan_data['archetype']['iupac'] or 
+                'IdoA' in glycan_data['archetype']['iupac'] or
+                'GlcA' in glycan_data['archetype']['iupac'] and 'GlcNAc' in glycan_data['archetype']['iupac'] or  # Hyaluronic acid pattern
+                'GlcA' in glycan_data['archetype']['iupac'] and 'GalNAc' in glycan_data['archetype']['iupac'] or  # Chondroitin/Dermatan pattern
+                'GlcN' in glycan_data['archetype']['iupac'] and 'GlcA' in glycan_data['archetype']['iupac'] or    # Heparin/Heparan pattern
+                'GlcN' in glycan_data['archetype']['iupac'] and 'IdoA' in glycan_data['archetype']['iupac']       # Heparin/Heparan pattern
+            ):
                 entry = {
                     'glytoucan': glycan_data['archetype']['glytoucan'],
                     'ID': glycan_data['archetype']['ID'],
@@ -693,12 +714,80 @@ def search():
                 search_result.append(entry)
         return jsonify({'search_string': search_string, 'results': search_result})
     
-    # elif search_string == "Oligomannose":
-        
+    elif search_string == "Oligomannose":
+        for _, glycan_data in GDB_data.items():
+            if glycan_data['archetype']['iupac'] and (
+                # Check for N-glycan core structure
+                ('Man(b1-4)GlcNAc(b1-4)GlcNAc' in glycan_data['archetype']['iupac'] or
+                 'Man(b1-4)GlcNAc(b1-4)[Fuc(a1-6)]GlcNAc' in glycan_data['archetype']['iupac']) and
+                # Ensure it has mannose branches beyond the core
+                glycan_data['archetype']['iupac'].count('Man') >= 3 and
+                # Ensure no GlcNAc on mannose branches (which would make it hybrid/complex)
+                'GlcNAc(b1-2)Man' not in glycan_data['archetype']['iupac'] and
+                # No galactose or other sugars typically found in complex/hybrid glycans
+                'Gal(' not in glycan_data['archetype']['iupac'] and
+                'Neu5Ac(' not in glycan_data['archetype']['iupac'] and
+                'GalNAc(' not in glycan_data['archetype']['iupac'] and
+                'Xyl(' not in glycan_data['archetype']['iupac'] and
+                'GlcNAc(b1-4)]Man' not in glycan_data['archetype']['iupac'] and  # No bisecting GlcNAc
+                'GlcNAc(b1-4)Man' not in glycan_data['archetype']['iupac'] and  # No bisecting GlcNAc
+                # No bisecting GlcNAc
+                'GlcNAc(b1-6)[GlcNAc(b1-2)]Man' not in glycan_data['archetype']['iupac'] and  # No complex branching
+                'GlcNAc(b1-4)[GlcNAc(b1-2)]Man' not in glycan_data['archetype']['iupac'] and
+                'Fuc(' not in glycan_data['archetype']['iupac'].replace('Fuc(a1-6)]GlcNAc', '')  # Allow core fucose
+            ):
+                entry = {
+                    'glytoucan': glycan_data['archetype']['glytoucan'],
+                    'ID': glycan_data['archetype']['ID'],
+                    'mass': glycan_data['archetype']['mass']
+                }
+                search_result.append(entry)
+        return jsonify({'search_string': search_string, 'results': search_result})
 
-    # elif search_string == "Complex":
+    elif search_string == "Complex":
+        for _, glycan_data in GDB_data.items():
+            if glycan_data['archetype']['iupac'] and (
+                # Basic N-glycan core structure (with or without core fucose)
+                ('Man(b1-4)GlcNAc(b1-4)GlcNAc' in glycan_data['archetype']['iupac'] or
+                 'Man(b1-4)GlcNAc(b1-4)[Fuc(a1-6)]GlcNAc' in glycan_data['archetype']['iupac'] or
+                 'Man(b1-4)GlcNAc(b1-4)[Fuc(a1-3)]GlcNAc' in glycan_data['archetype']['iupac']) and
+                # Complex glycans have GlcNAc additions on mannose branches
+                'GlcNAc(b1-2)Man' in glycan_data['archetype']['iupac'] and
+                # Check if it has branches on both α1-3 and α1-6 mannose arms
+                # (Complex N-glycans typically have GlcNAc on both branches)
+                'GlcNAc(b1-2)Man(a1-6)' in glycan_data['archetype']['iupac'] and
+                'GlcNAc(b1-2)Man(a1-3)' in glycan_data['archetype']['iupac']
+            ):
+                entry = {
+                    'glytoucan': glycan_data['archetype']['glytoucan'],
+                    'ID': glycan_data['archetype']['ID'],
+                    'mass': glycan_data['archetype']['mass']
+                }
+                search_result.append(entry)
+        return jsonify({'search_string': search_string, 'results': search_result})
     
-    # elif search_string == "Hybrid":
+    elif search_string == "Hybrid":
+        for _, glycan_data in GDB_data.items():
+            if glycan_data['archetype']['iupac'] and (
+                # Basic N-glycan core (with or without core fucose)
+                ('Man(b1-4)GlcNAc(b1-4)GlcNAc' in glycan_data['archetype']['iupac'] or
+                 'Man(b1-4)GlcNAc(b1-4)[Fuc(a1-6)]GlcNAc' in glycan_data['archetype']['iupac'] or
+                 'Man(b1-4)GlcNAc(b1-4)[Fuc(a1-3)]GlcNAc' in glycan_data['archetype']['iupac']) and
+                # Hybrid glycans have GlcNAc on one branch (usually α1-3) but not the other
+                (('GlcNAc(b1-2)Man(a1-3)' in glycan_data['archetype']['iupac'] and 
+                  'GlcNAc(b1-2)Man(a1-6)' not in glycan_data['archetype']['iupac']) or
+                 ('GlcNAc(b1-2)Man(a1-6)' in glycan_data['archetype']['iupac'] and
+                  'GlcNAc(b1-2)Man(a1-3)' not in glycan_data['archetype']['iupac'])) and
+                # Also check for mannose residues beyond the core (characteristic of hybrid)
+                glycan_data['archetype']['iupac'].count('Man') > 3
+            ):
+                entry = {
+                    'glytoucan': glycan_data['archetype']['glytoucan'],
+                    'ID': glycan_data['archetype']['ID'],
+                    'mass': glycan_data['archetype']['mass']
+                }
+                search_result.append(entry)
+        return jsonify({'search_string': search_string, 'results': search_result})
 
     elif search_type == 'wurcs':
         WURCS = search_string.lower()
@@ -748,12 +837,64 @@ def search():
                     search_result = n2s_client.search(search_string)
                     # The search method already formats the results, sorting can be done here if needed
                     search_result.sort(key=lambda x: x['mass'] if x['mass'] is not None else float('inf'))
+                    return jsonify({'search_string': search_string, 'results': search_result})  
                 except Exception as e:
                     print(f"AI search failed: {e}")
                     return jsonify({'error': f'AI search failed: {str(e)}'}), 500
             else:
                  return jsonify({'error': 'AI search client not available. Check API key.'}), 503
     else:
+        # Fallback to default search if no specific type is provided
+        # For text search, use fuzzy matching across multiple glycan fields
+        search_terms = search_string.lower().split()
+        scored_results = []
+
+        for _, glycan_data in GDB_data.items():
+            # Prepare a combined text from all relevant fields for fuzzy matching
+            search_text = ""
+            
+            # Add archetype data
+            archetype = glycan_data.get('archetype', {})
+            if archetype.get('glytoucan'):
+                search_text += archetype.get('glytoucan', '') + " "
+            if archetype.get('iupac'):
+                search_text += archetype.get('iupac', '') + " "
+            if archetype.get('ID'):
+                search_text += archetype.get('ID', '') + " "
+            
+            # Add alpha/beta data for more comprehensive search
+            for anomeric in ['alpha', 'beta']:
+                if anomeric in glycan_data:
+                    if glycan_data[anomeric].get('glytoucan'):
+                        search_text += glycan_data[anomeric].get('glytoucan', '') + " "
+                    if glycan_data[anomeric].get('iupac'):
+                        search_text += glycan_data[anomeric].get('iupac', '') + " "
+            
+            search_text = search_text.lower()
+            
+            # Calculate match score - higher is better
+            score = 0
+            for term in search_terms:
+                # Use partial token matching for each search term
+                partial_score = fuzz.partial_ratio(term, search_text)
+                # Also check for exact substring matches
+                if term in search_text:
+                    partial_score += 30  # Bonus for exact substring match
+                score += partial_score
+            
+            # Only include results with reasonable match scores
+            if score > 50:  # Threshold can be adjusted
+                entry = {
+                    'glytoucan': archetype.get('glytoucan'),
+                    'ID': archetype.get('ID'),
+                    'mass': archetype.get('mass'),
+                    'score': score
+                }
+                scored_results.append((score, entry))
+
+        # Sort by score descending
+        scored_results.sort(key=lambda x: x[0], reverse=True)
+        search_result = [entry for _, entry in scored_results[:20]]  # Return top 20 results
 
         return jsonify({'search_string': search_string, 'results': search_result})
     
