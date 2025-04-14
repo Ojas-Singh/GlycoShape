@@ -27,6 +27,14 @@ CORS(app)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 CORS(app, supports_credentials=True)
 
+# Initialize the Natural2SPARQL client (consider doing this once outside the request if possible)
+# Ensure ANTHROPIC_API_KEY environment variable is set
+try:
+    n2s_client = natural2sparql.Natural2SPARQL()
+except ValueError as e:
+    print(f"Warning: Natural2SPARQL client could not be initialized: {e}")
+    n2s_client = None
+
 
 # load directory 
 GLYCOSHAPE_DIR = Path(config.glycoshape_database_dir)
@@ -734,9 +742,17 @@ def search():
         return jsonify({'search_string': search_string, 'results': search_result})  
     
     elif search_type == 'ai':
-        results = natural2sparql.search(search_string)
-        return jsonify({'search_string': search_string, 'results': search_result})  
-
+            if n2s_client:
+                try:
+                    # Use the search method from the initialized client
+                    search_result = n2s_client.search(search_string)
+                    # The search method already formats the results, sorting can be done here if needed
+                    search_result.sort(key=lambda x: x['mass'] if x['mass'] is not None else float('inf'))
+                except Exception as e:
+                    print(f"AI search failed: {e}")
+                    return jsonify({'error': f'AI search failed: {str(e)}'}), 500
+            else:
+                 return jsonify({'error': 'AI search client not available. Check API key.'}), 503
     else:
 
         return jsonify({'search_string': search_string, 'results': search_result})
