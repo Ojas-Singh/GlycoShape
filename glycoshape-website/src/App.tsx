@@ -13,7 +13,7 @@ import Tutorials from './components/Tutorials';
 import Search from './components/SearchTop';
 import API from './components/API';
 import Download from './components/Download';
-import ReGlyco from './components/ReGlyco';
+import ReGlyco from './components/ReGlyco2';
 import Ensemble from './components/ReGlycoEnsemble';
 import Swap from './components/Swap';
 import Elab from './components/eLab/Elab';
@@ -29,11 +29,13 @@ import Stats from './components/Stats';
 import View from './components/View';
 import JobView from './components/JobView';
 import UnderConstruction from './components/UnderConstruction';
+import Sparql from './components/Sparql';
+import Chat from './components/Chat';
 
 // First create a Layout component for the main layout
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Flex direction="column" minHeight="100vh">
-    <UnderConstruction />
+    {/* <UnderConstruction /> */}
     <Navbar />
     <CookieConsent />
     <ScrollToTopButton />
@@ -72,6 +74,14 @@ const App: React.FC = () => {
               </ViewLayout>
             } 
           />
+          <Route 
+            path="/chat" 
+            element={
+              <ViewLayout>
+                <Chat />
+              </ViewLayout>
+            } 
+          />
           
           {/* All other routes with main layout */}
           <Route
@@ -83,6 +93,7 @@ const App: React.FC = () => {
                   <Route path="/faq" element={<div><Search /><FAQ /></div>} />
                   <Route path="/tutorial" element={<div><Search /><Tutorials /></div>} />
                   <Route path="/api-docs" element={<div><Search /><API /></div>} />
+                  <Route path="/sparql-query" element={<div><Sparql /></div>} />
                   <Route path="/downloads" element={<div><Search /> <Download /></div>} />
                   <Route path="/reglyco" element={<div><ReGlyco /></div>} />
                   <Route path="/search" element={<SearchPage />} />

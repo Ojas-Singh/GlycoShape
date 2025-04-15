@@ -176,9 +176,9 @@ const Bar: React.FC = () => {
             userSelect="none"
           >
             <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
-            &nbsp;  &nbsp; 
+            {/* &nbsp;  &nbsp; 
               Motif search
-              <Switch paddingLeft='2'colorScheme='teal' size='lg' />
+              <Switch paddingLeft='2'colorScheme='teal' size='lg' /> */}
           </Text>
           </Hide>
           <Button position={"absolute"} transform="translateY(10%)" alignContent={"center"} right={"1rem"} type="submit"

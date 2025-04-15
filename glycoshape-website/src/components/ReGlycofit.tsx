@@ -1487,14 +1487,14 @@ const ReGlyco = () => {
                 <Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
                   Currently supported function includes :<br />
                   N-GlcNAcylation<br />
-                  {/* O-GalNAcylation<br />
+                  O-GalNAcylation<br />
                   O-GlcNAcylation<br />
                   O-Fucosylation<br />
                   O-Mannosylation<br />
                   O-Glucosylation<br />
                   O-Xylosylation<br />
                   C-Mannosylation<br />
-                  O-Arabinosylation */}
+                  {/* O-Arabinosylation */}
                 </Text>
               </Box>
             </SimpleGrid>

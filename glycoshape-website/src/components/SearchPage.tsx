@@ -295,9 +295,9 @@ const SearchPage = () => {
               userSelect="none"
             >
               <Kbd>ctrl</Kbd> + <Kbd>K</Kbd>
-              &nbsp;  &nbsp; 
+              {/* &nbsp;  &nbsp; 
               Motif search
-              <Switch paddingLeft='2'colorScheme='teal' size='lg' />
+              <Switch paddingLeft='2'colorScheme='teal' size='lg' /> */}
 
             </Text>
           </Flex>

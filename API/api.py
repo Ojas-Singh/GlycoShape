@@ -824,7 +824,8 @@ def search():
                 entry = {
                     'glytoucan': glycan_data['archetype']['glytoucan'],
                     'ID': glycan_data['archetype']['ID'],
-                    'mass': glycan_data['archetype']['mass']
+                    'mass': glycan_data['archetype']['mass'],
+                    'iupac': glycan_data['archetype']['iupac']
                 }
                 search_result.append(entry)
         search_result.sort(key=lambda x: x['mass'])

@@ -305,8 +305,8 @@ import React, {
     const [output_sasa, setOutputSasa] = useState("");
     const [ensembleSize, setensembleSize] = useState<number>(50);
     const [effortLevel, setEffortLevel] = useState<number>(5);
-    const [checkSteric, setCheckSteric] = useState<boolean>(false);
-    const [calculateSASA, setCalculateSASA] = useState<boolean>(true);
+    const [checkSteric, setCheckSteric] = useState<boolean>(true);
+    const [calculateSASA, setCalculateSASA] = useState<boolean>(false);
     const [outputFormat, setOutputFormat] = useState<string>("PDB");
     const [selectedGlycans, setSelectedGlycans] = useState<{ [key: string]: string }>({});
     const [jobId, setJobId] = useState<string>("");
@@ -515,7 +515,7 @@ import React, {
         selectedGlycans: selectedGlycans,
         filename: protData?.filename,
         customPDB: isUpload,
-        jobType: "ensemble_compatible",
+        jobType: "optimization",
         ensembleSize: ensembleSize,
         effortLevel: effortLevel,
         checkSteric: checkSteric,
@@ -594,8 +594,8 @@ import React, {
             fontSize={{ base: "4xl", sm: "4xl", md: "5xl", lg: "5xl", xl: "5xl" }}
             marginBottom="0.2em"
           >
-            <Link fontWeight="bold" fontFamily={'heading'} href="/ensemble" marginRight="20px">
-              Re-Glyco Ensemble
+            <Link fontWeight="bold" fontFamily={'heading'} href="/reglyco" marginRight="20px">
+              Re-Glyco
             </Link>
           </Text>
   
@@ -1266,22 +1266,22 @@ import React, {
                     align={"center"}
                     marginLeft={'2rem'}
                   >
-                    Most Accurate Glycoprotein Builder
+                    Under Construction!
                   </Text>
-                  <Text fontFamily={'texts'} color='#B195A2' paddingTop="10rem" padding={"0rem"} justifySelf="left" align={'left'} fontSize={'lg'}>
+                  {/* <Text fontFamily={'texts'} color='#B195A2' paddingTop="10rem" padding={"0rem"} justifySelf="left" align={'left'} fontSize={'lg'}>
                     Re-Glyco Ensemble is a tool we designed to accurately restores missing glycans, aligning them within torsions from privateer and glycan conformations from GlycoShape.
-                  </Text>
+                  </Text> */}
                   <Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
                     Currently supported function includes :<br />
-                    N-GlcNAcylation<br />
-                    O-GalNAcylation<br />
+                    {/* N-GlcNAcylation<br /> */}
+                    {/* O-GalNAcylation<br />
                     O-GlcNAcylation<br />
                     O-Fucosylation<br />
                     O-Mannosylation<br />
                     O-Glucosylation<br />
                     O-Xylosylation<br />
                     C-Mannosylation<br />
-                    {/* O-Arabinosylation */}
+                    O-Arabinosylation */}
                   </Text>
                 </Box>
               </SimpleGrid>

@@ -173,13 +173,15 @@ const Navbar: React.FC = () => {
           
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/downloads" marginRight="20px">Downloads</Link>
           <Box alignContent={"center"} height='40px'>
-  <Divider orientation='vertical' />
+  {/* <Divider orientation='vertical' /> */}
           </Box>
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/api-docs" marginRight="20px" marginLeft={"20px"}>API</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/api-docs" marginRight="20px" >API</Link>
+          
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/sparql-query" marginRight="20px" >SPARQL</Link>
           <Box alignContent={"center"} height='40px'>
-  <Divider orientation='vertical' />
+  {/* <Divider orientation='vertical' /> */}
           </Box> 
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/faq" marginRight="20px" marginLeft={"20px"}>FAQ</Link> 
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/faq" marginRight="20px" >FAQ</Link> 
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/tutorial" marginRight="20px" >Tutorials</Link> 
 
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/elab" marginRight="20px">eLab</Link>
