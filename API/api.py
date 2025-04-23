@@ -175,10 +175,12 @@ def is_exist(identifier):
         if len(identifier) > 5:
             base_identifier = identifier[:-5]
             
+        
             # Check raw data directory
             if GLYCOSHAPE_RAWDATA_DIR.is_dir():
                 for folder in GLYCOSHAPE_RAWDATA_DIR.iterdir():
-                    if folder.is_dir() and len(folder.name) >= len(base_identifier) + 5:
+                    if folder.is_dir() and len(folder.name) == len(identifier):
+                        # Check if the folder matches the base and only differs in the last 5 chars
                         if folder.name.startswith(base_identifier) and folder.name != identifier:
                             return jsonify({
                                 'exists': True,
@@ -188,7 +190,8 @@ def is_exist(identifier):
             # Check upload directory
             if GLYCOSHAPE_UPLOAD_DIR.is_dir():
                 for folder in GLYCOSHAPE_UPLOAD_DIR.iterdir():
-                    if folder.is_dir() and len(folder.name) >= len(base_identifier) + 5:
+                    if folder.is_dir() and len(folder.name) == len(identifier):
+                        # Check if the folder matches the base and only differs in the last 5 chars
                         if folder.name.startswith(base_identifier) and folder.name != identifier:
                             return jsonify({
                                 'exists': True,
