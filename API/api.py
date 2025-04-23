@@ -173,15 +173,29 @@ def is_exist(identifier):
             return jsonify({'exists': True, 'reason': 'Folder found'})
         # 1b. Check if a folder exists matching the identifier minus the last 5 characters
         if len(identifier) > 5:
-            identifier_base = identifier[:-5]
-            folder_base_path = GLYCOSHAPE_RAWDATA_DIR / identifier_base
-            folder2_base_path = GLYCOSHAPE_UPLOAD_DIR / identifier_base
-            if folder_base_path.is_dir() or folder2_base_path.is_dir():
-             return jsonify({'exists': True, 'reason': 'Base folder found (ignoring last 5 chars)'})
+            base_identifier = identifier[:-5]
+            
+            # Check raw data directory
+            if GLYCOSHAPE_RAWDATA_DIR.is_dir():
+                for folder in GLYCOSHAPE_RAWDATA_DIR.iterdir():
+                    if folder.is_dir() and folder.name.startswith(base_identifier):
+                        return jsonify({
+                            'exists': True,
+                            'reason': f'Similar folder found in raw data: {folder.name}'
+                        })
+            
+            # Check upload directory
+            if GLYCOSHAPE_UPLOAD_DIR.is_dir():
+                for folder in GLYCOSHAPE_UPLOAD_DIR.iterdir():
+                    if folder.is_dir() and folder.name.startswith(base_identifier):
+                        return jsonify({
+                            'exists': True,
+                            'reason': f'Similar folder found in uploads: {folder.name}'
+                        })
 
-        # 2. Attempt conversions and generate potential WURCS variations
+        # 2. Prepare for conversions and WURCS checks
         identifier_lower = identifier.lower()
-        converted_wurcs = None # Stores WURCS string with original casing if converted
+        converted_wurcs = None        # WURCS string if conversion succeeds
         conversion_type = None
         input_is_wurcs = identifier.startswith('WURCS=')
         input_wurcs_lower = identifier_lower if input_is_wurcs else None
