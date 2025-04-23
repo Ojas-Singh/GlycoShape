@@ -157,34 +157,130 @@ def get_available():
     glytoucan_list = [x for x in glytoucan_list if x is not None]
     return jsonify(glytoucan_list)
 
-@app.route('/api/exist/<glycam>', methods=['GET'])
-def is_exist(glycam):
-    
-    folder_path = os.path.join(GLYCOSHAPE_RAWDATA_DIR, glycam)
-    folder2_path = os.path.join(GLYCOSHAPE_UPLOAD_DIR, glycam)
-    folder_exists = os.path.isdir(folder_path) or os.path.isdir(folder2_path)
+@app.route('/api/exist/<identifier>', methods=['GET'])
+def is_exist(identifier):
+    """
+    Checks if a glycan identifier exists either as a raw/uploaded folder
+    or within the processed GlycoShape database (GDB_data).
+    Accepts GLYCAM name, GlyTouCan ID, IUPAC, or WURCS.
+    Includes checks via IUPAC/GLYCAM to WURCS conversion and alpha/beta WURCS generation.
+    """
+    try:
+        # 1. Check if the identifier corresponds to an existing raw data or upload folder
+        folder_path = GLYCOSHAPE_RAWDATA_DIR / identifier
+        folder2_path = GLYCOSHAPE_UPLOAD_DIR / identifier
+        if folder_path.is_dir() or folder2_path.is_dir():
+            return jsonify({'exists': True, 'reason': 'Folder found'})
 
-    if folder_exists:
-        return jsonify({'exists': folder_exists})
-    else :
-        glycam_name = glycam[:-5]
-        wurcs =  name.glycam2wurcs(glycam_name)
-        alpha, beta = name.wurcs2alpha_beta(wurcs)
-        exist = False
-        for glycan_data in GDB_data.values():
-            if glycan_data['archetype']['wurcs'] == wurcs :
-                print(glycan_data['archetype']['glytoucan'])
-                exist = True
-                break
-            elif glycan_data['alpha']['wurcs'] == alpha :
-                print(glycan_data['archetype']['glytoucan'])
-                exist = True
-                break
-            elif glycan_data['beta']['wurcs'] == beta :
-                print(glycan_data['archetype']['glytoucan'])
-                exist = True
-                break
-        return jsonify({'exists': exist})
+        # 2. Attempt conversions and generate potential WURCS variations
+        identifier_lower = identifier.lower()
+        converted_wurcs = None # Stores WURCS string with original casing if converted
+        conversion_type = None
+        input_is_wurcs = identifier.startswith('WURCS=')
+        input_wurcs_lower = identifier_lower if input_is_wurcs else None
+        generated_alpha_wurcs = None # Stores lowercase generated alpha WURCS
+        generated_beta_wurcs = None  # Stores lowercase generated beta WURCS
+
+        # Try IUPAC to WURCS conversion
+        if "(" in identifier: # Basic heuristic for IUPAC
+            try:
+                # name.iupac2wurcs_glytoucan returns (glytoucan, wurcs)
+                wurcs_tuple = name.iupac2wurcs_glytoucan(identifier)
+                if wurcs_tuple and wurcs_tuple[1]: # Check if WURCS string exists
+                    converted_wurcs = wurcs_tuple[1] # Keep original case for potential processing
+                    conversion_type = "IUPAC"
+                    print(f"Converted IUPAC '{identifier}' to WURCS: {converted_wurcs}") # Debugging
+            except Exception as e:
+                # Log conversion error but continue checking other methods
+                print(f"IUPAC to WURCS conversion failed for '{identifier}': {e}")
+
+        # Try GLYCAM to WURCS conversion (if not already identified as IUPAC->WURCS)
+        # Avoid converting if it looks like IUPAC or WURCS or contains spaces (likely not GLYCAM)
+        if not converted_wurcs and not input_is_wurcs and "(" not in identifier and " " not in identifier:
+             try:
+                # Assume identifier might be a GLYCAM name, convert to IUPAC first
+                iupac_from_glycam = name.glycam2iupac(identifier)
+                if iupac_from_glycam:
+                    wurcs_tuple = name.iupac2wurcs_glytoucan(iupac_from_glycam)
+                    if wurcs_tuple and wurcs_tuple[1]:
+                        converted_wurcs = wurcs_tuple[1] # Keep original case
+                        conversion_type = "GLYCAM"
+                        print(f"Converted GLYCAM '{identifier}' to WURCS: {converted_wurcs}") # Debugging
+             except Exception as e:
+                 # Log conversion error but continue checking other methods
+                print(f"GLYCAM to WURCS conversion failed for '{identifier}': {e}")
+
+        # Determine the WURCS string to use for alpha/beta generation (prefer input if it was WURCS)
+        wurcs_to_process_for_ab = identifier if input_is_wurcs else converted_wurcs
+
+        if wurcs_to_process_for_ab:
+            try:
+                # Call the function with the determined WURCS string (original case)
+                alpha_w, beta_w = name.wurcs2alpha_beta(wurcs_to_process_for_ab)
+                # Store results in lowercase for comparison
+                generated_alpha_wurcs = alpha_w.lower() if alpha_w else None
+                generated_beta_wurcs = beta_w.lower() if beta_w else None
+                print(f"Generated alpha/beta WURCS from '{wurcs_to_process_for_ab}': alpha='{generated_alpha_wurcs}', beta='{generated_beta_wurcs}'") # Debugging
+            except Exception as e:
+                print(f"WURCS to alpha/beta conversion failed for '{wurcs_to_process_for_ab}': {e}")
+
+        # Prepare lowercase version of converted WURCS for comparison
+        converted_wurcs_lower = converted_wurcs.lower() if converted_wurcs else None
+
+        # 3. Check identifiers against the processed database (GDB_data)
+        for glycan_id, glycan_data in GDB_data.items():
+            archetype = glycan_data.get('archetype', {})
+            alpha = glycan_data.get('alpha', {})
+            beta = glycan_data.get('beta', {})
+
+            # --- Direct Identifier Checks ---
+            # GlyTouCan (case-sensitive)
+            if archetype.get('glytoucan') == identifier: return jsonify({'exists': True, 'reason': 'GlyTouCan Match (Archetype)', 'glytoucan': identifier, 'ID': archetype.get('ID')})
+            if alpha.get('glytoucan') == identifier: return jsonify({'exists': True, 'reason': 'GlyTouCan Match (Alpha)', 'glytoucan': identifier, 'ID': archetype.get('ID')})
+            if beta.get('glytoucan') == identifier: return jsonify({'exists': True, 'reason': 'GlyTouCan Match (Beta)', 'glytoucan': identifier, 'ID': archetype.get('ID')})
+
+            # IUPAC (case-insensitive)
+            if archetype.get('iupac') and archetype.get('iupac').lower() == identifier_lower: return jsonify({'exists': True, 'reason': 'IUPAC Match (Archetype)', 'glytoucan': archetype.get('glytoucan'), 'ID': archetype.get('ID')})
+            if alpha.get('iupac') and alpha.get('iupac').lower() == identifier_lower: return jsonify({'exists': True, 'reason': 'IUPAC Match (Alpha)', 'glytoucan': alpha.get('glytoucan'), 'ID': archetype.get('ID')})
+            if beta.get('iupac') and beta.get('iupac').lower() == identifier_lower: return jsonify({'exists': True, 'reason': 'IUPAC Match (Beta)', 'glytoucan': beta.get('glytoucan'), 'ID': archetype.get('ID')})
+
+            # GLYCAM (case-insensitive) - Check archetype only as GLYCAM name usually refers to the base structure
+            if archetype.get('glycam') and archetype.get('glycam').lower() == identifier_lower: return jsonify({'exists': True, 'reason': 'GLYCAM Match (Archetype)', 'glytoucan': archetype.get('glytoucan'), 'ID': archetype.get('ID')})
+
+            # --- WURCS Checks (case-insensitive) ---
+            # Get lowercase WURCS from DB, handling missing keys/values
+            db_archetype_wurcs = archetype.get('wurcs', '').lower() if archetype.get('wurcs') else None
+            db_alpha_wurcs = alpha.get('wurcs', '').lower() if alpha.get('wurcs') else None
+            db_beta_wurcs = beta.get('wurcs', '').lower() if beta.get('wurcs') else None
+
+            # Check input WURCS (if identifier was WURCS)
+            if input_wurcs_lower:
+                if db_archetype_wurcs == input_wurcs_lower: return jsonify({'exists': True, 'reason': 'Input WURCS Match (Archetype)', 'glytoucan': archetype.get('glytoucan'), 'ID': archetype.get('ID')})
+                if db_alpha_wurcs == input_wurcs_lower: return jsonify({'exists': True, 'reason': 'Input WURCS Match (Alpha)', 'glytoucan': alpha.get('glytoucan'), 'ID': archetype.get('ID')})
+                if db_beta_wurcs == input_wurcs_lower: return jsonify({'exists': True, 'reason': 'Input WURCS Match (Beta)', 'glytoucan': beta.get('glytoucan'), 'ID': archetype.get('ID')})
+
+            # Check converted WURCS (lowercase comparison)
+            if converted_wurcs_lower:
+                if db_archetype_wurcs == converted_wurcs_lower: return jsonify({'exists': True, 'reason': f'Converted {conversion_type} to WURCS Match (Archetype)', 'glytoucan': archetype.get('glytoucan'), 'ID': archetype.get('ID')})
+                if db_alpha_wurcs == converted_wurcs_lower: return jsonify({'exists': True, 'reason': f'Converted {conversion_type} to WURCS Match (Alpha)', 'glytoucan': alpha.get('glytoucan'), 'ID': archetype.get('ID')})
+                if db_beta_wurcs == converted_wurcs_lower: return jsonify({'exists': True, 'reason': f'Converted {conversion_type} to WURCS Match (Beta)', 'glytoucan': beta.get('glytoucan'), 'ID': archetype.get('ID')})
+
+            # Check generated alpha WURCS against DB alpha WURCS
+            if generated_alpha_wurcs and db_alpha_wurcs == generated_alpha_wurcs:
+                 return jsonify({'exists': True, 'reason': f'Generated Alpha WURCS Match (Alpha)', 'glytoucan': alpha.get('glytoucan'), 'ID': archetype.get('ID')})
+
+            # Check generated beta WURCS against DB beta WURCS
+            if generated_beta_wurcs and db_beta_wurcs == generated_beta_wurcs:
+                 return jsonify({'exists': True, 'reason': f'Generated Beta WURCS Match (Beta)', 'glytoucan': beta.get('glytoucan'), 'ID': archetype.get('ID')})
+
+        # 4. If not found after all checks
+        return jsonify({'exists': False, 'reason': 'Identifier not found'})
+
+    except Exception as e:
+        print(f"Error in /api/exist/{identifier}: {e}")
+        # import traceback # Consider adding for detailed debugging
+        # traceback.print_exc()
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
 @app.route('/api/glycan/<identifier>', methods=['GET'])
