@@ -178,20 +178,22 @@ def is_exist(identifier):
             # Check raw data directory
             if GLYCOSHAPE_RAWDATA_DIR.is_dir():
                 for folder in GLYCOSHAPE_RAWDATA_DIR.iterdir():
-                    if folder.is_dir() and folder.name.startswith(base_identifier):
-                        return jsonify({
-                            'exists': True,
-                            'reason': f'Similar folder found in raw data: {folder.name}'
-                        })
+                    if folder.is_dir() and len(folder.name) >= len(base_identifier) + 5:
+                        if folder.name.startswith(base_identifier) and folder.name != identifier:
+                            return jsonify({
+                                'exists': True,
+                                'reason': f'Similar folder found in raw data: {folder.name}'
+                            })
             
             # Check upload directory
             if GLYCOSHAPE_UPLOAD_DIR.is_dir():
                 for folder in GLYCOSHAPE_UPLOAD_DIR.iterdir():
-                    if folder.is_dir() and folder.name.startswith(base_identifier):
-                        return jsonify({
-                            'exists': True,
-                            'reason': f'Similar folder found in uploads: {folder.name}'
-                        })
+                    if folder.is_dir() and len(folder.name) >= len(base_identifier) + 5:
+                        if folder.name.startswith(base_identifier) and folder.name != identifier:
+                            return jsonify({
+                                'exists': True,
+                                'reason': f'Similar folder found in uploads: {folder.name}'
+                            })
 
         # 2. Prepare for conversions and WURCS checks
         identifier_lower = identifier.lower()
