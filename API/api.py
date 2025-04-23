@@ -171,6 +171,13 @@ def is_exist(identifier):
         folder2_path = GLYCOSHAPE_UPLOAD_DIR / identifier
         if folder_path.is_dir() or folder2_path.is_dir():
             return jsonify({'exists': True, 'reason': 'Folder found'})
+        # 1b. Check if a folder exists matching the identifier minus the last 5 characters
+        if len(identifier) > 5:
+            identifier_base = identifier[:-5]
+            folder_base_path = GLYCOSHAPE_RAWDATA_DIR / identifier_base
+            folder2_base_path = GLYCOSHAPE_UPLOAD_DIR / identifier_base
+            if folder_base_path.is_dir() or folder2_base_path.is_dir():
+             return jsonify({'exists': True, 'reason': 'Base folder found (ignoring last 5 chars)'})
 
         # 2. Attempt conversions and generate potential WURCS variations
         identifier_lower = identifier.lower()
