@@ -304,6 +304,7 @@ import React, {
 
     const [output_sasa, setOutputSasa] = useState("");
     const [ensembleSize, setensembleSize] = useState<number>(50);
+    const [wiggle, setWiggle] = useState<number>(2);
     const [effortLevel, setEffortLevel] = useState<number>(5);
     const [checkSteric, setCheckSteric] = useState<boolean>(false);
     const [calculateSASA, setCalculateSASA] = useState<boolean>(true);
@@ -515,8 +516,9 @@ import React, {
         selectedGlycans: selectedGlycans,
         filename: protData?.filename,
         customPDB: isUpload,
-        jobType: "ensemble_compatible",
+        jobType: "ensemble",
         ensembleSize: ensembleSize,
+        wiggle: wiggle,
         effortLevel: effortLevel,
         checkSteric: checkSteric,
         calculateSASA: calculateSASA,
@@ -909,7 +911,7 @@ import React, {
                           <FormControl>
                             <FormLabel fontWeight="medium" color="#B07095" mb={2}>
                               <Tooltip label="Output ensemble size. Higher values may capture more conformational space but increase computational cost.">
-                              Ensemble Size: {ensembleSize}
+                              Ensemble Size: {ensembleSize} conformations
                               </Tooltip>
                             </FormLabel>
                             <Slider
@@ -929,6 +931,32 @@ import React, {
                             </Slider>
                             {/* <FormHelperText >Adjust ray size for glycan ensemble generation</FormHelperText> */}
                           </FormControl>
+
+                            
+                            {/* Wiggle Slider */}
+                            <FormControl>
+                              <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                                <Tooltip label="Controls the amount of random movement applied to the glycan during modeling. Higher values produce more diverse conformations but clashes within the glycan may occur.">
+                                  Wiggle: {wiggle}°
+                                </Tooltip>
+                              </FormLabel>
+                              <Slider
+                                aria-label="Wiggle"
+                                defaultValue={2}
+                                value={wiggle}
+                                min={0}
+                                max={10}
+                                step={1}
+                                colorScheme="teal"
+                                onChange={(val) => setWiggle(val)}
+                              >
+                                <SliderTrack>
+                                  <SliderFilledTrack />
+                                </SliderTrack>
+                                <SliderThumb />
+                              </Slider>
+                              {/* <FormHelperText fontSize={'xs'}>0 = No wiggle, 10 = Maximum wiggle</FormHelperText> */}
+                            </FormControl>
 
                           {/* Effort Level Slider */}
                           <FormControl>
