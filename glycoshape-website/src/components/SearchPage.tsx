@@ -313,19 +313,25 @@ const SearchPage = () => {
               </Highlight>
 
               &nbsp;
-              <Button
+                <Button
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={(e) => setSearchString('N-Glycans')}
-              >
+                onClick={(e) => {
+                  setSearchString('N-Glycans');
+                  setCurrentPage(1);
+                }}
+                >
                 N-Glycans
-              </Button>&nbsp;
+                </Button>&nbsp;
               <Button
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={(e) => setSearchString('O-Glycans')}
+                onClick={(e) => {
+                  setSearchString('O-Glycans')
+                  setCurrentPage(1);
+                }}
               >
                 O-Glycans
               </Button>&nbsp;
@@ -333,7 +339,10 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={(e) => setSearchString('GAGs')}
+                onClick={(e) => {
+                  setSearchString('GAGs');
+                  setCurrentPage(1);
+                }}
               >
                 GAGs
               </Button>&nbsp;
@@ -341,7 +350,10 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={(e) => setSearchString('Oligomannose')}
+                onClick={(e) => {
+                  setSearchString('Oligomannose');
+                  setCurrentPage(1);
+                }}
               >
                 Oligomannose
               </Button>&nbsp;
@@ -349,7 +361,10 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={(e) => setSearchString('Complex')}
+                onClick={(e) => {
+                  setSearchString('Complex');
+                  setCurrentPage(1);
+                }}
               >
                 Complex
               </Button>&nbsp;
@@ -357,7 +372,10 @@ const SearchPage = () => {
                 backgroundColor="#7CC9A9"
                 _hover={{ backgroundColor: "#51BF9D" }}
                 color="white"
-                onClick={(e) => setSearchString('Hybrid')}
+                onClick={(e) => {
+                  setSearchString('Hybrid');
+                  setCurrentPage(1);
+                }}
               >
                 Hybrid
               </Button>&nbsp;

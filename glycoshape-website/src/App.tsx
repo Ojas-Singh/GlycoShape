@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { ChakraProvider, CSSReset } from '@chakra-ui/react';
 import { Flex } from "@chakra-ui/react";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import 'katex/dist/katex.min.css';
 
 // Importing your components
 import Navbar from './components/Navbar';
@@ -31,6 +32,7 @@ import JobView from './components/JobView';
 import UnderConstruction from './components/UnderConstruction';
 import Sparql from './components/Sparql';
 import Chat from './components/Chat';
+import Health from './components/DatabaseHealth';
 
 // First create a Layout component for the main layout
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -108,6 +110,7 @@ const App: React.FC = () => {
                   <Route path="/ensemble" element={<div><Ensemble /></div>} />
                   <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
                   <Route path="/stats" element={<div><Stats /></div>} />
+                  <Route path="/health" element={<div><Health /></div>} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </MainLayout>

@@ -174,7 +174,7 @@ const MolstarViewer: React.FC<MolstarViewerProps> = ({
         <div
             className="molstar-container"
             style={{
-                zIndex: isExpanded ? 100 : 'auto',
+                zIndex: 100,
             }}
         >
             <div className="molstar-plugin" ref={viewerRef} />

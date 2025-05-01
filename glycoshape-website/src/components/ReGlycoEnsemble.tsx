@@ -35,7 +35,6 @@ import React, {
     AccordionItem,
     AccordionPanel,
     FormControl,
-    FormHelperText,
     FormLabel,
     Switch,
     Tooltip,
@@ -43,9 +42,7 @@ import React, {
   import { AttachmentIcon, AddIcon } from '@chakra-ui/icons'
   import { Kbd } from '@chakra-ui/react';
   import bg from './assets/gly.png';
-  import fit from './assets/fit.png'
   import Select, { ActionMeta, OnChangeValue } from 'react-select';
-  import LiveProgress from './LiveProgress';
   
   
   // ───────────────────────────────────────────────
@@ -327,8 +324,8 @@ import React, {
     const [value, setValue] = useState<readonly ResidueOption[]>([]);
     const steps = [
       { title: 'Upload Structure', description: 'AF, PDB or upload your own' },
-      { title: 'Select Glycans', description: 'and upload SAXS/density file' },
-      { title: 'Download', description: 'Press process and download Re-Glyco-Fit structure!' },
+      { title: 'Select Glycans', description: 'Choose your N- or O-glycan' },
+      { title: 'Download', description: 'Press process and download Re-Glyco structure!' },
     ];
     const { activeStep, setActiveStep } = useSteps({
       index: 0,
@@ -1278,7 +1275,6 @@ import React, {
                 paddingTop={'1rem'}
                 paddingBottom={'2rem'}
               >
-                {/* <Image src={fit} alt="Glycoprotein" width="90%" /> */}
 
                 <video width={'50%'} autoPlay loop muted id="bgVideo" >
                 <source src="/gamma_s.mp4" type="video/mp4" />

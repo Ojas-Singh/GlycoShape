@@ -6,7 +6,7 @@ import { Box, Flex, Text,Stack, Divider, Link } from '@chakra-ui/react';
 
 const Cite = () => {
   return (
-    <Flex width={{ base: "100%", sm: "100%", md: "100%", lg: "100%", xl: "80%" }}
+    <Flex width={{ base: "100%", sm: "100%", md: "100%", lg: "100%", xl: "100%" }}
     margin="auto">
     <Box p={10} borderWidth="0px" borderRadius="lg" overflow="hidden"
     >

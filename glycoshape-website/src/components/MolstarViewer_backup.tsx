@@ -95,7 +95,7 @@ const MolstarViewer: React.FC<MolstarViewerProps> = ({
                         layout: {
                             initial: {
                                 isExpanded,
-                                showControls: true,
+                                showControls: false,
                             },
                         },
                         components: {

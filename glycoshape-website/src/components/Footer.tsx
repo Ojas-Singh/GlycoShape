@@ -3,7 +3,8 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Box, Flex, Text, Link, Image, VStack, HStack, Divider} from "@chakra-ui/react";
 import logo from './assets/logo_white.png';
 import logo_sfi from './assets/logo_sfi.jpg';
-import logo_oracle from './assets/logo_oracle.png';
+import logo_research_ireland from './assets/Research_Ireland_RGB_logo_white.png';
+import logo_oracle from './assets/Oracle_Logo.svg.png';
 import { SocialIcon } from 'react-social-icons'
 import 'react-social-icons/vimeo'
 
@@ -41,9 +42,13 @@ const Footer: React.FC = () => {
           <Text color="white" fontWeight="bold">Tools</Text>
           <Divider />
           <Link as={RouterLink} color="white" to="/reglyco">Re-Glyco</Link>
+          <Link as={RouterLink} color="white" to="/ensemble">Re-Glyco Ensemble</Link>
           
           {isDevelopment ? (
+            <>
         <Link as={RouterLink} color="white" to="/fit">Re-Glyco Fit</Link>
+        <Link as={RouterLink} color="white" to="/chat">GlycoShape Copilot</Link>
+        </>
       ) : (
         <></>
       )}
@@ -78,8 +83,8 @@ const Footer: React.FC = () => {
           </HStack>
           <Text fontWeight="Medium" color={'white'}>Main Funding by:
           <HStack direction='row'>
-            <Link href='https://www.sfi.ie/'>
-          <Image src={logo_sfi} alt="SFI Logo" height="60px" marginBottom="0em" /></Link><Link href='https://www.oracle.com/ie/research/'><Image src={logo_oracle} alt="Oracle Logo" height="60px" marginBottom="0em" /></Link> 
+            <Link href='https://www.researchireland.ie'>
+          <Image src={logo_research_ireland} alt="Research Ireland Logo" height="50px" marginBottom="0em" /></Link><Link href='https://www.oracle.com/ie/research/'><Image src={logo_oracle} alt="Oracle Logo" height="60px" marginBottom="0em" /></Link> 
           
           </HStack> 
           </Text>

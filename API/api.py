@@ -1043,7 +1043,18 @@ def get_glycan_for_reglyco(identifier):
     is_iupac = False
 
     # First check if it's an IUPAC identifier
+    # Detect IUPAC: either contains parentheses (typical for IUPAC) or is a single monosaccharide name (e.g., GlcNAc, Man, Gal, etc.)
+    iupac_like = False
+    # List of common monosaccharide names (expand as needed)
+    monosaccharides = {
+        'GlcNAc', 'GalNAc', 'Man', 'Gal', 'Glc', 'Fuc', 'Xyl', 'Neu5Ac', 'Neu5Gc', 'IdoA', 'GlcA', 'GalA', 'Kdn', 'Rha', 'Ara', 'Fru', 'All', 'Alt', 'Tal', 'Qui', 'Api', 'Bac', 'Col', 'Dha', 'Fru', 'MurNAc', 'MurNGc', 'Par', 'Pse', 'Tyv', 'Abe', 'Leg', 'Lep', 'Ery', 'Rib', 'Lyx', 'Sor', 'Tag', 'Sed', 'Pent', 'Hex', 'Hept', 'Oct', 'Non', 'Dec'
+    }
     if "(" in identifier:
+        iupac_like = True
+    elif identifier in monosaccharides:
+        iupac_like = True
+
+    if iupac_like:
         is_iupac = True
         # Try to find the glycan based on IUPAC
         for glycan_id, glycan_data in GDB_data.items():
