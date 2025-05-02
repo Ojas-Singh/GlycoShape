@@ -55,6 +55,8 @@ import Scanner from './assets/Scanner.png';
 import Setting from './assets/setting.png';
 import Select, { ActionMeta, OnChangeValue } from 'react-select';
 
+import { useNavigate } from 'react-router-dom'; // <-- Add this
+
 
 // ───────────────────────────────────────────────
 // Interfaces
@@ -348,10 +350,13 @@ const ReGlyco = () => {
     }
   }, []);
 
-  const [ensembleSize, setensembleSize] = useState<number>(50);
-  const [effortLevel, setEffortLevel] = useState<number>(5);
-  const [checkSteric, setCheckSteric] = useState<boolean>(true);
-  const [calculateSASA, setCalculateSASA] = useState<boolean>(false);
+  const [advancedMode, setAdvancedMode] = useState<'fancy' | 'lightweight'>('fancy');
+
+
+  const [populationSize, setpopulationSize] = useState<number>(128);
+  const [maxGenerations, setmaxGenerations] = useState<number>(4);
+  const [wiggleAngle, setwiggleAngle] = useState<number>(5);
+  const [wiggleAttempts, setwiggleAttempts] = useState<number>(40);
   const [outputFormat, setOutputFormat] = useState<string>("PDB");
   const [selectedGlycans, setSelectedGlycans] = useState<{ [key: string]: string }>({});
   const [jobId, setJobId] = useState<string>("");
@@ -483,6 +488,8 @@ const ReGlyco = () => {
       // --- End Populate UniProt Defaults ---
 
       setActiveStep(1);
+      setScanResults(null);
+      setScanCompleted(false);
     } catch (error) {
       if (error instanceof Error) {
         toast({
@@ -537,6 +544,9 @@ const ReGlyco = () => {
             output: '',
             results: []
           });
+          setScanResults(null);
+          setScanCompleted(false);
+          setLastSuccessfulSelections(null);
         } else {
           console.error("Failed to upload file.");
         }
@@ -565,6 +575,7 @@ const ReGlyco = () => {
 
   // Add state for job results
   const [jobResults, setJobResults] = useState<ResultItem[] | null>(null);
+  const [scanResults, setScanResults] = useState<ResultItem[] | null>(null);
   const [scanCompleted, setScanCompleted] = useState<boolean>(false);
   const [scanAddGlycan, setScanAddGlycan] = useState<string | null>(null); // Store selected glycan ID (e.g., G00028MO)
   const [scanSearchTerm, setScanSearchTerm] = useState(''); // State for scan tab search
@@ -590,13 +601,14 @@ const ReGlyco = () => {
   const debouncedScanSearchTerm = useDebounce(scanSearchTerm, 300); // Debounce the scan search term
   
 
+  const [lastSuccessfulSelections, setLastSuccessfulSelections] = useState<{ [key: string]: string } | null>(null);
+
+
   // Unified handler for processing jobs
   const handleProcessJob = async (source: 'advanced' | 'uniprot' | 'scan' | 'scan_add') => {
     let selections: { [key: string]: string } = {};
     let jobDescription: string = "";
     let currentJobType: "optimization" | "scan" = "optimization"; // Default to optimization
-
-    setScanCompleted(false); // Reset scan completed state on any new job start
 
     if (source === 'uniprot') {
       if (!protData || Object.keys(uniprotDefaultSelections).length === 0) {
@@ -624,7 +636,7 @@ const ReGlyco = () => {
       jobDescription = "GlcNAc scan";
       currentJobType = "scan"; // Set job type to scan
     } else if (source === 'scan_add') {
-      if (!jobResults || jobResults.length === 0) {
+      if (!scanResults || scanResults.length === 0) {
         toast({ title: "No Scan Results", description: "Please run the scan first.", status: "warning" });
         return;
       }
@@ -634,7 +646,7 @@ const ReGlyco = () => {
       }
 
       // Filter successful scan results and build selections
-      const successfulSites = jobResults.filter(r => r.clash_solved);
+      const successfulSites = scanResults.filter(r => r.clash_solved);
       if (successfulSites.length === 0) {
         toast({ title: "No Successful Sites", description: "No sites passed the GlcNAc scan.", status: "info" });
         return;
@@ -667,10 +679,10 @@ const ReGlyco = () => {
       filename: protData?.filename,
       customPDB: isUpload,
       jobType: currentJobType, // Use the determined job type
-      ensembleSize: ensembleSize,
-      effortLevel: effortLevel,
-      checkSteric: checkSteric,
-      calculateSASA: calculateSASA,
+      populationSize: populationSize,
+      maxGenerations: maxGenerations,
+      wiggleAngle: wiggleAngle,
+      wiggleAttempts: wiggleAttempts,
       outputFormat: outputFormat,
     };
 
@@ -685,17 +697,28 @@ const ReGlyco = () => {
         const responseData = await response.json();
         setResults(responseData); // Keep setting the main Results state
         setJobResults(responseData.results || []); // Store detailed results
-
-        // Set scan completed flag only if the job was a scan
         if (currentJobType === 'scan') {
-          setScanCompleted(true);
+          setScanResults(responseData.results || []); // Store scan-specific results
+          setScanCompleted(true); // Mark that a scan has been completed
         }
+        
+        setLastSuccessfulSelections(selections); // <-- Store successful selections
 
         setActiveStep(3);
         setElapsedTime(0);
       } else {
         console.error(`Failed to post data for ${jobDescription}.`);
-        toast({ title: "Processing Error", description: `Failed to process job with ${jobDescription}. Server responded with status ${response.status}.`, status: "error" });
+        // Try to parse error message from server response
+        let errorMsg = `Failed to process job with ${jobDescription}. Server responded with status ${response.status}.`;
+        try {
+          const errorData = await response.json();
+          if (errorData && (errorData.error || errorData.message)) {
+            errorMsg += `\n${errorData.error || errorData.message}`;
+          }
+        } catch (e) {
+          // Ignore JSON parse errors, fallback to default message
+        }
+        toast({ title: "Processing Error", description: errorMsg, status: "error" });
         setActiveStep(1);
       }
     } catch (error) {
@@ -710,8 +733,105 @@ const ReGlyco = () => {
 
   // Add state for UniProt default selections
   const [uniprotDefaultSelections, setUniprotDefaultSelections] = useState<{ [key: string]: string }>({});
+  
+  const navigate = useNavigate();
+  const handleSwitchToEnsemble = () => {
+    if (!protData || !lastSuccessfulSelections) return;
+  
+    const selectionsString = encodeURIComponent(JSON.stringify(lastSuccessfulSelections));
+    const protIdParam = protData.id;
+    const isUploadParam = isUpload.toString();
+  
+    // Navigate to the ensemble route with query parameters
+    navigate(`/ensemble?id=${protIdParam}&isUpload=${isUploadParam}&selections=${selectionsString}`);
+  };
 
+  // Memoize the list of residue selection components
+  const residueSelectionComponents = useMemo(() => {
+    // Ensure protData and necessary nested properties exist
+    if (!protData?.glycosylation?.available || !protData.configurations) {
+      return null; // Or return an empty array or placeholder
+    }
 
+    return protData.glycosylation.available.map((glycoConf: Glycosylation) => {
+      const isSelected = value.find((option) => option.value === glycoConf.residueTag);
+      if (!isSelected) return null;
+
+      // Ensure configurations for the specific residue name exist
+      const residueGlycans = protData.configurations[glycoConf.residueName];
+      if (!residueGlycans) return null; // Handle case where glycans for residue type might be missing
+
+      // --- Conditional Rendering Logic ---
+      if (advancedMode === 'fancy') {
+        // Render the existing fancy ResidueMenu
+        return (
+          <ResidueMenu
+            key={`${glycoConf.residueTag}-fancy`} // Ensure unique key
+            glycoConf={glycoConf}
+            selectedGlycan={selectedGlycanImage[glycoConf.residueTag]}
+            onSelect={handleResidueSelect}
+            glycans={residueGlycans} // Pass the specific glycans
+            apiUrl={apiUrl}
+            residueKey={glycoConf.residueTag}
+          />
+        );
+      } else {
+        // Render the new lightweight Input
+        const residueKeyString = `${glycoConf.residueID}_${glycoConf.residueChain}`;
+        return (
+          <Flex
+            key={`${glycoConf.residueTag}-light`} // Ensure unique key
+            w="100%"
+            align="center"
+            justify="space-between"
+            p={2}
+            gap={4} // Add some gap
+            borderBottom="1px solid" // Add separator
+            borderColor="gray.100"
+          >
+            <Box minW="200px">
+              <Heading
+                fontSize={{ base: "md", md: "md" }} // Slightly smaller heading
+                noOfLines={1}
+                color="gray.600" // Dimmed color
+              >
+                {`Residue ${glycoConf.residueName} ${glycoConf.residueID} ${glycoConf.residueChain}`}
+              </Heading>
+            </Box>
+            <Input
+              flex="1" // Take available space
+              placeholder="Enter GlyTouCan ID or IUPAC (e.g., G00028MO or Man(a1-3)[Man(a1-6)]Man(a1-6)[Man(a1-3)]Man(b1-4)GlcNAc(b1-4)GlcNAc)"
+              value={selectedGlycans[residueKeyString] || ''} // Get value from selectedGlycans
+              onChange={(e) => {
+                const newGlycanId = e.target.value.trim(); // Basic normalization, keep case for IUPAC
+                // Update selectedGlycans directly
+                setSelectedGlycans(prevState => ({
+                  ...prevState,
+                  [residueKeyString]: newGlycanId
+                }));
+                // Clear image selection if input is used
+                setSelectedGlycanImage(prevState => {
+                    const newState = {...prevState};
+                    delete newState[glycoConf.residueTag];
+                    return newState;
+                });
+              }}
+              size="sm" // Smaller input
+            />
+          </Flex>
+        );
+      }
+      // --- End Conditional Rendering Logic ---
+    }).filter(Boolean); // Filter out null values if any residues were skipped
+  }, [
+      protData, // Dependency: Main data source
+      value, // Dependency: List of selected residues
+      advancedMode, // Dependency: Toggle state
+      selectedGlycanImage, // Dependency: State holding selected glycan images/IDs for fancy mode
+      selectedGlycans, // Dependency: State holding selected glycan IDs for lightweight mode
+      handleResidueSelect, // Dependency: Callback function (should be stable due to useCallback)
+      apiUrl // Dependency: API URL (should be stable)
+  ]); // Dependencies for useMemo
 
   // Render
   return (
@@ -1010,11 +1130,15 @@ const ReGlyco = () => {
                   paddingTop={"1rem"}
                 >
                   <TabList>
-                    <Tab border='1px solid' borderTopRadius='xl'>Build using &nbsp;<Image height="30px" src={uniprot_logo} />&nbsp;</Tab>
+                  {protData?.glycosylation?.uniprot && protData.glycosylation.uniprot.length > 0 && (
+                      <Tab border='1px solid' borderTopRadius='xl'>Build using &nbsp;<Image height="30px" src={uniprot_logo} />&nbsp;</Tab>
+                    )}
                     <Tab border='1px solid' borderTopRadius='xl'>GlcNAc Scanning&nbsp;<Image height="38px" src={Scanner} />&nbsp;</Tab>
                     <Tab border='1px solid' borderTopRadius='xl'> Advanced (Site-by-Site) Glycosylation &nbsp;<Image height="35px" src={Setting} />&nbsp;</Tab>
                   </TabList>
                   <TabPanels>
+
+                  {protData?.glycosylation?.uniprot && protData.glycosylation.uniprot.length > 0 && (
                     <TabPanel>
                       {/* --- Build using UniProt Content --- */}
                       <Box margin={'1rem'}>
@@ -1037,9 +1161,12 @@ const ReGlyco = () => {
                                 return (
                                   <ListItem key={`${glyco.begin}-${index}`} display="flex" alignItems="center" flexWrap="wrap">
                                     <HStack spacing={4} align="center">
-                                      <Badge colorScheme="pink" variant="outline" minW="60px" textAlign="center">
-                                        Res {glyco.begin} {availableSite ? `(${availableSite.residueName} ${availableSite.residueChain})` : ''}
-                                      </Badge>
+                                      {/* <Badge colorScheme="pink" variant="outline" minW="60px" textAlign="center">
+                                        Residue {glyco.begin} {availableSite ? `(${availableSite.residueName} ${availableSite.residueChain})` : ''}
+                                      </Badge> */}
+                                      <Text fontSize="sm" fontWeight="bold" minW="100px">
+                                        Residue {glyco.begin} {availableSite ? `(${availableSite.residueName} ${availableSite.residueChain})` : ''}
+                                      </Text>
                                       <Text fontSize="sm" flex="1" minW="200px">{glyco.description}</Text>
                                       {hasDefault ? (
                                         <HStack spacing={1}>
@@ -1109,6 +1236,7 @@ const ReGlyco = () => {
                       </Box>
                       {/* --- End Build using UniProt Content --- */}
                     </TabPanel>
+                    )}
                     <TabPanel>
                        {/* --- GlcNAc Scanning Content --- */}
                        <Box margin={'1rem'}>
@@ -1123,16 +1251,34 @@ const ReGlyco = () => {
                          {!scanCompleted ? (
                            // Show Scan Button if scan hasn't completed
                            <Button
+                             position={"relative"}
                              onClick={() => handleProcessJob('scan')}
-                             isLoading={isLoading && activeStep === 2} // Show loading state only if this specific job is running
-                             loadingText="Scanning..."
                              backgroundColor="#B07095"
+                             borderRadius="full"
                              _hover={{ backgroundColor: "#CF6385" }}
                              size="lg"
                              mt={4}
                              isDisabled={isLoading} // Disable if any job is loading
                            >
-                             Scan for N-Glycosylation Sites
+                            {isLoading ? (
+                                <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                  <CircularProgress
+                                    position="absolute"
+                                    color="#B07095"
+                                    size="50px"
+                                    thickness="5px"
+                                    isIndeterminate
+                                    marginLeft={"15rem"}
+                                    capIsRound
+                                  >
+                                    <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                  </CircularProgress>
+                                  Scanning...
+                                </Box>
+                              ) : (
+                                "Scan for N-Glycosylation Sites"
+                              )}
+                             
                            </Button>
                          ) : (
                            // Show Results and Add Glycan UI after scan completes
@@ -1140,42 +1286,42 @@ const ReGlyco = () => {
                              <Heading as="h5" size="md" color="#B07095" mb={4}>
                                Scan Results
                              </Heading>
-                             {jobResults && jobResults.length > 0 ? (
+                             {scanResults && scanResults.length > 0 ? (
                                <VStack align="stretch" spacing={3} mb={6}>
-                                 {jobResults.map((result, index) => (
+                                 {scanResults.map((result, index) => (
                                    <Flex
                                      key={index}
                                      align="center"
-                                     justify="space-between"
-                                     p={2}
-                                     borderRadius="md"
-                                     bg={result.clash_solved ? "green.50" : "red.50"}
-                                     border="1px solid"
+                                    //  justify="space-between"
+                                    //  p={2}
+                                    //  borderRadius="md"
+                                    //  bg={result.clash_solved ? "green.50" : "red.50"}
+                                    //  border="1px solid"
                                      borderColor={result.clash_solved ? "green.200" : "red.200"}
                                    >
                                      <HStack spacing={3}>
+                                       <Text fontWeight="medium">Residue: {result.residue}</Text>
                                        <Text fontSize="xl" color={result.clash_solved ? "green.500" : "red.500"}>
                                          {result.clash_solved ? '✓' : '✗'}
                                        </Text>
-                                       <Text fontWeight="medium">{result.residue}</Text>
-                                     </HStack>
-                                     <Badge colorScheme={result.clash_solved ? "green" : "red"} variant="subtle">
-                                       {result.clash_solved ? 'Accommodates GlcNAc' : 'Clash Detected'}
+                                       <Badge colorScheme={result.clash_solved ? "green" : "red"} variant="subtle">
+                                       {result.clash_solved ? 'N-glycosylation possible' : 'Clash Detected'}
                                      </Badge>
+                                     </HStack>
+                                     
                                    </Flex>
                                  ))}
                                </VStack>
                              ) : (
-                               <Text color="gray.500" mb={6}>No scan results available or no NXS/T sequons found.</Text>
+                               <Text color="gray.500" mb={6}>No successful scan results available or no NXS/T sequons found.</Text>
                              )}
 
                              {/* Glycan Selection for Successful Sites */}
-                             <Heading as="h6" size="sm" color="#B07095" mb={2}>Add Glycan to Successful Sites:</Heading>
+                             
                              <HStack spacing={4} align="center">
+                              <Heading as="h6" size="sm" color="#B07095" mb={2}>Add Glycan to Successful Sites:</Heading>
                                <Box flex="1">
-                                 {/* --- START: Searchable Menu --- */}
                                  <Menu
-                                    // Add focus handler
                                     onOpen={() => setTimeout(() => scanSearchInputRef.current?.focus(), 100)}
                                  >
                                    <MenuButton
@@ -1184,16 +1330,15 @@ const ReGlyco = () => {
                                      _hover={{ backgroundColor: "#CF6385" }}
                                      w="100%"
                                      color="#1A202C"
-                                     isDisabled={!jobResults || jobResults.filter(r => r.clash_solved).length === 0} // Disable if no successful sites
+                                     isDisabled={!scanResults || scanResults.filter(r => r.clash_solved).length === 0} // Disable if no successful sites
                                    >
                                      {scanAddGlycan || "Select Glycan to Add"}
                                    </MenuButton>
                                    <MenuList
                                       maxH="300px"
                                       overflowY="auto"
-                                      minW="400px" // Adjust width as needed
+                                      minW="400px"
                                       borderRadius="xl"
-                                      // Add scrollbar styling like in ResidueMenu
                                       sx={{
                                         '&::-webkit-scrollbar': { width: '8px', borderRadius: '8px', backgroundColor: `rgba(0, 0, 0, 0.05)` },
                                         '&::-webkit-scrollbar-thumb': { borderRadius: '8px', backgroundColor: `rgba(0, 0, 0, 0.15)` },
@@ -1201,11 +1346,10 @@ const ReGlyco = () => {
                                         scrollbarColor: 'rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.05)',
                                       }}
                                     >
-                                      {/* Sticky Search Input */}
                                       <Box
                                         position="sticky"
-                                        top={-2} // Adjust based on padding
-                                        bg="white" // Ensure background covers content below
+                                        top={-2}
+                                        bg="white"
                                         zIndex={2}
                                         borderTopRadius="xl"
                                         borderBottom="1px solid #e2e8f0"
@@ -1216,13 +1360,12 @@ const ReGlyco = () => {
                                           placeholder="Search Glycans (ID, Toucan, Mass)"
                                           value={scanSearchTerm}
                                           onChange={(e) => setScanSearchTerm(e.target.value)}
-                                          onClick={(e) => e.stopPropagation()} // Prevent menu close on click
+                                          onClick={(e) => e.stopPropagation()}
                                           size="md"
                                           width="100%"
                                         />
                                       </Box>
 
-                                      {/* Filtered Glycan List */}
                                       <Box pt={2}>
                                         {(protData?.configurations?.ASN || [])
                                           .filter(glycan =>
@@ -1249,7 +1392,6 @@ const ReGlyco = () => {
                                       </Box>
                                    </MenuList>
                                  </Menu>
-                                 {/* --- END: Searchable Menu --- */}
                                </Box>
                                {scanAddGlycan && (
                                  <Box w="80px" h="80px">
@@ -1265,23 +1407,39 @@ const ReGlyco = () => {
                                )}
                              </HStack>
 
-                             {/* Button to Add Selected Glycan */}
                              <Button
+                               position={"relative"}
+                               borderRadius="full"
                                onClick={() => handleProcessJob('scan_add')}
-                               isLoading={isLoading && activeStep === 2} // Show loading state only if this specific job is running
-                               loadingText="Processing..."
-                               backgroundColor="#81D8D0"
-                               _hover={{ backgroundColor: "#008081" }}
+                               backgroundColor="#B07095"
+                               _hover={{ backgroundColor: "#CF6385" }}
                                size="lg"
                                mt={6}
-                               isDisabled={isLoading || !scanAddGlycan || !jobResults || jobResults.filter(r => r.clash_solved).length === 0} // Disable if loading, no glycan selected, or no successful sites
+                               isDisabled={isLoading || !scanAddGlycan || !scanResults || scanResults.filter(r => r.clash_solved).length === 0}
                              >
-                               Add Selected Glycan to Successful Sites
+                              {isLoading ? (
+                                <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                                  <CircularProgress
+                                    position="absolute"
+                                    color="#B07095"
+                                    size="50px"
+                                    thickness="5px"
+                                    isIndeterminate
+                                    marginLeft={"15rem"}
+                                    capIsRound
+                                  >
+                                    <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                                  </CircularProgress>
+                                  Processing...
+                                </Box>
+                              ) : (
+                                "Add Selected Glycan to Successful Sites"
+                              )}
+                               
                              </Button>
                            </Box>
                          )}
 
-                         {/* Loading indicator for scan/add process */}
                          {isLoading && activeStep === 2 && (
                            <Alert status='info' mt={4}>
                              <AlertIcon />
@@ -1316,26 +1474,20 @@ const ReGlyco = () => {
                           }))}
                         />
 
-                        {/* Use the new memoized ResidueMenu component.
-                      Only render menus for residues that the user has selected. */}
-                        {protData?.glycosylation?.available &&
-                          Array.isArray(protData.glycosylation.available) &&
-                          protData.glycosylation.available.map((glycoConf: Glycosylation) => {
-                            const isSelected = value.find((option) => option.value === glycoConf.residueTag);
-                            if (!isSelected) return null;
-                            return (
-                              <ResidueMenu
-                                key={glycoConf.residueTag}
-                                glycoConf={glycoConf}
-                                selectedGlycan={selectedGlycanImage[glycoConf.residueTag]}
-                                onSelect={handleResidueSelect}
-                                glycans={protData.configurations[glycoConf.residueName]}
-                                apiUrl={apiUrl}
-                                residueKey={glycoConf.residueTag}
-                              />
-                            );
-                          })
-                        }
+                        <FormControl display="flex" alignItems="center" justifyContent="flex-end" my={4}>
+                          <FormLabel htmlFor="advanced-mode-toggle" mb="0" fontSize="sm" mr={2}>
+                            Use Lightweight Input?
+                          </FormLabel>
+                          <Switch
+                            id="advanced-mode-toggle"
+                            isChecked={advancedMode === 'lightweight'}
+                            onChange={(e) => setAdvancedMode(e.target.checked ? 'lightweight' : 'fancy')}
+                            colorScheme="teal" // Match theme
+                          />
+                        </FormControl>
+
+                        {/* Render the memoized list */}
+                        {residueSelectionComponents}
 
                         <br />
 
@@ -1352,22 +1504,22 @@ const ReGlyco = () => {
                             </h2>
                             <AccordionPanel pb={4} bg="white">
                               <VStack spacing={6} align="stretch">
-                                {/* Ray Size Slider */}
+                                {/* Population Size */}
                                 <FormControl>
                                   <FormLabel fontWeight="medium" color="#B07095" mb={2}>
-                                    <Tooltip label="Output ensemble size. Higher values may capture more conformational space but increase computational cost.">
-                                      Ensemble Size: {ensembleSize}
+                                    <Tooltip label="Population size to be used in genetic optimization. Higher values may capture more conformational space but increase computational cost.">
+                                    Population Size: {populationSize}
                                     </Tooltip>
                                   </FormLabel>
                                   <Slider
-                                    aria-label="Ray Size"
+                                    aria-label="Population Size"
                                     defaultValue={50}
-                                    value={ensembleSize}
-                                    min={1}
-                                    max={500}
-                                    step={1}
+                                    value={populationSize}
+                                    min={32}
+                                    max={512}
+                                    step={32}
                                     colorScheme="teal"
-                                    onChange={(val) => setensembleSize(val)}
+                                    onChange={(val) => setpopulationSize(val)}
                                   >
                                     <SliderTrack>
                                       <SliderFilledTrack />
@@ -1377,22 +1529,22 @@ const ReGlyco = () => {
                                   {/* <FormHelperText >Adjust ray size for glycan ensemble generation</FormHelperText> */}
                                 </FormControl>
 
-                                {/* Effort Level Slider */}
+                                {/* maxGenerations Slider */}
                                 <FormControl>
                                   <FormLabel fontWeight="medium" color="#B07095" mb={2}>
-                                    <Tooltip label="Controls the computational effort invested in finding optimal glycan conformations. Higher values produce better results but take longer.">
-                                      Effort Level: {effortLevel}
+                                    <Tooltip label="Maximum number of generation to used in the optimization. Higher values produce better results but take longer.">
+                                    Maximum generation: {maxGenerations}
                                     </Tooltip>
                                   </FormLabel>
                                   <Slider
-                                    aria-label="Effort Level"
-                                    defaultValue={2}
-                                    value={effortLevel}
+                                    aria-label="max Generation"
+                                    defaultValue={4}
+                                    value={maxGenerations}
                                     min={1}
                                     max={20}
                                     step={1}
                                     colorScheme="teal"
-                                    onChange={(val) => setEffortLevel(val)}
+                                    onChange={(val) => setmaxGenerations(val)}
                                   >
                                     <SliderTrack>
                                       <SliderFilledTrack />
@@ -1402,37 +1554,57 @@ const ReGlyco = () => {
                                   {/* <FormHelperText fontSize={'xs'}>1 = Fast but less accurate, 10 = Slow but more accurate</FormHelperText> */}
                                 </FormControl>
 
-                                {/* Glycan-Glycan Steric Check */}
-                                <FormControl display="flex" alignItems="center">
-                                  <FormLabel htmlFor="glycan-steric-check" mb="0" fontWeight="medium" color="#B07095">
-                                    <Tooltip label="Enables checking for steric clashes between different glycans during modeling">
-                                      Glycan-Glycan Steric Checks
+                                {/* wiggle Angle Slider */}
+                                <FormControl>
+                                  <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                                    <Tooltip label="Wiggle angle for the glycan. Higher values produce more diverse conformations but may be less realistic.">
+                                    Wiggle Angle: {wiggleAngle}
                                     </Tooltip>
                                   </FormLabel>
-                                  <Switch
-                                    id="glycan-steric-check"
-                                    isChecked={checkSteric}
-                                    onChange={(e) => setCheckSteric(e.target.checked)}
+                                  <Slider
+                                    aria-label="Wiggle Angle"
+                                    defaultValue={5}
+                                    value={wiggleAngle}
+                                    min={0}
+                                    max={10}
+                                    step={1}
                                     colorScheme="teal"
-                                    size="md"
-                                  />
+                                    onChange={(val) => setwiggleAngle(val)}
+                                  >
+                                    <SliderTrack>
+                                      <SliderFilledTrack />
+                                    </SliderTrack>
+                                    <SliderThumb />
+                                  </Slider>
+                                  {/* <FormHelperText fontSize={'xs'}>Adjust ray size for glycan ensemble generation</FormHelperText> */}
                                 </FormControl>
 
-                                {/* Calculate SASA */}
-                                <FormControl display="flex" alignItems="center">
-                                  <FormLabel htmlFor="calculate-sasa" mb="0" fontWeight="medium" color="#B07095">
-                                    <Tooltip label="Calculates Solvent Accessible Surface Area for the final model">
-                                      Calculate SASA
+                                {/* wiggle Attempts Slider */}
+                                <FormControl>
+                                  <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                                    <Tooltip label="Number of attempts to wiggle the glycan. Higher values produce more diverse conformations but use more compute.">
+                                    Wiggle Attempts: {wiggleAttempts}
                                     </Tooltip>
                                   </FormLabel>
-                                  <Switch
-                                    id="calculate-sasa"
-                                    isChecked={calculateSASA}
-                                    onChange={(e) => setCalculateSASA(e.target.checked)}
+                                  <Slider
+                                    aria-label="Wiggle Attempts"
+                                    defaultValue={10}
+                                    value={wiggleAttempts}
+                                    min={1}
+                                    max={100}
+                                    step={1}
                                     colorScheme="teal"
-                                    size="md"
-                                  />
+                                    onChange={(val) => setwiggleAttempts(val)}
+                                  >
+                                    <SliderTrack>
+                                      <SliderFilledTrack />
+                                    </SliderTrack>
+                                    <SliderThumb />
+                                  </Slider>
+                                  {/* <FormHelperText fontSize={'xs'}>Adjust ray size for glycan ensemble generation</FormHelperText> */}
                                 </FormControl>
+
+                                
 
 
                                 {/* Output Format */}
@@ -1472,8 +1644,8 @@ const ReGlyco = () => {
                             position={"relative"}
                             margin={'1rem'}
                             borderRadius="full"
-                            backgroundColor="#81D8D0"
-                            _hover={{ backgroundColor: "#008081" }}
+                            backgroundColor="#B07095"
+                            _hover={{ backgroundColor: "#CF6385" }}
                             size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
                             onClick={() => handleProcessJob('advanced')}
                             isDisabled={isLoading}
@@ -1482,7 +1654,7 @@ const ReGlyco = () => {
                               <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
                                 <CircularProgress
                                   position="absolute"
-                                  color="#81D8D0"
+                                  color="#B07095"
                                   size="50px"
                                   thickness="5px"
                                   isIndeterminate
@@ -1545,26 +1717,27 @@ const ReGlyco = () => {
                           margin={'1rem'}
                           borderRadius="full"
                           isDisabled={isLoading}
-                          backgroundColor="#81D8D0"
-                          _hover={{ backgroundColor: "#008081" }}
+                          backgroundColor="#B07095"
+                          _hover={{ backgroundColor: "#CF6385" }}
                           size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
                         >
                           Download Re-glycosylated Structure PDB File
                         </Button>
                       </a>
-                      <a href={`${apiUrl}/api/reglyco/download/${jobId}`} download>
-                        <Button
-                          position={"relative"}
-                          margin={'1rem'}
-                          borderRadius="full"
-                          isDisabled={isLoading}
-                          backgroundColor="#81D8D0"
-                          _hover={{ backgroundColor: "#008081" }}
-                          size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                        >
-                          Download full job Files
-                        </Button>
-                      </a>
+                      
+                      <Button
+                position={"relative"}
+                margin={'1rem'}
+                borderRadius="full"
+                isDisabled={!lastSuccessfulSelections} // Disable if no successful selections stored
+                backgroundColor="#8C619D" // Ensemble-like color
+                _hover={{ backgroundColor: "#A77CA6" }}
+                size={{ base: "md", lg: "lg" }}
+                onClick={handleSwitchToEnsemble}
+                title="Switch to Ensemble mode with current selections"
+              >
+                Switch to Ensemble Mode
+              </Button>
 
                     </div>
                     <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>

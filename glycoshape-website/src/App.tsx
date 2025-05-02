@@ -80,6 +80,7 @@ const App: React.FC = () => {
             path="/chat" 
             element={
               <ViewLayout>
+                <CookieConsent />
                 <Chat />
               </ViewLayout>
             } 

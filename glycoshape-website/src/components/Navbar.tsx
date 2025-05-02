@@ -115,11 +115,19 @@ const Navbar: React.FC = () => {
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/reglyco" w="100%" onClick={onClose}  mb={4}>Re-Glyco</Button>
+            <Button _hover={{
+              backgroundColor: "#F7FFE6"
+            }} as={RouterLink}  to="/ensemble" w="100%" onClick={onClose}  mb={4}>Re-Glyco Ensemble</Button>
             
             {isDevelopment ? (
+              <div>
         <Button _hover={{
           backgroundColor: "#F7FFE6"
         }} as={RouterLink}  to="/fit" w="100%" onClick={onClose} mb={4}>Re-Glyco Fit</Button>
+        <Button _hover={{
+          backgroundColor: "#F7FFE6"
+        }} as={RouterLink}  to="/chat" w="100%" onClick={onClose} mb={4}>Copilot</Button>
+        </div>
         ) : (
           <></>)}
 
@@ -133,6 +141,9 @@ const Navbar: React.FC = () => {
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/api-docs" w="100%" onClick={onClose} mb={4}>API</Button>
+                  <Button _hover={{
+              backgroundColor: "#F7FFE6"
+            }} as={RouterLink}  to="/sparql-query" w="100%" onClick={onClose} mb={4}>SPARQL</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/faq" w="100%" onClick={onClose} mb={4}>FAQ</Button>
@@ -163,6 +174,7 @@ const Navbar: React.FC = () => {
           <MenuItem fontWeight="bold" as={RouterLink} to="/ensemble" onClick={() =>  handleNavigation('/ensemble')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Ensemble</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() =>  handleNavigation('/fit')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/swap" onClick={() =>  handleNavigation('/swap')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() =>  handleNavigation('/chat')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Copilot</MenuItem>
         </MenuList>
       </Menu>) : (
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} marginRight="20px">Re-Glyco</Link>

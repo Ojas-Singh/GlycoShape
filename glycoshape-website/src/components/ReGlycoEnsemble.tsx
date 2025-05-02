@@ -43,26 +43,13 @@ import React, {
   import { Kbd } from '@chakra-ui/react';
   import bg from './assets/gly.png';
   import Select, { ActionMeta, OnChangeValue } from 'react-select';
+
   
+  import { useLocation } from 'react-router-dom'; // <-- Add this
   
   // ───────────────────────────────────────────────
-  // Interfaces (unchanged)
-  interface ResultItem {
-    clash_solved: boolean;
-    cluster: number;
-    glycan: string;
-    phi: number;
-    psi: number;
-    residue: string;
-  }
-  
-  interface ScanResults {
-    box: string;
-    clash: boolean;
-    output: string;
-    results: ResultItem[];
-  }
-  
+  // Interfaces 
+
   interface ResidueOption {
     label: string;
     value: number;
@@ -292,16 +279,11 @@ import React, {
     const [error, setError] = useState<string | null>(null);
     const searchRef = useRef(null);
     const [placeholderText, setPlaceholderText] = useState('Enter Uniprot Id');
-    const [scanResults, setScanResults] = useState<ScanResults | null>({
-      box: '',
-      clash: false,
-      output: '',
-      results: []
-    });
+
 
     const [output_sasa, setOutputSasa] = useState("");
     const [ensembleSize, setensembleSize] = useState<number>(50);
-    const [wiggle, setWiggle] = useState<number>(2);
+    const [wiggleAngle, setwiggleAngle] = useState<number>(2);
     const [effortLevel, setEffortLevel] = useState<number>(5);
     const [checkSteric, setCheckSteric] = useState<boolean>(false);
     const [calculateSASA, setCalculateSASA] = useState<boolean>(true);
@@ -332,6 +314,8 @@ import React, {
       count: steps.length,
     });
   
+    const location = useLocation(); // <-- Add this
+
     const onChange = (
       newValue: OnChangeValue<ResidueOption, true>,
       actionMeta: ActionMeta<ResidueOption>
@@ -386,39 +370,171 @@ import React, {
     }, []);
   
     useEffect(() => {
-      const fetchData = async () => {
-        try {
-          if (!isUpload && protID) {
-            await fetchProteinData();
-            setScanResults({
-              box: '',
-              clash: false,
-              output: '',
-              results: []
-            });
+        const fetchData = async () => {
+          try {
+            if (!isUpload && protID) {
+              await fetchProteinData();
+              
+            }
+          } catch (error) {
+            console.error("Error fetching protein data:", error);
           }
-        } catch (error) {
-          console.error("Error fetching protein data:", error);
+        };
+        fetchData();
+      }, [isUpload, protID]);
+    
+
+    useEffect(() => {
+      const queryParams = new URLSearchParams(location.search);
+      const idParam = queryParams.get('id');
+      const isUploadParam = queryParams.get('isUpload');
+      const selectionsParam = queryParams.get('selections');
+    
+      let shouldFetch = false;
+    
+      if (idParam && idParam !== protID) { // Only set and fetch if ID is new
+        setprotID(idParam);
+        shouldFetch = true;
+      }
+    
+      if (isUploadParam !== null) {
+        const uploadBool = isUploadParam === 'true';
+        if (uploadBool !== isUpload) {
+           setIsUpload(uploadBool);
+           // If isUpload changes, might need refetch depending on your logic
+           // For now, assume ID change triggers fetch
         }
-      };
-      fetchData();
-    }, [isUpload, protID]);
-  
-    const fetchProteinData = async () => {
+      }
+    
+      if (selectionsParam) {
+        try {
+          const decodedSelections = JSON.parse(decodeURIComponent(selectionsParam));
+          // Check if selections actually changed before setting state
+          if (JSON.stringify(decodedSelections) !== JSON.stringify(selectedGlycans)) {
+            setSelectedGlycans(decodedSelections);
+            // Update selectedGlycanImage based on decodedSelections
+            // This requires mapping keys like "123_A" back to residueTag if possible,
+            // or adjusting how ResidueMenu reads selections.
+            // For now, we set selectedGlycans, but ResidueMenu might need adjustment
+            // OR we need to update the 'value' state for react-select based on these selections.
+    
+            // --- Update 'value' state for react-select ---
+            // This assumes protData is already fetched or will be fetched soon.
+            // It might be better to do this *after* protData is available.
+            if (protData?.glycosylation?.available) {
+                const newSelectedOptions: ResidueOption[] = [];
+                const selectionKeys = Object.keys(decodedSelections);
+    
+                protData.glycosylation.available.forEach(glycoConf => {
+                    const residueKey = `${glycoConf.residueID}_${glycoConf.residueChain}`;
+                    if (selectionKeys.includes(residueKey)) {
+                        newSelectedOptions.push({
+                            value: glycoConf.residueTag,
+                            label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
+                        });
+                    }
+                });
+                // Only update if the value actually changes
+                if (JSON.stringify(newSelectedOptions) !== JSON.stringify(value)) {
+                    setValue(newSelectedOptions);
+                }
+            }
+            // --- End Update 'value' state ---
+    
+            // --- Update selectedGlycanImage (Needs mapping logic) ---
+            const newImageSelections: { [key: number]: string } = {};
+            if (protData?.glycosylation?.available) {
+                Object.entries(decodedSelections).forEach(([resKey, glycanToucan]) => {
+                    const site = protData.glycosylation.available.find(g => `${g.residueID}_${g.residueChain}` === resKey);
+                    if (site) {
+                        // Assert glycanToucan as string before assignment
+                        newImageSelections[site.residueTag] = glycanToucan as string;
+                    }
+                });
+                 if (JSON.stringify(newImageSelections) !== JSON.stringify(selectedGlycanImage)) {
+                    setSelectedGlycanImage(newImageSelections);
+                 }
+            }
+            // --- End Update selectedGlycanImage ---
+          }
+        } catch (e) {
+          console.error("Failed to parse selections from URL:", e);
+          // Optionally clear selections if parsing fails
+          // setSelectedGlycans({});
+          // setValue([]);
+          // setSelectedGlycanImage({});
+        }
+      }
+    
+      // Automatically trigger the fetch if ID was set from URL
+      if (shouldFetch && idParam) {
+        // Use setTimeout to ensure state update is processed before fetch
+        setTimeout(() => {
+          fetchProteinData(idParam, isUploadParam === 'true'); // Pass params directly
+        }, 100);
+      }
+      // --- Scroll to top if we processed any parameters from the URL ---
+    if (idParam) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  // --- End Scroll to top ---
+    }, [location.search]); // Rerun effect when query params change
+    
+    const fetchProteinData = async (idToFetch = protID, uploadStatus = isUpload) => {
+      if (!idToFetch) return; // Don't fetch if no ID
       try {
         const response = await fetch(`${apiUrl}/api/reglyco/init`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ protID: protID, isUpload: isUpload })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ protID: idToFetch, isUpload: uploadStatus }) // Use passed params
         });
         const data: protData = await response.json();
         setprotData(data);
-        setIsUpload(false);
-        setSelectedGlycans({});
-        setSelectedGlycanImage({});
+        // Don't reset selections if they came from URL
+        // setSelectedGlycans({});
+        // setSelectedGlycanImage({});
         setActiveStep(1);
+  
+        // --- Re-apply selections logic after data is fetched ---
+        // This ensures the 'value' state is correctly set based on fetched protData
+        const queryParams = new URLSearchParams(location.search);
+        const selectionsParam = queryParams.get('selections');
+        if (selectionsParam && data?.glycosylation?.available) {
+           try {
+              const decodedSelections = JSON.parse(decodeURIComponent(selectionsParam));
+              const newSelectedOptions: ResidueOption[] = [];
+              const selectionKeys = Object.keys(decodedSelections);
+              data.glycosylation.available.forEach(glycoConf => {
+                  const residueKey = `${glycoConf.residueID}_${glycoConf.residueChain}`;
+                  if (selectionKeys.includes(residueKey)) {
+                      newSelectedOptions.push({
+                          value: glycoConf.residueTag,
+                          label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
+                      });
+                  }
+              });
+               if (JSON.stringify(newSelectedOptions) !== JSON.stringify(value)) {
+                  setValue(newSelectedOptions);
+               }
+  
+               // Also re-apply image selections
+               const newImageSelections: { [key: number]: string } = {};
+               Object.entries(decodedSelections).forEach(([resKey, glycanToucan]) => {
+                   const site = data.glycosylation.available.find(g => `${g.residueID}_${g.residueChain}` === resKey);
+                   if (site) {
+                       newImageSelections[site.residueTag] = glycanToucan as string;
+                   }
+               });
+               if (JSON.stringify(newImageSelections) !== JSON.stringify(selectedGlycanImage)) {
+                  setSelectedGlycanImage(newImageSelections);
+               }
+  
+           } catch (e) {
+               console.error("Failed to re-parse selections after fetch:", e);
+           }
+        }
+        // --- End re-apply selections ---
+  
       } catch (error) {
         if (error instanceof Error) {
               toast({
@@ -467,12 +583,6 @@ import React, {
             setError(null);
             setIsUploading(false);
             setUploadProgress(0);
-            setScanResults({
-              box: '',
-              clash: false,
-              output: '',
-              results: []
-            });
           } else {
             console.error("Failed to upload file.");
           }
@@ -515,7 +625,7 @@ import React, {
         customPDB: isUpload,
         jobType: "ensemble",
         ensembleSize: ensembleSize,
-        wiggle: wiggle,
+        wiggleAngle: wiggleAngle,
         effortLevel: effortLevel,
         checkSteric: checkSteric,
         calculateSASA: calculateSASA,
@@ -930,29 +1040,29 @@ import React, {
                           </FormControl>
 
                             
-                            {/* Wiggle Slider */}
+                            {/* wiggleAngle Slider */}
                             <FormControl>
                               <FormLabel fontWeight="medium" color="#B07095" mb={2}>
                                 <Tooltip label="Controls the amount of random movement applied to the glycan during modeling. Higher values produce more diverse conformations but clashes within the glycan may occur.">
-                                  Wiggle: {wiggle}°
+                                  wiggleAngle: {wiggleAngle}°
                                 </Tooltip>
                               </FormLabel>
                               <Slider
-                                aria-label="Wiggle"
+                                aria-label="wiggleAngle"
                                 defaultValue={2}
-                                value={wiggle}
+                                value={wiggleAngle}
                                 min={0}
                                 max={10}
                                 step={1}
                                 colorScheme="teal"
-                                onChange={(val) => setWiggle(val)}
+                                onChange={(val) => setwiggleAngle(val)}
                               >
                                 <SliderTrack>
                                   <SliderFilledTrack />
                                 </SliderTrack>
                                 <SliderThumb />
                               </Slider>
-                              {/* <FormHelperText fontSize={'xs'}>0 = No wiggle, 10 = Maximum wiggle</FormHelperText> */}
+                              {/* <FormHelperText fontSize={'xs'}>0 = No wiggleAngle, 10 = Maximum wiggleAngle</FormHelperText> */}
                             </FormControl>
 
                           {/* Effort Level Slider */}
@@ -1042,23 +1152,6 @@ import React, {
 
                   <VStack align={"self-start"}>
                     
-                  {/* <Text color="#B195A2" fontFamily={'heading'} fontWeight={'bold'}>
-                        Ray Size: {ensembleSize}
-                    </Text>
-                    <Slider width={'50rem'}
-                        aria-label="Ray Size"
-                        defaultValue={50}
-                        min={1}
-                        max={500}
-                        step={1}
-                        colorScheme="teal"
-                        onChange={(val) => setensembleSize(val)}
-                    >
-                        <SliderTrack>
-                        <SliderFilledTrack />
-                        </SliderTrack>
-                        <SliderThumb />
-                    </Slider> */}
 
                     <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
                       This will take a few minutes. Please be patient.
@@ -1068,8 +1161,8 @@ import React, {
                       position={"relative"}
                       margin={'1rem'}
                       borderRadius="full"
-                      backgroundColor="#81D8D0"
-                      _hover={{ backgroundColor: "#008081" }}
+                      backgroundColor="#8C619D"
+                      _hover={{ backgroundColor: "#A77CA6" }}
                       size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
                       onClick={handleProcess}
                       isDisabled={isLoading}
@@ -1295,6 +1388,15 @@ import React, {
                   <Text fontFamily={'texts'} color='#B195A2' paddingTop="10rem" padding={"0rem"} justifySelf="left" align={'left'} fontSize={'lg'}>
                     Re-Glyco Ensemble is a tool we designed to accurately restores missing glycans, aligning them within torsions from privateer and glycan conformations from GlycoShape.
                   </Text>
+                  <Text fontFamily={'texts'}>
+                                    <Button margin='0rem' onClick={(e) => (setprotID('P27918'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P27918</Button>
+                                    <Button margin='0rem' onClick={(e) => (setprotID('Q7Z3Q1'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>Q7Z3Q1</Button>
+                                    <Button margin='0rem' onClick={(e) => (setprotID('P29016'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>P29016</Button>
+                                    <Button margin='0rem' onClick={(e) => (setprotID('O15552'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>O15552</Button>
+                                    <Button margin='0rem' onClick={(e) => (setprotID('I3UJJ7'))} colorScheme='purple' variant='link' size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}>I3UJJ7</Button>
+                                  </Text>
+                                  <Text fontFamily={'texts'} paddingTop="0rem" color='#B195A2' alignSelf={"left"} fontSize={'lg'}>
+                                    and press fetch!</Text>
                   <Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
                     Currently supported function includes :<br />
                     N-GlcNAcylation<br />

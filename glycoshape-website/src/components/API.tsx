@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Added useRef
 import {
   Flex,
   Link,
@@ -18,10 +18,13 @@ import {
   HStack,
   useToast,
   Heading,
-  useClipboard, 
-  Badge,        
+  useClipboard,
+  Badge,
+  InputGroup, // Added
+  InputRightElement, // Added
+  IconButton, // Added
 } from "@chakra-ui/react";
-import { CheckIcon, CopyIcon } from "@chakra-ui/icons"; 
+import { CheckIcon, CopyIcon, AttachmentIcon } from "@chakra-ui/icons"; // Added AttachmentIcon
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -38,14 +41,16 @@ interface ApiExample {
   label: string;
   method: "GET" | "POST";
   endpoint: string;
-  params: ApiExampleParam[]; // Use the specific interface here
+  params: ApiExampleParam[];
   body: string;
-  isFileUpload?: boolean; // Optional property
+  isFileUpload?: boolean; // For file input in tester
+  isBase64Upload?: boolean; // For base64 input in tester
 }
 // --- End Interfaces ---
 
-// Strongly type the apiExamples array
-const apiExamples: ApiExample[] = [ // Apply the type here
+// --- Updated apiExamples array ---
+const apiExamples: ApiExample[] = [
+  // --- GlycoShape APIs ---
   {
     id: "available",
     label: "GET /api/available",
@@ -94,32 +99,139 @@ const apiExamples: ApiExample[] = [ // Apply the type here
     params: [{ name: "identifier", value: "G00028MO" }],
     body: "",
   },
+  // --- Re-Glyco APIs ---
   {
-    id: "upload_pdb",
-    label: "POST /api/upload_pdb",
+    id: "reglyco_init_configs",
+    label: "POST /api/reglyco/init (Configs Only)",
     method: "POST",
-    endpoint: "/api/upload_pdb",
+    endpoint: "/api/reglyco/init",
     params: [],
-    body: "// Use form-data for file upload via curl or client-side FormData",
-    isFileUpload: true,
+    body: JSON.stringify({ configsOnly: true }, null, 2),
   },
   {
-    id: "process_pdb",
-    label: "POST /api/process_pdb",
+    id: "reglyco_init_id",
+    label: "POST /api/reglyco/init (Fetch ID)",
     method: "POST",
-    endpoint: "/api/process_pdb",
+    endpoint: "/api/reglyco/init",
+    params: [],
+    body: JSON.stringify({ protID: "P01857" }, null, 2),
+  },
+  {
+    id: "reglyco_init_file_upload",
+    label: "POST /api/reglyco/init (File Upload)",
+    method: "POST",
+    endpoint: "/api/reglyco/init",
+    params: [],
+    body: "// Use form-data for file upload via curl or client-side FormData",
+    isFileUpload: true, // Mark for tester UI
+  },
+  {
+    id: "reglyco_job_scan",
+    label: "POST /api/reglyco/job (Scan)",
+    method: "POST",
+    endpoint: "/api/reglyco/job",
     params: [],
     body: JSON.stringify(
       {
-        uniprotID: "P01857",
-        selectedGlycans: { 50: "G00031MO", 80: "G00055MO" },
+        jobId: "unique-job-id-scan",
+        jobType: "scan",
+        filename: "P01857.pdb", // Assumes init was run for P01857
+      },
+      null,
+      2
+    ),
+  },
+  {
+    id: "reglyco_job_scan_base64",
+    label: "POST /api/reglyco/job (Scan Base64)",
+    method: "POST",
+    endpoint: "/api/reglyco/job",
+    params: [],
+    body: JSON.stringify(
+      {
+        jobId: "unique-job-id-scan-b64",
+        jobType: "scan",
+        filename: "my_protein.pdb",
+        protFileBase64: "<base64_encoded_pdb_content>",
+      },
+      null,
+      2
+    ),
+    isBase64Upload: true, // Mark for tester UI
+  },
+  {
+    id: "reglyco_job_optimization",
+    label: "POST /api/reglyco/job (Optimization)",
+    method: "POST",
+    endpoint: "/api/reglyco/job",
+    params: [],
+    body: JSON.stringify(
+      {
+        jobId: "unique-job-id-opt",
+        jobType: "optimization",
+        filename: "P01857.pdb", // Assumes init was run for P01857
+        selectedGlycans: { "50_A": "G00031MO", "80_B": "G00055MO" },
+        populationSize: 128,
+        maxGenerations: 4,
+        wiggleAttempts: 10,
+        wiggleAngle: 5,
+        outputFormat: "PDB",
+      },
+      null,
+      2
+    ),
+    
+  },
+  {
+    id: "reglyco_job_optimization_base64",
+    label: "POST /api/reglyco/job (Optimization Base64)",
+    method: "POST",
+    endpoint: "/api/reglyco/job",
+    params: [],
+    body: JSON.stringify(
+      {
+        jobId: "unique-job-id-opt",
+        jobType: "optimization",
+        filename: "protein.pdb", // Assumes init was run for P01857
+        selectedGlycans: { "50_A": "G00031MO", "80_B": "G00055MO" },
+        populationSize: 128,
+        maxGenerations: 4,
+        wiggleAttempts: 10,
+        wiggleAngle: 5,
+        outputFormat: "PDB",
+      },
+      null,
+      2
+    ),
+    isBase64Upload: true, // Mark for tester UI
+  },
+  {
+    id: "reglyco_job_ensemble",
+    label: "POST /api/reglyco/job (Ensemble)",
+    method: "POST",
+    endpoint: "/api/reglyco/job",
+    params: [],
+    body: JSON.stringify(
+      {
+        jobId: "unique-job-id-ens",
+        jobType: "ensemble",
+        filename: "P01857.pdb", // Assumes init was run for P01857
+        selectedGlycans: { "50_A": "G00031MO" },
+        ensembleSize: 10,
+        calculateSASA: true,
+        effortLevel: 5, // Example effort level (will be *100 on server)
+        wiggleAngle: 2,
+        checkSteric: true,
+        outputFormat: "PDB",
       },
       null,
       2
     ),
   },
 ];
+// --- End Updated apiExamples array ---
 
+// --- APITester Component ---
 const APITester: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [currentExample, setCurrentExample] = useState(apiExamples[selectedIdx]);
@@ -129,25 +241,68 @@ const APITester: React.FC = () => {
   const [body, setBody] = useState(apiExamples[selectedIdx].body);
   const [response, setResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // For file uploads
+  const [base64Input, setBase64Input] = useState<string>(""); // For base64 input
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for file input
   const toast = useToast();
 
   useEffect(() => {
     const example = apiExamples[selectedIdx];
     setCurrentExample(example);
-    // Provide explicit types for reduce
     setParamValues(
       example.params.reduce((acc: { [key: string]: string }, p: { name: string; value: string }) => {
         acc[p.name] = p.value;
         return acc;
-      }, {}) // Initial value is an empty object
+      }, {})
     );
     setBody(example.body);
     setResponse(null);
+    setSelectedFile(null); // Reset file input on example change
+    setBase64Input(""); // Reset base64 input
+    if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Clear the actual file input element
+    }
   }, [selectedIdx]);
 
   const handleParamChange = (name: string, value: string) => {
     setParamValues(prev => ({ ...prev, [name]: value }));
   };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  const handleBase64FileRead = (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files[0]) {
+          const file = event.target.files[0];
+          const reader = new FileReader();
+          reader.onload = (loadEvent) => {
+              const base64String = (loadEvent.target?.result as string)?.split(',')[1]; // Get base64 part
+              if (base64String) {
+                  setBase64Input(base64String);
+                  // Optionally update the body template
+                  try {
+                      const bodyJson = JSON.parse(body);
+                      bodyJson.protFileBase64 = base64String;
+                      bodyJson.filename = file.name; // Update filename too
+                      setBody(JSON.stringify(bodyJson, null, 2));
+                  } catch (e) {
+                      console.error("Could not parse body JSON to insert base64");
+                      setBody(prev => prev.replace("<base64_encoded_pdb_content>", base64String)); // Simple replace as fallback
+                  }
+              }
+          };
+          reader.onerror = (error) => {
+              toast({ title: "File Read Error", description: "Could not read file for base64 encoding.", status: "error" });
+          };
+          reader.readAsDataURL(file); // Read as Data URL to get base64
+      }
+  };
+
 
   const constructUrl = () => {
     let url = currentExample.endpoint;
@@ -163,12 +318,17 @@ const APITester: React.FC = () => {
 
     if (currentExample.method === "POST") {
       if (currentExample.isFileUpload) {
-        curl += ` -F "pdbFile=@/path/to/your/file.pdb"`; // Example for file upload
+        curl += ` -F "protFile=@/path/to/your/file.pdb"`; // Updated field name for /init
       } else if (body.trim()) {
-        curl += ` -H "Content-Type: application/json" -d '${body.replace(/'/g, "'\\''")}'`; // Escape single quotes in body
+        // Ensure body is valid JSON before adding
+        try {
+            JSON.parse(body); // Validate
+            curl += ` -H "Content-Type: application/json" -d '${body.replace(/'/g, "'\\''")}'`; // Escape single quotes
+        } catch (e) {
+            curl += ` # Body is not valid JSON`;
+        }
       }
     } else if (currentExample.method === "GET" && (currentExample.id === 'pdb' || currentExample.id === 'download')) {
-        // Suggest using -o for file downloads
         const extension = currentExample.id === 'pdb' ? 'pdb' : 'zip';
         curl += ` -o output.${extension}`;
     }
@@ -179,28 +339,36 @@ const APITester: React.FC = () => {
   const { hasCopied: hasCopiedCurl, onCopy: onCopyCurl } = useClipboard(generateCurlCommand());
 
   const handleSend = async () => {
-    if (currentExample.isFileUpload) {
-        toast({ title: "Info", description: "File uploads must be tested via curl or a dedicated client.", status: "info" });
-        return;
-    }
-
     setLoading(true);
     setResponse(null);
     const url = constructUrl();
     let options: RequestInit = { method: currentExample.method };
+    let requestBody: BodyInit | null = null;
 
-    if (currentExample.method === "POST" && body.trim()) {
-      options.headers = { "Content-Type": "application/json" };
-      try {
-        // Validate JSON before sending
-        JSON.parse(body);
-        options.body = body;
-      } catch (e) {
-        toast({ title: "Invalid JSON", description: "Please check the request body format.", status: "error" });
-        setLoading(false);
-        return;
-      }
+    if (currentExample.method === "POST") {
+        if (currentExample.isFileUpload) {
+            if (!selectedFile) {
+                toast({ title: "File Required", description: "Please select a file to upload.", status: "warning" });
+                setLoading(false);
+                return;
+            }
+            const formData = new FormData();
+            formData.append("protFile", selectedFile); // Use 'protFile' for /init
+            requestBody = formData;
+        } else {
+            options.headers = { "Content-Type": "application/json" };
+            try {
+                JSON.parse(body); // Validate JSON
+                requestBody = body;
+            } catch (e) {
+                toast({ title: "Invalid JSON", description: "Please check the request body format.", status: "error" });
+                setLoading(false);
+                return;
+            }
+        }
+        options.body = requestBody;
     }
+
 
     try {
       const res = await fetch(url, options);
@@ -212,13 +380,10 @@ const APITester: React.FC = () => {
         setResponse(JSON.stringify(data, null, 2));
       } else if (contentType?.includes("text/") || contentType?.includes("application/xml")) {
          data = await res.text();
-         setResponse(data); // Display text directly
+         setResponse(data);
       } else if (res.ok && (currentExample.id === 'pdb' || currentExample.id === 'download')) {
-         // Handle successful file download response in tester
          setResponse(`// Success: Received ${contentType || 'file'}. Use curl command with '-o' to save.`);
-      }
-       else {
-        // Fallback for other types or errors
+      } else {
         data = await res.text();
         setResponse(`// Status: ${res.status}\n// Content-Type: ${contentType || 'N/A'}\n\n${data}`);
       }
@@ -245,13 +410,11 @@ const APITester: React.FC = () => {
           ))}
         </Select>
 
-        {/* Display Method and Constructed URL */}
         <HStack>
            <Text fontWeight="semibold" minW="60px">{currentExample.method}</Text>
            <Input value={constructUrl()} isReadOnly={true} fontSize="sm" />
         </HStack>
 
-        {/* Path Parameter Inputs */}
         {currentExample.params.length > 0 && (
           <VStack align="stretch" spacing={1}>
             <Text fontSize="sm" fontWeight="medium">Path Parameters:</Text>
@@ -268,6 +431,40 @@ const APITester: React.FC = () => {
           </VStack>
         )}
 
+        {/* File Upload Input */}
+        {currentExample.isFileUpload && (
+            <VStack align="stretch" spacing={1}>
+                <Text fontSize="sm" fontWeight="medium">File Upload:</Text>
+                <InputGroup size="sm">
+                    <Input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        p={1}
+                        accept=".pdb,.cif"
+                    />
+                </InputGroup>
+                {selectedFile && <Text fontSize="xs" color="gray.500">Selected: {selectedFile.name}</Text>}
+            </VStack>
+        )}
+
+        {/* Base64 File Input Helper */}
+        {currentExample.isBase64Upload && (
+            <VStack align="stretch" spacing={1}>
+                <Text fontSize="sm" fontWeight="medium">Load Base64 from File:</Text>
+                <InputGroup size="sm">
+                     <Input
+                        type="file"
+                        onChange={handleBase64FileRead}
+                        p={1}
+                        accept=".pdb,.cif"
+                    />
+                </InputGroup>
+                <Text fontSize="xs" color="gray.500">Select a file to auto-fill the 'protFileBase64' field below.</Text>
+            </VStack>
+        )}
+
+
         {/* Request Body Input */}
         {currentExample.method === "POST" && !currentExample.isFileUpload && (
           <VStack align="stretch" spacing={1}>
@@ -275,26 +472,21 @@ const APITester: React.FC = () => {
              <Textarea
                 value={body}
                 onChange={e => setBody(e.target.value)}
-                rows={6}
+                rows={currentExample.isBase64Upload ? 10 : 6}
                 fontFamily="mono"
                 fontSize="sm"
                 placeholder="Enter JSON body here..."
              />
           </VStack>
         )}
-         {currentExample.isFileUpload && (
-             <Text fontSize="sm" color="gray.500">File uploads require using `curl` or client-side `FormData`.</Text>
-         )}
 
-        {/* Action Buttons */}
         <HStack>
-          <Button colorScheme="blue" onClick={handleSend} isLoading={loading} isDisabled={currentExample.isFileUpload}>Send Request</Button>
+          <Button colorScheme="blue" onClick={handleSend} isLoading={loading}>Send Request</Button>
           <Button variant="outline" onClick={onCopyCurl} leftIcon={hasCopiedCurl ? <CheckIcon /> : <CopyIcon />}>
             {hasCopiedCurl ? "Copied" : "Copy Curl"}
           </Button>
         </HStack>
 
-        {/* Response Area */}
         <Box>
           <Text fontWeight="semibold" mb={1}>Response:</Text>
           <Box maxH="500px" overflowY="auto" borderWidth={1} borderRadius="md" bg="gray.50" p={1}>
@@ -312,8 +504,9 @@ const APITester: React.FC = () => {
     </Box>
   );
 };
+// --- End APITester Component ---
 
-// --- Define Interface for ApiEndpoint Props ---
+// --- ApiEndpoint Component ---
 interface ApiParam {
   name: string;
   description: string;
@@ -329,16 +522,14 @@ interface ApiEndpointProps {
   method: "GET" | "POST";
   path: string;
   description: string;
-  params?: ApiParam[]; // Use the interface
-  requestBody?: ApiRequestBody; // Use the interface
+  params?: ApiParam[];
+  requestBody?: ApiRequestBody;
   responseDesc: string;
   curlExample: string;
   notes?: string[];
 }
-// --- End Interface Definition ---
 
-// --- Type the ApiEndpoint Component ---
-const ApiEndpoint: React.FC<ApiEndpointProps> = ({ // Apply the interface here
+const ApiEndpoint: React.FC<ApiEndpointProps> = ({
   method,
   path,
   description,
@@ -346,14 +537,13 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({ // Apply the interface here
   curlExample,
   notes = [],
   params = [],
-  requestBody // No need for default {} if optional in interface
+  requestBody
 }) => {
   const methodColorScheme = method === "GET" ? "green" : "blue";
 
   return (
     <AccordionItem>
       <AccordionButton>
-        {/* Use HStack and Badge for better styling */}
         <HStack flex="1" textAlign="left" spacing={3}>
            <Badge colorScheme={methodColorScheme} fontSize="sm" px={2} py={0.5} borderRadius="md">{method}</Badge>
            <Text fontFamily="monospace" fontSize="md">{path}</Text>
@@ -364,11 +554,10 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({ // Apply the interface here
         <VStack align="stretch" spacing={3}>
           <Text>{description}</Text>
 
-          {/* Parameters Section */}
           {params && params.length > 0 && (
             <Box>
               <Text fontWeight="semibold" mb={1}>Path Parameters:</Text>
-              {params.map(p => ( // 'p' is now correctly typed as ApiParam
+              {params.map(p => (
                  <HStack key={p.name} spacing={2} mb={1}>
                     <Code fontSize="sm">{p.name}</Code>
                     <Text fontSize="sm">- {p.description}</Text>
@@ -377,8 +566,7 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({ // Apply the interface here
             </Box>
           )}
 
-          {/* Request Body Section */}
-          {requestBody && ( // requestBody is now correctly typed as ApiRequestBody | undefined
+          {requestBody && (
              <Box>
                <Text fontWeight="semibold" mb={1}>Request Body ({requestBody.format}):</Text>
                {requestBody.description && <Text fontSize="sm" mb={1}>{requestBody.description}</Text>}
@@ -388,13 +576,11 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({ // Apply the interface here
              </Box>
           )}
 
-          {/* Response Section */}
           <Box>
              <Text fontWeight="semibold" mb={1}>Response:</Text>
              <Text fontSize="sm">{responseDesc}</Text>
           </Box>
 
-          {/* Curl Example Section */}
           <Box>
              <Text fontWeight="semibold" mb={1}>Example Curl:</Text>
              <Code display="block" whiteSpace="pre-wrap" p={2} borderRadius="md" bg="gray.200" fontSize="sm">
@@ -402,10 +588,9 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({ // Apply the interface here
              </Code>
           </Box>
 
-          {/* Notes Section */}
           {notes && notes.length > 0 && (
              <Box>
-                {notes.map((note, i) => ( // 'note' is correctly typed as string
+                {notes.map((note, i) => (
                    <Text key={i} fontSize="sm" color="gray.600" mt={1}>Note: {note}</Text>
                 ))}
              </Box>
@@ -420,10 +605,8 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({ // Apply the interface here
 
 const API: React.FC = () => {
   return (
-    // Use Flex for two-column layout
     <Flex direction={{ base: "column", md: "row" }} p={5} gap={6}>
 
-      {/* Left Column: Documentation */}
       <Box flex="1" minW={0}>
         <Text
             bgGradient='linear(to-l, #44666C, #A7C4A3)'
@@ -438,7 +621,6 @@ const API: React.FC = () => {
               Not stabilized yet. Please contact us <Link href="mailto:OJAS.SINGH.2023@mumail.ie" color="blue.500" isExternal>here</Link> if you have any questions.
           </Text>
 
-          {/* GlycoShape APIs Section */}
           <Heading mt={8} mb={4} bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
           fontSize={{base: "3xl",sm: "3xl", md: "3xl", lg: "3xl",xl: "3xl"}}
@@ -500,7 +682,6 @@ const API: React.FC = () => {
              />
           </Accordion>
 
-          {/* Re-Glyco APIs Section */}
           <Heading size="lg" mt={8} mb={4}  bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
           fontSize={{base: "3xl",sm: "3xl", md: "3xl", lg: "3xl",xl: "3xl"}}
@@ -509,42 +690,95 @@ const API: React.FC = () => {
           <Accordion allowMultiple>
              <ApiEndpoint
                 method="POST"
-                path="/api/upload_pdb"
-                description="Uploads a PDB file to the server. The file is saved in a designated directory for later processing."
+                path="/api/reglyco/init"
+                description="Initializes the Re-Glyco process. Fetches protein structure (AlphaFold/RCSB) by ID, uses a previously uploaded file, or accepts a direct file upload. Identifies potential glycosylation sites and returns protein info, sequence, available sites, UniProt data (if applicable), and glycan configurations. Can also be used to fetch only glycan configurations."
                 requestBody={{
-                    format: "multipart/form-data",
-                    example: "(Use form data with a field named 'pdbFile')",
-                    description: "Requires sending the PDB file as form data."
-                }}
-                responseDesc="200 OK with JSON confirming upload success and filename, or 400/500 on error."
-                curlExample={`curl -X POST ${apiUrl}/api/upload_pdb -F "pdbFile=@/path/to/your/file.pdb"`}
-                notes={["This endpoint is typically used programmatically or via curl."]}
-             />
-             <ApiEndpoint
-                method="POST"
-                path="/api/process_pdb"
-                description="Attaches specified glycans to a protein structure identified by UniProt ID. Assumes the base protein PDB and glycan structures are available server-side."
-                requestBody={{
-                    format: "application/json",
+                    format: "application/json OR multipart/form-data",
                     example: JSON.stringify(
                         {
-                          uniprotID: "P01857",
-                          selectedGlycans: { 50: "G00031MO", 80: "G00055MO" },
+                          protID: "P01857",
+                          isUpload: false,
+                          configsOnly: false
                         },
                         null,
                         2
                       ),
-                    description: "`uniprotID`: UniProt accession ID of the protein. `selectedGlycans`: A dictionary where keys are sequence positions (1-based index) and values are GlyTouCan IDs of the glycans to attach."
+                    description: "Use JSON to fetch by ID or reference an upload. Use multipart/form-data with a 'protFile' field to upload directly."
                 }}
-                responseDesc="200 OK with the modified PDB file content, or 400/404/500 on errors (e.g., missing protein/glycan, invalid position)."
-                curlExample={`curl -X POST ${apiUrl}/api/process_pdb -H "Content-Type: application/json" -d '{"uniprotID": "P01857", "selectedGlycans": {"50": "G00031MO"}}' -o modified_protein.pdb`}
-                notes={["Use `-o filename.pdb` to save the resulting PDB file."]}
+                responseDesc="200 OK with JSON containing protein details (`id`, `filename`, `requestURL`, `sequence`), `glycosylation` info (available sites, UniProt data), and `configurations`. If `configsOnly` is true, returns only `configurations`. Errors on 400/404/500."
+                curlExample={`# Fetch by ID:\ncurl -X POST ${apiUrl}/api/reglyco/init -H "Content-Type: application/json" -d '{"protID": "P01857"}'\n\n# Upload file:\ncurl -X POST ${apiUrl}/api/reglyco/init -F "protFile=@/path/to/your/file.pdb"`}
+                notes={[
+                    "Fetches from AlphaFold first, then RCSB if ID is provided.",
+                    "Returns .cif filename/URL if fetched from AlphaFold CIF.",
+                    "Glycan configurations are cached server-side."
+                ]}
+             />
+             <ApiEndpoint
+                method="POST"
+                path="/api/reglyco/job"
+                description="Executes a Re-Glyco job: 'scan' (checks N-glycosylation sequons), 'optimization' (attaches selected glycans with optimization), or 'ensemble' (generates conformational ensemble)."
+                requestBody={{
+                    format: "application/json",
+                    example: JSON.stringify(
+                        {
+                          jobId: "<unique-job-identifier>",
+                          jobType: "<scan|optimization|ensemble>",
+                          filename: "<protein.pdb>",
+                          protFileBase64: "<base64_string>",
+                          selectedGlycans: { "ResID_Chain": "GlyTouCan/IUPAC", "...": "..." },
+                          outputFormat: "PDB",
+                          wiggleAngle: 60,
+                          populationSize: 50,
+                          maxGenerations: 100,
+                          wiggleAttempts: 10,
+                          ensembleSize: 10,
+                          calculateSASA: true,
+                          effortLevel: 5,
+                          checkSteric: true,
+                        },
+                        null,
+                        2
+                      ),
+                    description: "Provide job parameters. `selectedGlycans` maps residue locations (e.g., '50_A') to glycan identifiers. Include optimization or ensemble parameters as needed."
+                }}
+                responseDesc="200 OK with JSON containing job results: `output` (path to main result file), `box` (log messages). Scan/Optimization also include `clash` (boolean) and `results` (list). Ensemble also includes `sasa` (path) and `plot` (path). Errors on 400/500."
+                curlExample={`# Scan Job:\ncurl -X POST ${apiUrl}/api/reglyco/job -H "Content-Type: application/json" -d '{"jobId": "job1", "jobType": "scan", "filename": "P01857.pdb"}'\n\n# Optimization Job:\ncurl -X POST ${apiUrl}/api/reglyco/job -H "Content-Type: application/json" -d '{"jobId": "job2", "jobType": "optimization", "filename": "P01857.pdb", "selectedGlycans": {"50_A": "G00031MO"}}'`}
+                notes={[
+                    "Use `filename` obtained from the `/api/reglyco/init` response.",
+                    "Alternatively, provide `protFileBase64` to send the file content directly.",
+                    "Ensure `jobId` is unique for each job run.",
+                    "Returned `output` filepath are saved in the server's `output` directory.",
+                    `E.g 'output': 'unique-job-id/all.pdb is at ${apiUrl}/output/unique-job-id/all.pdb'`,
+                ]}
              />
           </Accordion>
 
+          <Heading mt={8} mb={4} bgGradient='linear(to-l, #44666C, #A7C4A3)'
+          bgClip='text'
+          fontSize={{base: "3xl",sm: "3xl", md: "3xl", lg: "3xl",xl: "3xl"}}
+          fontWeight='extrabold'
+          marginBottom="0.2em">GlycoShape structure viewer</Heading>
+          <Text fontSize="sm" mb={4} p={2}>
+            The GlycoShape structure viewer is a web-based tool for visualizing glycan structures. It allows users to view glycan structures in 3D using GlyTouCan identifiers or IUPAC names.  
+            </Text>
+            <Box borderWidth={1} borderRadius="md" overflow="hidden" mb={6} bg="gray.50" p={2}>
+              <Text fontSize="sm" mb={2} fontWeight="medium">
+                Example Viewer (GlyTouCan ID: G00028MO) URL: {apiUrl}/view?glytoucan=G00028MO
+              </Text>
+              
+              <Box as="iframe"
+                src={`${apiUrl}/view?glytoucan=G00028MO`}
+                width="100%"
+                height="320px"
+                border="0"
+                borderRadius="md"
+                bg="white"
+                title="GlycoShape Structure Viewer"
+                />
+            </Box>
+
       </Box>
 
-      {/* Right Column: API Tester */}
       <APITester />
 
     </Flex>
