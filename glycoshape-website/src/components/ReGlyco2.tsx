@@ -359,7 +359,7 @@ const ReGlyco = () => {
   const [wiggleAttempts, setwiggleAttempts] = useState<number>(40);
   const [outputFormat, setOutputFormat] = useState<string>("PDB");
   const [selectedGlycans, setSelectedGlycans] = useState<{ [key: string]: string }>({});
-  const [jobId, setJobId] = useState<string>("");
+  // const [jobId, setJobId] = useState<string>("");
   const [selectedGlycanImage, setSelectedGlycanImage] = useState<{ [key: number]: string }>({});
   const toast = useToast();
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -670,11 +670,11 @@ const ReGlyco = () => {
     setJobResults(null); // Clear previous results
 
 
-    const currentJobId = new Date().toISOString();
-    setJobId(currentJobId);
+    // const currentJobId = new Date().toISOString();
+    // setJobId(currentJobId);
 
     const payload = {
-      jobId: currentJobId,
+      // jobId: currentJobId,
       selectedGlycans: selections,
       filename: protData?.filename,
       customPDB: isUpload,

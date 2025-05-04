@@ -133,7 +133,6 @@ const apiExamples: ApiExample[] = [
     params: [],
     body: JSON.stringify(
       {
-        jobId: "unique-job-id-scan",
         jobType: "scan",
         filename: "P01857.pdb", // Assumes init was run for P01857
       },
@@ -149,7 +148,6 @@ const apiExamples: ApiExample[] = [
     params: [],
     body: JSON.stringify(
       {
-        jobId: "unique-job-id-scan-b64",
         jobType: "scan",
         filename: "my_protein.pdb",
         protFileBase64: "<base64_encoded_pdb_content>",
@@ -167,7 +165,6 @@ const apiExamples: ApiExample[] = [
     params: [],
     body: JSON.stringify(
       {
-        jobId: "unique-job-id-opt",
         jobType: "optimization",
         filename: "P01857.pdb", // Assumes init was run for P01857
         selectedGlycans: { "50_A": "G00031MO", "80_B": "G00055MO" },
@@ -190,7 +187,6 @@ const apiExamples: ApiExample[] = [
     params: [],
     body: JSON.stringify(
       {
-        jobId: "unique-job-id-opt",
         jobType: "optimization",
         filename: "protein.pdb", // Assumes init was run for P01857
         selectedGlycans: { "50_A": "G00031MO", "80_B": "G00055MO" },
@@ -213,7 +209,6 @@ const apiExamples: ApiExample[] = [
     params: [],
     body: JSON.stringify(
       {
-        jobId: "unique-job-id-ens",
         jobType: "ensemble",
         filename: "P01857.pdb", // Assumes init was run for P01857
         selectedGlycans: { "50_A": "G00031MO" },
@@ -721,7 +716,6 @@ const API: React.FC = () => {
                     format: "application/json",
                     example: JSON.stringify(
                         {
-                          jobId: "<unique-job-identifier>",
                           jobType: "<scan|optimization|ensemble>",
                           filename: "<protein.pdb>",
                           protFileBase64: "<base64_string>",
@@ -746,9 +740,8 @@ const API: React.FC = () => {
                 notes={[
                     "Use `filename` obtained from the `/api/reglyco/init` response.",
                     "Alternatively, provide `protFileBase64` to send the file content directly.",
-                    "Ensure `jobId` is unique for each job run.",
                     "Returned `output` filepath are saved in the server's `output` directory.",
-                    `E.g 'output': 'unique-job-id/all.pdb is at ${apiUrl}/output/unique-job-id/all.pdb'`,
+                    `E.g 'output': 'unique-job-id/output_file_name.pdb is at ${apiUrl}/output/unique-job-id/output_file_name.pdb'`,
                 ]}
              />
           </Accordion>

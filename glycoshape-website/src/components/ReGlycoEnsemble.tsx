@@ -46,6 +46,7 @@ import React, {
 
   
   import { useLocation } from 'react-router-dom'; // <-- Add this
+import { set } from 'lodash';
   
   // ───────────────────────────────────────────────
   // Interfaces 
@@ -615,11 +616,11 @@ import React, {
       setActiveStep(2);
       setOutputPath("");
       // Compute job id from current datetime
-      const currentJobId = new Date().toISOString();
-      setJobId(currentJobId);
+      // const currentJobId = new Date().toISOString();
+      // setJobId(currentJobId);
     
       const payload = {
-        jobId: currentJobId, // job folder name in server
+        // jobId: currentJobId, // job folder name in server
         selectedGlycans: selectedGlycans,
         filename: protData?.filename,
         customPDB: isUpload,
@@ -650,6 +651,13 @@ import React, {
           setOutputSasa(responseData.sasa);
           setActiveStep(3);
           setElapsedTime(0);
+          
+          setJobId(responseData.jobId);
+
+          console.log("Received response from /api/reglyco/job:", responseData);
+          console.log("Job ID:", jobId);
+          console.log("Output path:", outputPath);
+
         } else {
           console.error("Failed to post data.");
         }
@@ -1197,11 +1205,7 @@ import React, {
                     )}
                   </VStack>
                 </div>
-                {/* {jobId && activeStep !== 1 && (
-          <Box mt={4}>
-            <LiveProgress jobId={jobId} apiUrl={process.env.REACT_APP_API_URL || ""} />
-          </Box>
-        )} */}
+
                   
                 {outputPath && (
                   <Box ref={scrollToRef}>

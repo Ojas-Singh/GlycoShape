@@ -174,7 +174,7 @@ const Navbar: React.FC = () => {
           <MenuItem fontWeight="bold" as={RouterLink} to="/ensemble" onClick={() =>  handleNavigation('/ensemble')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Ensemble</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() =>  handleNavigation('/fit')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/swap" onClick={() =>  handleNavigation('/swap')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
-          <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() =>  handleNavigation('/chat')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Copilot</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/chat" onClick={() =>  handleNavigation('/chat')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Copilot</MenuItem>
         </MenuList>
       </Menu>) : (
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} marginRight="20px">Re-Glyco</Link>
