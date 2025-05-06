@@ -129,6 +129,7 @@ const BackendChat: React.FC<{
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileAttachment, setFileAttachment] = useState<FileAttachment | null>(null);
   const [thinkingVisible, setThinkingVisible] = useState<{ [key: string]: boolean }>({});
+  const [codeOutputVisible, setCodeOutputVisible] = useState<{ [key: string]: boolean }>({}); // <-- Add state for code output visibility
   const [isThinkingActive, setIsThinkingActive] = useState(false);
   const [isThinkingEnabled, setIsThinkingEnabled] = useState(true); // State for thinking toggle, default ON
   const toast = useToast();
@@ -179,45 +180,63 @@ const BackendChat: React.FC<{
       return null; // Or <></> if preferred
     }
 
-    // Handle simple string children
-    if (typeof children === 'string') {
-      return <Text as="p" mb={2}><Latex delimiters={latexDelimiters}>{children}</Latex></Text>;
-    }
+    // Use Box as the paragraph container instead of Text
+    // Apply margin bottom directly to the Box
+    return (
+      <Box as="p" mb={2}>
+        {(() => {
+          // Handle simple string children
+          if (typeof children === 'string') {
+            return <Latex delimiters={latexDelimiters}>{children}</Latex>;
+          }
 
-    // Handle array children (most common case for mixed content)
-    if (Array.isArray(children)) {
-      return (
-        <Text as="p" mb={2}>
-          {children.map((child, index) => {
-            if (typeof child === 'string') {
-              // Wrap string parts with Latex
-              return <Latex key={index} delimiters={latexDelimiters}>{child}</Latex>;
-            } else if (isValidElement(child)) {
-              // Render valid React elements directly
-              // Use Fragment wrapper with key for direct element rendering in map
-              return <Fragment key={index}>{child}</Fragment>;
-            }
-            // Ignore null, undefined, boolean, etc. in arrays
-            return null;
-          })}
-        </Text>
-      );
-    }
+          // Handle array children (most common case for mixed content)
+          if (Array.isArray(children)) {
+            return children.map((child, index) => {
+              if (typeof child === 'string') {
+                // Wrap string parts with Latex
+                return <Latex key={index} delimiters={latexDelimiters}>{child}</Latex>;
+              } else if (isValidElement(child)) {
+                // Render valid React elements directly
+                // Use Fragment wrapper with key for direct element rendering in map
+                return <Fragment key={index}>{child}</Fragment>;
+              }
+              // Ignore null, undefined, boolean, etc. in arrays
+              return null;
+            });
+          }
 
-    // Handle single React element child (less common for <p>, but possible)
-    if (isValidElement(children)) {
-        // Render the element directly, assuming no LaTeX processing needed within it here
-        return <Text as="p" mb={2}>{children}</Text>;
-    }
+          // Handle single React element child
+          if (isValidElement(children)) {
+              // Render the element directly
+              return children;
+          }
 
-    // Fallback for unknown types (should be rare)
-    console.warn("MarkdownParagraph received unexpected children type:", children);
-    return <Text as="p" mb={2}>{children as React.ReactNode}</Text>; // Attempt to render anyway
+          // Fallback for unknown types
+          console.warn("MarkdownParagraph received unexpected children type:", children);
+          return children as React.ReactNode; // Attempt to render anyway
+        })()}
+      </Box>
+    );
   };
 
-  // CodeBlock component (no changes needed here for LaTeX)
   const CodeBlock: React.FC<any> = ({ node, inline, className, children, ...props }) => {
-    const { hasCopied, onCopy } = useClipboard(String(children).replace(/\n$/, ''));
+    // Get the content as a string
+    const content = String(children).replace(/\n$/, '');
+    
+    // Override the 'inline' prop based on content analysis
+    // Consider code as block if it contains newlines or is enclosed in triple backticks
+    const containsNewlines = content.includes('\n');
+    const isCodeBlock = containsNewlines || 
+                       (className && className.startsWith('language-'));
+    
+    // Explicitly override the inline prop
+    const effectiveInline = !isCodeBlock;
+    
+    // Log for debugging
+    // console.log(`CodeBlock: content="${content.substring(0, 20)}...", inline=${inline}, effectiveInline=${effectiveInline}`);
+    
+    const { hasCopied, onCopy } = useClipboard(content);
     const match = /language-(\w+)/.exec(className || '');
     const language = match ? match[1] : 'plaintext'; // Default to plaintext
 
@@ -225,44 +244,65 @@ const BackendChat: React.FC<{
     const currentCodeStyle = codeStyle; // Always oneLight
     const currentCodeOutputBg = codeOutputBg;
     const currentCodeBlockHeaderBg = codeBlockHeaderBg;
-    const currentInlineCodeBg = inlineCodeBg;
+    const currentInlineCodeBg = inlineCodeBg; // Use the defined variable
 
-    return !inline ? (
-      <Box position="relative" my={4} className="code-block" bg={currentCodeOutputBg} borderRadius="md" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
-         <HStack px={3} py={1} bg={currentCodeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
-            <Text fontSize="xs" color="gray.500" textTransform="uppercase">{language}</Text>
-             <Tooltip label={hasCopied ? 'Copied!' : 'Copy code'} placement="top">
-              <IconButton
-                aria-label="Copy code"
-                icon={hasCopied ? <CheckIcon /> : <CopyIcon />}
-                size="xs"
-                onClick={onCopy}
-                variant="ghost"
-                colorScheme={hasCopied ? 'green' : 'gray'}
-              />
-            </Tooltip>
-         </HStack>
-        <SyntaxHighlighter
-          style={currentCodeStyle} // Use oneLight
-          language={language}
-          PreTag="div"
-          {...props}
-          customStyle={{ margin: 0, padding: '1rem', fontSize: '0.875rem', backgroundColor: 'transparent' }} // Transparent BG, parent Box handles it
-          wrapLongLines={true}
-          codeTagProps={{ style: { fontFamily: 'monospace' } }}
+    // --- Use our effectiveInline instead of the original inline prop ---
+    if (effectiveInline) {
+      // --- Render simple inline code using Chakra's Code component ---
+      return (
+        <Code
+          display="inline-block" // <-- Force inline display
+          verticalAlign="baseline" // <-- Adjust vertical alignment if needed
+          px={1} // Padding for visual spacing
+          py={0.5}
+          bg={currentInlineCodeBg} // Background color for inline code
+          borderRadius="sm"
+          fontSize="sm" // Consistent font size
+          fontFamily="monospace" // Monospace font
+          {...props} // Pass down other props if necessary
         >
-          {String(children).replace(/\n$/, '')}
-        </SyntaxHighlighter>
-      </Box>
-    ) : (
-      <Text as="code" px={1} py={0.5} bg={currentInlineCodeBg} borderRadius="sm" fontSize="sm" fontFamily="monospace" {...props}>
-        {children}
-      </Text>
-    );
+          {children}
+        </Code>
+      );
+    } else {
+      // --- Render block code with SyntaxHighlighter ---
+      // This part remains unchanged
+      return (
+        <Box position="relative" my={4} className="code-block" bg={currentCodeOutputBg} borderRadius="md" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
+           <HStack px={3} py={1} bg={currentCodeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
+              <Text fontSize="xs" color="gray.500" textTransform="uppercase">{language}</Text>
+               <Tooltip label={hasCopied ? 'Copied!' : 'Copy code'} placement="top">
+                <IconButton
+                  aria-label="Copy code"
+                  icon={hasCopied ? <CheckIcon /> : <CopyIcon />}
+                  size="xs"
+                  onClick={onCopy}
+                  variant="ghost"
+                  colorScheme={hasCopied ? 'green' : 'gray'}
+                />
+              </Tooltip>
+           </HStack>
+          <SyntaxHighlighter
+            style={currentCodeStyle} // Use oneLight
+            language={language}
+            PreTag="div"
+            {...props}
+            customStyle={{ margin: 0, padding: '1rem', fontSize: '0.875rem', backgroundColor: 'transparent' }} // Transparent BG, parent Box handles it
+            wrapLongLines={false} // Disable line wrapping
+            codeTagProps={{ style: { fontFamily: 'monospace' } }}
+          >
+            {content}
+          </SyntaxHighlighter>
+        </Box>
+      );
+    }
   };
 
+  
+
+  
   const markdownComponents: Components = {
-    // Use Chakra Text component for paragraphs and let our custom component handle content
+    // Use the updated MarkdownParagraph
     p: MarkdownParagraph,
     code: CodeBlock,
     // Add other renderers as needed
@@ -299,34 +339,6 @@ const BackendChat: React.FC<{
     }
     // Trigger scroll on new messages AND content changes in the last message during streaming
   }, [messages, messages[messages.length - 1]?.content, messages[messages.length - 1]?.thinkingContent, isLoading]); // Added last message content/thinkingContent and isLoading
-
-  // --- NEW: Scroll individual reasoning boxes ---
-  useEffect(() => {
-    // Create a dependency based on the thinking content of all messages
-    const thinkingContentDependency = messages.map(m => m.thinkingContent || '').join('-');
-
-    // Iterate through the current messages to find the ones with thinking content
-    messages.forEach((msg, idx) => {
-      if (msg.thinkingContent) {
-        // Reconstruct the key exactly as done in the map function
-        const messageKey = `${msg.role}-${msg.timestamp}-${idx}${msg.id ? `-${msg.id}` : ''}`;
-        const reasoningBox = reasoningBoxRefs.current[messageKey];
-
-        if (reasoningBox) {
-          // Check if scrolled near the bottom before new content arrived
-          // Use a smaller threshold for the reasoning box
-          const isReasoningScrolledToBottom = reasoningBox.scrollHeight - reasoningBox.scrollTop <= reasoningBox.clientHeight + 30;
-          if (isReasoningScrolledToBottom) {
-            reasoningBox.scrollTo({
-              top: reasoningBox.scrollHeight,
-              behavior: 'smooth' // Or 'auto' if smooth feels jumpy
-            });
-          }
-        }
-      }
-    });
-    // Depend on the generated string representing all thinking content
-  }, [messages.map(m => m.thinkingContent || '').join('-')]); // Dependency ensures this runs when thinking content changes
 
 
   // Paste handler (unchanged logic)
@@ -903,6 +915,10 @@ const BackendChat: React.FC<{
     setThinkingVisible((prev) => ({ ...prev, [messageKey]: !prev[messageKey] }));
   };
 
+  const toggleCodeOutput = (messageKey: string) => { // <-- Add handler for code output toggle
+    setCodeOutputVisible((prev) => ({ ...prev, [messageKey]: !prev[messageKey] }));
+  };
+
   const cancelRequest = () => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -1047,24 +1063,26 @@ const BackendChat: React.FC<{
                         )}
                         {/* Collapse component for expanded view */}
                         <Collapse in={thinkingVisible[messageKey]} animateOpacity style={{width: '100%'}}>
-                          <Box
-                          ref={(el) => { reasoningBoxRefs.current[messageKey] = el; }}
-                          mt={1}
-                          mb={2}
-                          p={3}
-                          borderWidth="1px"
-                          borderRadius="md"
-                          borderColor={thinkingBorderColor}
-                          bg={thinkingBg}
-                          maxH={"400px"}
-                          overflowY="auto"
-                          w="full"
-                          >
-                          <Box className="markdown-container" fontSize="sm"></Box>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                          {msg.thinkingContent}
-                          </ReactMarkdown>
-                          </Box>
+                            <Box
+                            ref={(el) => { reasoningBoxRefs.current[messageKey] = el; }}
+                            mt={1}
+                            mb={2}
+                            p={3}
+                            borderWidth="1px"
+                            borderRadius="md"
+                            borderColor={thinkingBorderColor}
+                            bg={thinkingBg}
+                            maxH={"400px"}
+                            overflowY="auto"
+                            w="full"
+                            fontSize="xs" // Correct font size here
+                            >
+                            <Box className="markdown-container">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                              {msg.thinkingContent}
+                            </ReactMarkdown>
+                            </Box>
+                            </Box>
                         </Collapse>
                         </VStack>
                     )}
@@ -1100,44 +1118,64 @@ const BackendChat: React.FC<{
                     )}
 
 
-                     {/* Code Output */}
+                     {/* Code Output (Collapsible) */}
                     {msg.codeOutput && (
-                      <Box mt={3} >
-                        {/* Display Executed Code if present */}
-                        {msg.codeOutput.code && (
-                          <Box mb={3}>
-                            <Text fontSize="sm" fontWeight="bold" mb={1}>Executed Code:</Text>
-                            <CodeBlock className="language-python">
-                              {msg.codeOutput.code}
-                            </CodeBlock>
-                          </Box>
-                        )}
-                        {/* END Display Executed Code */}
+                      <Box mt={3}>
+                        {/* Header for Collapse Toggle */}
+                        <HStack spacing={2} width="100%" justifyContent="space-between" minH="16px" mb={1} cursor="pointer" onClick={() => toggleCodeOutput(messageKey)}>
+                          <Text fontSize="xs" fontWeight="bold" color="gray.600">Code Execution:</Text>
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            height="16px"
+                            minWidth="20px"
+                            p={0}
+                            aria-label={codeOutputVisible[messageKey] ? "Collapse Code Output" : "Expand Code Output"}
+                          >
+                            {codeOutputVisible[messageKey] ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                          </Button>
+                        </HStack>
 
-                        {/* Display STDOUT/STDERR only if they exist */}
-                        {(msg.codeOutput.stdout || msg.codeOutput.stderr) && (
-                             <Text fontSize="sm" fontWeight="bold" mb={1}>Code Output:</Text>
-                        )}
-                        {msg.codeOutput.stdout && (
-                          <Box mb={msg.codeOutput.stderr ? 2 : 0}> {/* Adjust margin if stderr follows */}
-                            <Text fontSize="xs" color="gray.500" mb={1}>STDOUT:</Text>
-                            <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" wordBreak="break-all" fontSize="sm" w="full" borderWidth="1px" borderColor={borderColor}>
-                              {msg.codeOutput.stdout}
-                            </Code>
+                        {/* Collapsible Content */}
+                        <Collapse in={codeOutputVisible[messageKey]} animateOpacity style={{width: '100%'}}>
+                          <Box pt={2} /* Add padding top to separate from header */ >
+                            {/* Display Executed Code if present */}
+                            {msg.codeOutput.code && (
+                              <Box mb={3}>
+                                <Text fontSize="sm" fontWeight="bold" mb={1}>Executed Code:</Text>
+                                <CodeBlock className="language-python">
+                                  {msg.codeOutput.code}
+                                </CodeBlock>
+                              </Box>
+                            )}
+                            {/* END Display Executed Code */}
+
+                            {/* Display STDOUT/STDERR only if they exist */}
+                            {(msg.codeOutput.stdout || msg.codeOutput.stderr) && (
+                                <Text fontSize="sm" fontWeight="bold" mb={1}>Code Output:</Text>
+                            )}
+                            {msg.codeOutput.stdout && (
+                              <Box mb={msg.codeOutput.stderr ? 2 : 0}> {/* Adjust margin if stderr follows */}
+                                <Text fontSize="xs" color="gray.500" mb={1}>STDOUT:</Text>
+                                <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" wordBreak="break-all" fontSize="sm" w="full" borderWidth="1px" borderColor={borderColor}>
+                                  {msg.codeOutput.stdout}
+                                </Code>
+                              </Box>
+                            )}
+                            {msg.codeOutput.stderr && (
+                              <Box>
+                                  <Text fontSize="xs" color={stderrColor} mb={1}>STDERR:</Text>
+                                  <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" wordBreak="break-all" fontSize="sm" w="full" color={stderrCodeColor} borderWidth="1px" borderColor={borderColor}>
+                                    {msg.codeOutput.stderr}
+                                  </Code>
+                              </Box>
+                            )}
+                            {/* Conditionally render "(No output)" only if BOTH stdout/stderr are empty AND code wasn't shown */}
+                            {!msg.codeOutput.code && !msg.codeOutput.stdout && !msg.codeOutput.stderr && (
+                                <Text fontSize="sm" fontStyle="italic" color="gray.500">(No output)</Text>
+                            )}
                           </Box>
-                        )}
-                        {msg.codeOutput.stderr && (
-                           <Box>
-                              <Text fontSize="xs" color={stderrColor} mb={1}>STDERR:</Text>
-                              <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" wordBreak="break-all" fontSize="sm" w="full" color={stderrCodeColor} borderWidth="1px" borderColor={borderColor}>
-                                {msg.codeOutput.stderr}
-                              </Code>
-                           </Box>
-                        )}
-                        {/* Conditionally render "(No output)" only if BOTH stdout/stderr are empty AND code wasn't shown */}
-                        {!msg.codeOutput.code && !msg.codeOutput.stdout && !msg.codeOutput.stderr && (
-                            <Text fontSize="sm" fontStyle="italic" color="gray.500">(No output)</Text>
-                        )}
+                        </Collapse>
                       </Box>
                     )}
 
