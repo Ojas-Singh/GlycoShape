@@ -915,18 +915,50 @@ def search():
     elif search_type == 'wurcs':
         WURCS = search_string.lower()
 
-        format_part, residues_list = name.wurcsmatch(WURCS)
-        wurcs_0 = f'WURCS=2.0/{format_part}/{residues_list}'
-        # Store tuples of (score, entry) for sorting
+        # Use name.wurcs_split to extract components from the query WURCS
+        query_split = name.wurcs_split(WURCS)
+        query_res_count = query_split["res_count"]
+        query_lin_count = query_split["lin_count"]
+        query_unique_res_count = query_split["unique_res_count"]
+        query_unique_res_list = query_split["unique_res_list"]
+        query_res_sequence = query_split["res_sequence"]
+        query_lin_list = query_split["lin_list"]
+
         scored_results = []
-        
 
         for _, glycan_data in GDB_data.items():
             wurcs = glycan_data['archetype']['wurcs']
             if wurcs:
-                format_part_i, residues_list_i = name.wurcsmatch(wurcs)
-                wurcs_i = f'WURCS=2.0/{format_part_i}/{residues_list_i}'
-                score = fuzz.partial_ratio(wurcs_0, wurcs_i.lower())
+                db_split = name.wurcs_split(wurcs)
+                db_res_count = db_split["res_count"]
+                db_lin_count = db_split["lin_count"]
+                db_unique_res_count = db_split["unique_res_count"]
+                db_unique_res_list = db_split["unique_res_list"]
+                db_res_sequence = db_split["res_sequence"]
+                db_lin_list = db_split["lin_list"]
+
+                # Score: prioritize exact matches on res_count and lin_count, then minimize differences in other parts
+                score = 0
+                if db_res_count == query_res_count:
+                    score += 50
+                else:
+                    score -= abs(db_res_count - query_res_count) * 10
+
+                if db_lin_count == query_lin_count:
+                    score += 50
+                else:
+                    score -= abs(db_lin_count - query_lin_count) * 10
+
+                # Penalize difference in unique_res_count
+                score -= abs(db_unique_res_count - query_unique_res_count) * 5
+
+                # Fuzzy match for unique_res_list and res_sequence
+                score += fuzz.partial_ratio(" ".join(query_unique_res_list), " ".join(db_unique_res_list))
+                score += fuzz.partial_ratio(query_res_sequence, db_res_sequence)
+
+                # Fuzzy match for lin_list (as string)
+                score += fuzz.partial_ratio(" ".join(query_lin_list), " ".join(db_lin_list))
+
                 entry = {
                     'glytoucan': glycan_data['archetype']['glytoucan'],
                     'ID': glycan_data['archetype']['ID'],
