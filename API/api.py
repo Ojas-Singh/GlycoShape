@@ -172,7 +172,8 @@ def is_exist(identifier):
         if folder_path.is_dir() or folder2_path.is_dir():
             return jsonify({'exists': True, 'reason': 'Folder found'})
         # 1b. Check if a folder exists matching the identifier minus the last 5 characters
-        if len(identifier) > 5:
+        # Only check for similar folders if identifier is not a GlyTouCan ID (GlyTouCan IDs are exactly 8 characters, alphanumeric)
+        if len(identifier) > 5 and not (len(identifier) == 8):
             base_identifier = identifier[:-5]
             
         
