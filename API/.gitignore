@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+visitors.csv
+request.txt
+
 # Distribution / packaging
 dist/
 build/
