@@ -177,7 +177,63 @@ def wurcsmatch(wurcs):
     residues_match = re.findall(r'\[([^\]]+)\]', wurcs)
     residues_list = residues_match if residues_match else []
 
+
     return format_part, residues_list
+
+def wurcs_split(wurcs):
+    """
+    Parse a WURCS string and extract UniqueRESs, RESs, LINs, RES Sequence list, and LIN list.
+
+    Args:
+        wurcs (str): WURCS string, e.g. 
+            "WURCS=2.0/3,5,4/[a2122h-1b_1-5_2*NCC/3=O][a1122h-1b_1-5][a1122h-1a_1-5]/1-1-2-3-3/a4-b1_b4-c1_c3-d1_c6-e1"
+
+    Returns:
+        dict: {
+            "unique_res_count": int,
+            "res_count": int,
+            "lin_count": int,
+            "unique_res_list": list of str,
+            "res_sequence": list of int,
+            "lin_list": list of str
+        }
+    """
+    # Remove prefix if present
+    if wurcs.startswith("WURCS="):
+        wurcs = wurcs.split("=", 1)[1]
+    # Split into sections
+    try:
+        # Split into header and the rest
+        parts = wurcs.split("/", 3)
+        if len(parts) != 4:
+            raise ValueError("WURCS string does not have the expected number of sections")
+        _, counts, rest = parts[0], parts[1], parts[2] + "/" + parts[3]
+        unique_res_count, res_count, lin_count = map(int, counts.split(","))
+        # Extract all unique residues (inside brackets)
+        unique_res_list = re.findall(r'\[([^\]]+)\]', rest)
+        # Remove all unique residues from the string to get the rest
+        after_unique_res = re.sub(r'(\[[^\]]+\])+', '', rest, count=unique_res_count)
+        # Now after_unique_res should start with a slash, then RES sequence, then slash, then LINs
+        after_unique_res = after_unique_res.lstrip("/")
+        if "/" in after_unique_res:
+            res_seq_str, lin_str = after_unique_res.split("/", 1)
+        else:
+            res_seq_str, lin_str = after_unique_res, ""
+        # RES Sequence: list of ints
+        res_sequence = [int(x) for x in res_seq_str.split("-") if x]
+        # LINs: list of strings separated by _
+        lin_list = lin_str.split("_") if lin_str else []
+        return {
+            "unique_res_count": unique_res_count,
+            "res_count": res_count,
+            "lin_count": lin_count,
+            "unique_res_list": unique_res_list,
+            "res_sequence": res_sequence,
+            "lin_list": lin_list
+        }
+    except Exception as e:
+        logger.error(f"Failed to parse WURCS: {e}")
+        return None
 
 def glycam2wurcs(glycam):
     iupac = glycam2iupac(glycam)
