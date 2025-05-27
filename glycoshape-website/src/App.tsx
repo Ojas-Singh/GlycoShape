@@ -18,6 +18,7 @@ import ReGlyco from './components/ReGlyco2';
 import Ensemble from './components/ReGlycoEnsemble';
 import Swap from './components/Swap';
 import Elab from './components/eLab/Elab';
+// import Blog from './components/eLab/Blog';
 import SearchPage from './components/SearchPage';
 import GlycanPage from './components/GlycanPage';
 import theme from './components/Theme';
@@ -32,7 +33,8 @@ import JobView from './components/JobView';
 import UnderConstruction from './components/UnderConstruction';
 import Sparql from './components/Sparql';
 import Chat from './components/Chat';
-import Health from './components/DatabaseHealth';
+import DBHealth from './components/DatabaseHealth';
+import XP from './components/XP';
 
 // First create a Layout component for the main layout
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -105,14 +107,16 @@ const App: React.FC = () => {
                   <Route path="/elab" element={<div><Search /><Elab /></div>} />
                   <Route path="/team" element={<div><Search /><Elab /></div>} />
                   <Route path="/blog" element={<div><Search /><Elab /></div>} />
+                  <Route path="/blog/:slug" element={<Elab />} /> 
                   <Route path="/publications" element={<div><Search /><Elab /></div>} />
                   <Route path="/swap" element={<div><Swap /></div>} />
                   <Route path="/fit" element={<div><Fit /></div>} />
                   <Route path="/job" element={<div><Search /><JobView /></div>} />
                   <Route path="/ensemble" element={<div><Ensemble /></div>} />
+                  <Route path="/xp" element={<div><XP /></div>} />
                   <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
                   <Route path="/stats" element={<div><Stats /></div>} />
-                  <Route path="/health" element={<div><Health /></div>} />
+                  <Route path="/db_health" element={<div><DBHealth /></div>} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </MainLayout>

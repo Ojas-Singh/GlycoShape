@@ -161,9 +161,7 @@ const Navbar: React.FC = () => {
       ) : (
         <Flex align="center" >
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }}  marginRight="20px">Database</Link>
-          {/* <Link fontWeight="bold" color={"#F7FFE6"} href="/reglyco" marginRight="20px">Re-Glyco</Link> */}
-          
-          
+
           {isDevelopment ? (
         <Menu>
         <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
@@ -174,7 +172,7 @@ const Navbar: React.FC = () => {
           <MenuItem fontWeight="bold" as={RouterLink} to="/ensemble" onClick={() =>  handleNavigation('/ensemble')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Ensemble</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() =>  handleNavigation('/fit')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/swap" onClick={() =>  handleNavigation('/swap')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
-          <MenuItem fontWeight="bold" as={RouterLink} to="/chat" onClick={() =>  handleNavigation('/chat')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Copilot</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/chat" onClick={() =>  handleNavigation('/chat')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>GlyCopilot</MenuItem>
         </MenuList>
       </Menu>) : (
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} marginRight="20px">Re-Glyco</Link>
@@ -196,8 +194,18 @@ const Navbar: React.FC = () => {
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/faq" marginRight="20px" >FAQ</Link> 
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/tutorial" marginRight="20px" >Tutorials</Link> 
 
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/elab" marginRight="20px">eLab</Link>
-          
+          {/* <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/elab" marginRight="20px">eLab</Link> */}
+          <Menu>
+        <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
+          eLab
+        </MenuButton>
+        <MenuList bg="#28363F" borderColor="#28363F">
+          <MenuItem fontWeight="bold" as={RouterLink} to="/eLab" onClick={() =>  handleNavigation('/elab')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>eLab</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/team" onClick={() =>  handleNavigation('/team')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Team</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/blog" onClick={() =>  handleNavigation('/blog')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Blog</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/publications" onClick={() =>  handleNavigation('/publications')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Publications</MenuItem>
+        </MenuList>
+      </Menu>
         </Flex>
       )}
       </Flex>

@@ -30,7 +30,11 @@ const Footer: React.FC = () => {
           <Link as={RouterLink} color="white" to="/search?query=N-Glycans">N linked Glycans</Link>
           <Link as={RouterLink} color="white" to="/search?query=O-Glycans">O linked Glycans</Link>
           <Link as={RouterLink} color="white" to="/search?query=GAGs">Glycosaminoglycans </Link>
-        </VStack>
+        
+          <Text color="white" fontWeight="bold" marginTop={'1rem'}>Stats</Text>
+          <Divider />
+          <Link as={RouterLink} color="white" to="/stats">Visitors map</Link>
+          </VStack>
         {/* <VStack align="start">
           <Text color="white" fontWeight="bold">Supporting Data</Text>
           <Divider />
@@ -47,7 +51,8 @@ const Footer: React.FC = () => {
           {isDevelopment ? (
             <>
         <Link as={RouterLink} color="white" to="/fit">Re-Glyco Fit</Link>
-        <Link as={RouterLink} color="white" to="/chat">GlycoShape Copilot</Link>
+        <Link as={RouterLink} color="white" to="/xp">Re-Glyco XP</Link>
+        <Link as={RouterLink} color="white" to="/chat">GlyCopilot</Link>
         </>
       ) : (
         <></>

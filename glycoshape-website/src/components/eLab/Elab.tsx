@@ -1,20 +1,234 @@
 // eLab.tsx
 
-import React, { useState } from 'react';
-import { useLocation, Link as RouterLink } from 'react-router-dom';
-import { SocialIcon } from 'react-social-icons'
+import React, { useState, useEffect } from 'react';
+import { useLocation, Link as RouterLink, useParams, useNavigate } from 'react-router-dom';
+import { SocialIcon } from 'react-social-icons';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+
+// Imports for LaTeX and Code Highlighting
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { gruvboxLight } from 'react-syntax-highlighter/dist/esm/styles/prism'; // Choose a style
+import 'katex/dist/katex.min.css'; // KaTeX CSS
 
 import elab_logo from '.././assets/eLAB.png';
 
-import { Tag, Divider, Show, SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack, Spacer, Hide } from '@chakra-ui/react';
+import { Tag, Divider, Show, SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack, Spacer, Hide, Spinner, Alert, AlertIcon } from '@chakra-ui/react';
+import { Element as HastElement } from 'hast'; // Import HastElement for typing the AST node
 
+interface BlogPost {
+  title: string;
+  date: string;
+  content: string;
+  slug: string;
+}
 
+interface Publication {
+  title: string;
+  authors: string;
+  source: string;
+  doi?: string;
+  files_doi?: string;
+  status?: string;
+  editor?: string;
+}
+
+// GitHub configuration
+const GITHUB_CONFIG = {
+  owner: 'Ojas-Singh', 
+  repo: 'GlycoShape', 
+  path: '/', 
+  branch: 'main' 
+};
 
 const ELab: React.FC = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any | null>(null);
   const [hoveredMember, setHoveredMember] = useState<number | null>(null);
+  
+  // New state for markdown content
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loadingPublications, setLoadingPublications] = useState(true);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
+  const [publicationsError, setPublicationsError] = useState<string | null>(null);
+  const [blogsError, setBlogsError] = useState<string | null>(null);
+
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+
+  // Tab index state for controlled Tabs
+  const [tabIndex, setTabIndex] = useState(0);
+
+  // Update tabIndex whenever location changes
+  useEffect(() => {
+    let idx = 0;
+    if (location.pathname.startsWith('/team')) {
+      idx = 1;
+    } else if (location.pathname.startsWith('/blog')) {
+      idx = 2;
+    } else if (location.pathname.startsWith('/publications')) {
+      idx = 3;
+    } else if (location.pathname === '/elab' || location.pathname === '/') {
+      idx = 0;
+    } else {
+      idx = 0;
+    }
+    setTabIndex(idx);
+  }, [location.pathname]);
+
+  // GitHub API functions
+  const fetchGitHubDirectoryContents = async (): Promise<string[]> => {
+    const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?ref=${GITHUB_CONFIG.branch}`;
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Filter for markdown files and return their download URLs
+      return data
+        .filter((file: any) => file.name.endsWith('.md') && file.type === 'file')
+        .map((file: any) => file.download_url);
+    } catch (error) {
+      console.error('Error fetching GitHub directory:', error);
+      throw error;
+    }
+  };
+
+  const fetchGitHubFile = async (downloadUrl: string): Promise<string> => {
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status}`);
+      }
+      return await response.text();
+    } catch (error) {
+      console.error('Error fetching GitHub file:', error);
+      throw error;
+    }
+  };
+
+  // Updated fetchBlogPosts function to use GitHub API
+  const fetchBlogPosts = async () => {
+    try {
+      setLoadingBlogs(true);
+      
+      // Get list of markdown files from GitHub
+      const fileUrls = await fetchGitHubDirectoryContents();
+      
+      // Fetch content for each file
+      const blogPromises = fileUrls.map(async (downloadUrl) => {
+        const rawContent = await fetchGitHubFile(downloadUrl);
+        const { title, date } = extractBlogMetadata(rawContent);
+
+        // Robustly remove frontmatter
+        const contentWithoutFrontmatter = rawContent.replace(/^---[\s\r\n]+([\s\S]*?)^---[\s\r\n]*/m, '');
+
+        // Extract filename from URL for slug
+        const filename = downloadUrl.split('/').pop() || '';
+        const slugFromFile = filename.replace(/\.md$/, '');
+
+        return {
+          title: title || slugFromFile,
+          date: date || new Date().toISOString(),
+          content: contentWithoutFrontmatter.trim(),
+          slug: slugFromFile,
+        };
+      });
+      
+      const posts = await Promise.all(blogPromises);
+      setBlogPosts(posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    } catch (error) {
+      console.error('Error fetching blog posts from GitHub:', error);
+      setBlogsError('Failed to load blog posts from GitHub');
+    } finally {
+      setLoadingBlogs(false);
+    }
+  };
+
+  // Keep your existing fetchPublications function unchanged
+  const fetchPublications = async () => {
+    try {
+      setLoadingPublications(true);
+      const response = await fetch('/publications.md'); // Keep local for publications
+      if (!response.ok) throw new Error('Failed to fetch publications');
+      
+      const markdownContent = await response.text();
+      const parsedPublications = parsePublicationsMarkdown(markdownContent);
+      setPublications(parsedPublications);
+    } catch (error) {
+      console.error('Error fetching publications:', error);
+      setPublicationsError('Failed to load publications');
+    } finally {
+      setLoadingPublications(false);
+    }
+  };
+
+  // Parse publications markdown content
+  const parsePublicationsMarkdown = (markdown: string): Publication[] => {
+    const publications: Publication[] = [];
+    const lines = markdown.split('\n');
+    
+    let currentPublication: Partial<Publication> = {};
+    
+    for (const line of lines) {
+      if (line.startsWith('**Title:**')) {
+        if (currentPublication.title) {
+          publications.push(currentPublication as Publication);
+        }
+        currentPublication = { title: line.replace('**Title:**', '').trim() };
+      } else if (line.startsWith('**Authors:**')) {
+        currentPublication.authors = line.replace('**Authors:**', '').trim();
+      } else if (line.startsWith('**Source:**')) {
+        currentPublication.source = line.replace('**Source:**', '').trim();
+      } else if (line.startsWith('**DOI:**')) {
+        currentPublication.doi = line.replace('**DOI:**', '').trim();
+      } else if (line.startsWith('**Files DOI:**')) {
+        currentPublication.files_doi = line.replace('**Files DOI:**', '').trim();
+      } else if (line.startsWith('**Status:**')) {
+        currentPublication.status = line.replace('**Status:**', '').trim();
+      } else if (line.startsWith('**Editor:**')) {
+        currentPublication.editor = line.replace('**Editor:**', '').trim();
+      }
+    }
+    
+    if (currentPublication.title) {
+      publications.push(currentPublication as Publication);
+    }
+    
+    return publications;
+  };
+
+  // Extract blog metadata from markdown frontmatter
+  const extractBlogMetadata = (content: string) => {
+  // Support both \n and \r\n line endings
+  const frontmatterMatch = content.match(/^---\s*[\r\n]+([\s\S]*?)^---\s*$/m);
+  if (!frontmatterMatch) return { title: '', date: '' };
+
+  const frontmatter = frontmatterMatch[1];
+  // Use regex with multiline and optional quotes
+  const titleMatch = frontmatter.match(/^title:\s*["']?(.+?)["']?\s*$/m);
+  const dateMatch = frontmatter.match(/^date:\s*["']?(.+?)["']?\s*$/m);
+
+  return {
+    title: titleMatch ? titleMatch[1].trim() : '',
+    date: dateMatch ? dateMatch[1].trim() : ''
+  };
+};
+
+  useEffect(() => {
+    fetchPublications();
+    fetchBlogPosts();
+  }, []);
+
   const handleOpenModal = (member: any) => {
     setSelectedMember(member);
     setIsOpen(true);
@@ -24,19 +238,18 @@ const ELab: React.FC = () => {
     setIsOpen(false);
   }
   let defaultIndex: number;
-  switch (location.pathname) {
-    case '/team':
-      defaultIndex = 1;
-      break;
-    case '/blog':
-      defaultIndex = 2;
-      break;
-    case '/publications':
-      defaultIndex = 3;
-      break;
-    default:
-      defaultIndex = 0;
-      break;
+  // Updated defaultIndex logic to handle /blog/:slug
+  if (location.pathname.startsWith('/team')) {
+    defaultIndex = 1;
+  } else if (location.pathname.startsWith('/blog')) {
+    defaultIndex = 2;
+  } else if (location.pathname.startsWith('/publications')) {
+    defaultIndex = 3;
+  } else if (location.pathname === '/elab' || location.pathname === '/') { // Ensure /elab is caught
+    defaultIndex = 0;
+  }
+   else {
+    defaultIndex = 0; // Default to eLab tab
   }
   const members = [
     {
@@ -85,221 +298,6 @@ const ELab: React.FC = () => {
       ]
     },
   ];
-  const publications = [
-    {
-      type: "Research Articles in Glycobiology",
-      entries: [
-        {
-          title: "Restoring Protein Glycosylation with GlycoShape",
-          authors: "Callum M Ives*, Ojas Singh*, Silvia D’Andrea, Carl A Fogarty, Aoife M Harbison, Akash Satheesan, Beatrice Tropea, Elisa Fadda",
-          source: "bioRxiv (2023)",
-          doi: "https://doi.org/10.1101/2023.12.11.571101",
-          files_doi: ""
-        },
-        {
-          title: "#GotGlycans: Role of N343 Glycosylation on the SARS-CoV-2 S RBD Structure and Co-Receptor Binding Across Variants of Concern",
-          authors: "Callum M Ives, Linh Nguyen, Carl A. Fogarty, Aoife M Harbison, Yves Durocher, John S. Klassen, Elisa Fadda",
-          source: "bioRxiv (2023)",
-          doi: "https://doi.org/10.1101/2023.12.05.570076",
-          files_doi: "https://doi.org/10.5281/zenodo.10441732"
-        },
-        {
-          title: "Variations within the Glycan Shield of SARS-CoV-2 Impact Viral Spike Dynamics",
-          authors: "Newby ML, Fogarty CA, Allen JD, Butler J, Fadda E, Crispin M",
-          source: "J Mol Biol (2022)",
-          doi: "https://doi.org/10.1016/j.jmb.2022.167928",
-          files_doi: ""
-        },
-        {
-          title: "Fine-tuning the Spike: Role of the nature and topology of the glycan shield in the structure and dynamics of SARS-CoV-2 S",
-          authors: "Harbison AM, Fogarty CA, Phung T, Satheesan A, Schulz BL, Fadda E",
-          source: "Chem Sci (2022)",
-          doi: "https://doi.org/10.1039/D1SC04832E",
-          files_doi: ""
-        },
-        {
-          title: "The case for post-predictional modifications in the AlphaFold Protein Structure Database",
-          authors: "Bagdonas H, Fogarty AC, Fadda E, Agirre J",
-          source: "Nat Struct Mol Biol (2021)",
-          doi: "https://doi.org/10.1038/s41594-021-00680-9",
-          files_doi: ""
-        },
-        {
-          title: "SARS-CoV-2 simulations go exascale to predict dramatic spike opening and cryptic pockets across the proteome",
-          authors: "Zimmerman MI, Porter JR, Ward MD, Singh S, Vithani N, Meller A, Mallimadugula UL, Kuhn CE, Borowsky JH, Wiewiora RP, Hurley MFD, Harbison AM, Fogarty CA, Coffland JE, Fadda E, Voelz VA, Chodera JD, Bowman GR",
-          source: "Nat Chem (2021)",
-          doi: "https://doi.org/10.1038/s41557-021-00707-0",
-          files_doi: ""
-        },
-        {
-          title: "Oligomannose N-Glycans 3D Architecture and Its Response to the FcγRIIIa Structural Landscape",
-          authors: "Fogarty CA and Fadda E",
-          source: "J Phys Chem B (2021)",
-          doi: "https://doi.org/10.1021/acs.jpcb.1c00304",
-          files_doi: ""
-        },
-        {
-          title: "Circulating SARS-CoV-2 spike N439K variants maintain fitness while evading antibody-mediated immunity",
-          authors: "Thomson EC, Rosen LE, Shepherd JG, Spreafico R, da Silva Filipe A, Wojcechowskyj JA, Davis C, Piccoli L, Pascall DJ, Dillen J, Lytras S, Czudnochowski N, Shah R, Meury M, Jesudason N, De Marco A, Li K, Bassi J, O'Toole A, Pinto D, Colquhoun RM, Culap K, Jackson B, Zatta F, Rambaut A, Jaconi S, Sreenu VP, Nix J, Zhang, Jarrett RF, Glass WG, Beltramello M, Nomikou K, Pizzuto M, Tong L, Cameroni E, Croll TI, Johnson N, Di Iulio J, Wickenhagen A, Ceschi A, Harbison AM, Mair D, Ferrari P, Smollett K, Sallusto F, Carmichael S, Garzoni C, Nichols J, Galli M, Hughes J, Riva A, Ho A, Schiuma M, Semple MG, Openshaw PJM, Fadda E, Baillie JK, Chodera JD, ISARIC4C Investigators; COVID-19 Genomics UK (COG-UK) Consortium; Rihn SJ, Lycett SJ, Virgin HW, Telenti A, Corti D, Robertson DL, Snell G",
-          source: "Cell (2021)",
-          doi: "https://doi.org/10.1016/j.cell.2021.01.037",
-          files_doi: ""
-        },
-        {
-          title: "Beyond Shielding: The Roles of Glycans in the SARS-CoV-2 Spike Protein",
-          authors: "Casalino L, Gaieb Z, Goldsmith JA, Hjorth CK, Dommer AC, Harbison AM, Fogarty CA, Barros EP, Taylor BC, McLellan JS, Fadda E, Amaro RE",
-          source: "ACS Central Sci (2020)",
-          doi: "https://doi.org/10.1021/acscentsci.0c01056",
-          files_doi: ""
-        },
-        {
-          title: "How and why plants and human N-glycans are different: Insight from molecular dynamics into the “glycoblocks” architecture of complex carbohydrates",
-          authors: "Fogarty CA, Harbison AM, Dugdale AR, Fadda E",
-          source: "Beilstein J Org Chem (2020)",
-          doi: "https://doi.org/10.3762/bjoc.16.171",
-          files_doi: ""
-        },
-        {
-          title: "An atomistic perspective on ADCC quenching by core-fucosylation of IgG1 Fc N-glycans from enhanced sampling molecular dynamics",
-          authors: "Harbison AM and Fadda E",
-          source: "Glycobiology (2020)",
-          doi: "https://doi.org/10.1093/glycob/cwz101",
-          files_doi: ""
-        },
-        {
-          title: "Sequence-to-structure dependence of isolated IgG Fc complex biantennary N-glycans: A molecular dynamics study",
-          authors: "Harbison AM, Brosnan LP, Fenlon K, Fadda E",
-          source: "Glycobiology (2019)",
-          doi: "https://doi.org/10.1093/glycob/cwy097",
-          files_doi: ""
-        },
-        {
-          title: "Aminoquinoline Fluorescent Labels Obstruct Efficient Removal of N-Glycan Core (1-6) Fucose by Bovine Kidney -L-fucosidase (BKF)",
-          authors: "O'Flaherty R, Harbison AM, Hanley PJ, Taron CH, Fadda E, Rudd PM",
-          source: "J Proteome Res (2017)",
-          doi: "https://doi.org/10.1021/acs.jproteome.7b00580",
-          files_doi: ""
-        },
-        {
-          title: "Defining the structural origin of the substrate sequence independence of O-GlcNAcase using a combination of molecular docking and dynamics simulation",
-          authors: "Martin JC, Fadda E, Ito K, Woods RJ",
-          source: "Glycobiology (2014)",
-          doi: "https://doi.org/10.1093/glycob/cwt094",
-          files_doi: ""
-        },
-        {
-          title: "Presentation, presentation, presentation! Molecular level insight into linker effects on glycan array screening data",
-          authors: "Grant OC, Smith MK, Firsova D, Fadda E, Woods RJ",
-          source: "Glycobiology (2014)",
-          doi: "https://doi.org/10.1093/glycob/cwt083",
-          files_doi: ""
-        },
-        {
-          title: "The influence of N-linked glycans on the molecular dynamics of the HIV-1 gp120 V3 loop",
-          authors: "Wood NT, Fadda E, Davis R, Grant OC, Martin JC, Woods RJ, Travers SA",
-          source: "PLoS ONE (2013)",
-          doi: "http://doi.org/10.1371/journal.pone.0080301",
-          files_doi: ""
-        },
-        {
-          title: "On the role of water models in quantifying the standard binding free energy of highly conserved water molecules in proteins: the case of Concanavalin A",
-          authors: "Fadda E and Woods RJ",
-          source: "J Chem Theo Comput (2011)",
-          doi: "https://doi.org/10.1021/ct200404z",
-          files_doi: ""
-        },
-        {
-          title: "Structure of a human-type influenza epitope [Neu5Ac-a(2,6)-Gal-b(1,4)-GlcNAc] bound to P squamosus lectin",
-          authors: "Kadirvelraj R, Grant OC, Goldstein IJ, Tateno H, Fadda E, Woods RJ",
-          source: "Glycobiology (2011)",
-          doi: "https://doi.org/10.1093/glycob/cwr030",
-          files_doi: ""
-        }
-      ]
-    },
-    {
-      type: "Science Communication and Education in Glycobiology",
-      entries: [
-        {
-          title: "Can ChatGPT pass Glycobiology",
-          authors: "Ormsby-Williams D and Fadda E",
-          source: "Glycobiology (2023)",
-          doi: "https://doi.org/10.1093/glycob/cwad064",
-          files_doi: ""
-        },
-        // {
-        //     title: "Can ChatGPT pass Glycobiology",
-        //     authors: "Ormsby-Williams D and Fadda E",
-        //     source: "bioRxiv (2023)",
-        //     doi: "https://doi.org/10.1101/2023.04.13.536705"
-        // }
-      ]
-    },
-    {
-      type: "Reviews and Books Chapters in Glycobiology",
-      entries: [
-        {
-          title: "Rebuilding glycosylation: A new approach to incorporate glycans’ structural disorder by molecular dynamics-generated 3D libraries",
-          authors: "Fogarty CA and Fadda E",
-          source: "Glycoprotein Analysis (2023)",
-          status: "in press",
-          files_doi: ""
-        },
-        {
-          title: "Glycosaminoglycans: What Remains to be Deciphered?",
-          authors: "Perez S, Mashkakova O, Angulo J, Bedini E, Bisio A, de Paz JL, Fadda E, Guerrini M, Hricovini M, Hricovini M, Lisacek F, Nieto P, Pagel K, Paiardi, G, Richter R, Samsonov S, Vives R, Nikitovic D, Ricard-Blum S",
-          source: "ACS Omega (2023)",
-          doi: "https://doi.org/10.1021/jacsau.2c00569",
-          files_doi: ""
-        },
-        {
-          title: "Molecular simulations of complex carbohydrates and glycoconjugates",
-          authors: "Fadda E",
-          source: "Curr Opin Chem Biol (2022)",
-          doi: "https://doi.org/10.1016/j.cbpa.2022.102175",
-          files_doi: ""
-        },
-        {
-          title: "Principles of SARS-CoV-2 Glycosylation",
-          authors: "Chawla H, Fadda E, Crispin M",
-          source: "Curr Opin Struct Biol (2022)",
-          doi: "https://doi.org/10.1016/j.sbi.2022.102402",
-          files_doi: ""
-        },
-        {
-          title: "Understanding the structure and function of viral glycosylation by molecular simulations: State-of-the-art and recent case studies",
-          authors: "Fadda E",
-          source: "Comprehensive Glycoscience, 2nd Ed (2021)",
-          editor: "JJ Barchi Jr, Elsevier",
-          doi: "https://doi.org/10.1016/B978-0-12-819475-1.00056-0",
-          files_doi: ""
-        },
-        {
-          title: "Computational Modelling in Glycoscience",
-          authors: "Perez S, Fadda E, Maskshakova O",
-          source: "Comprehensive Glycoscience, 2nd Ed (2021)",
-          editor: "JJ Barchi Jr, Elsevier",
-          doi: "https://doi.org/10.1016/B978-0-12-819475-1.00004-3",
-          files_doi: ""
-        },
-        {
-          title: "Calculating binding free energies for protein-carbohydrate complexes",
-          authors: "Hadden JA, Tessier M, Fadda E, Woods RJ",
-          source: "Methods in Molecular Biology: Glycoinformatics (2015)",
-          editor: "Martin Frank, Springer-Nature",
-          doi: "https://doi.org/10.1007/978-1-4939-2343-4_26",
-          files_doi: ""
-        },
-        {
-          title: "Molecular simulation of carbohydrates and protein-carbohydrate interactions: motivations, issues and prospects",
-          authors: "Fadda E and Woods RJ",
-          source: "Drug Discov Today (2010)",
-          doi: "https://doi.org/10.1016/j.drudis.2010.06.001",
-          files_doi: ""
-        }
-      ]
-    }
-  ];
 
   return (
 
@@ -308,13 +306,13 @@ const ELab: React.FC = () => {
 
       <Tabs
         align={"start"}
-        // alignItems={"start"}
         maxWidth="100%"
         padding={"0rem"}
         paddingTop={"1rem"}
         variant='soft-rounded'
         colorScheme='green'
-        defaultIndex={defaultIndex}
+        index={tabIndex}
+        onChange={setTabIndex}
       >
         <TabList display="flex" width={'100%'} position="sticky" top="0" bg="white" zIndex="10" padding={"0rem"}>
 
@@ -419,121 +417,220 @@ const ELab: React.FC = () => {
             </Container>
           </TabPanel>
 
-          <TabPanel>
-            <Box flex='1' alignItems={'center'} id="Nomenclature" pb={'4rem'}
-              boxShadow="md"
-              marginBottom="1em"
-              margin={"1em"}
-              backgroundColor="white"
-              borderRadius="md"
-
-            >
-              <Flex bgPosition="center" bgRepeat="no-repeat" bgSize="cover" flexDirection="column" alignItems="center" justifyContent="center" height="30vh" width="100%"
-
-              >
-                <Text
-                  padding={{ base: "0.2rem", sm: "0.2rem", md: "4rem", lg: "4rem", xl: "4rem" }}
-                  bgGradient='linear(to-l, #6530A5, #898E32)'
-                  bgClip='text'
-                  fontSize={{ base: "xl", sm: "3xl", md: "3xl", lg: "3xl", xl: "3xl" }}
-                  fontWeight='extrabold'
-                // marginBottom="0.2em"
-                >
-                  #GotGlycans: Role of N343 Glycosylation on the SARS-CoV-2 S RBD Structure and Co-Receptor Binding Across Variants of Concern
-                </Text>
-                {/* <Image maxHeight={"40rem"} width={'auto'} src="/img/blog/F1.large.jpg" alt="Figure 1" /> */}
-              </Flex>
-              <Divider />
-              <Grid
-                templateColumns={{ base: "1fr", md: "1fr 3fr 1fr" }}
-                gap={5}
-                justifyItems="center"
-                alignSelf="center"
-              >
-                <Box marginTop={"1rem"}> <Image
-                  boxSize="120px"
-                  objectFit="cover"
-                  borderRadius="full"
-                  src={'/img/sciencecast.jpeg'}
-                  alt={'/img/cat2.jpg'}
-                  marginBottom="0rem"
-                  alignItems={'center'}
-                />
-                  ScienceCast <br></br> AI-generated summary</Box>
-                <Box>
-                  <Text fontFamily={'texts'} textAlign="justify" fontSize="md" paddingLeft="0rem" paddingRight="0rem" paddingTop="1rem">
-                    In the context of SARS-CoV-2's evolution and immune evasion, the glycosylation of the spike protein's receptor binding domain (RBD) is a focal point. The study delves into the specific role of N343 glycosylation across various variants, utilizing over 45 seconds of molecular dynamics (MD) simulations. Results indicate the amphipathic N-glycan at N343 preserves the RBD's structural integrity, with its removal causing a uniform conformational change, affecting the receptor binding motif (RBM) in early strains (WHu-1, alpha, beta) but not in later ones (delta, omicron). Omicron variants, with key mutations near N343, maintain RBD architecture independent of the glycan, underscoring an evolutionary adaptation. Empirical data on RBD binding to monosialylated ganglioside co-receptors show dependency on N343 glycosylation for WHu-1 but not for delta, suggesting additional evolutionary changes in co-receptor interactions.</Text>
-
-                  <Image maxHeight={"40rem"} width={'auto'} src="/img/blog/F1.large.jpg" alt="Figure 1" />
-                  <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                    Panel a) Atomistic model of the SARS-CoV-2 (WHu-1) S glycoprotein trimer embedded in a lipid bilayer as reported in ref(Casalino et al., 2020). In the conformation shown, the S bears the RBD of chain A in an open conformation, highlighted with a solvent accessible surface rendering. The topological S1 and S2 subdomains are indicated on the left-hand side. Glycans are represented with sticks in white, the protein is represented with cartoon rendering with different shades of cyan to highlight the chains. Panel b) Close-up of the open RBD (WHu-1) in a ACE2-bound conformation (PDB 6M0J), with regions colour-coded as described in the legend. Key residues for anchoring the FA2G2 (GlyTouCan-ID G00998NI) N343 glycan, namely S371, S373 and S375, across the beta sheet core are highlighted also in the Symbol Nomenclature for Glycans (SNFG) diagram on the bottom-right with links to the monosaccharides corresponding to primary contacts. Key residues of the hydrophobic patch (orange) found to be inverted in the recently isolated FLip XBB1.5 variant are also indicated. Panel c) Heat map indicating the interactions frequency (%) classified in terms of hydrogen bonding and van der Waals contacts between the N343 glycan and the RBD residues 365 to 375 for each VoC, over the cumulative conventional MD (cMD) and enhanced GaMD sampling. Panel d) Side view of the RBD with the antigenic Region 1 (green), Region 2 (or RBM in yellow), and Region 3 (orange) highlighted. Key residues Y351 and L452 at the intersection between Region 1 and the Receptor Binding Motif (RBM) are indicated, together with the predicted site for the GM1 co-receptor binding. Rendering with VMD (https://www.ks.uiuc.edu/Research/vmd/).
-                  </Text>
-                  <Text fontFamily={'texts'} textAlign="justify" fontSize="md" paddingLeft="0rem" paddingRight="0rem" paddingTop="1rem">
-                    Molecular insights were acquired using all-atom force fields for protein, glycan, and solvent molecules, with analysis extending to variant under monitoring (VUM) omicron BA.2.86 ('pirola'). This variant has gained a new N-glycosylation site at N354, indicating the glycan shield's adaptive evolution.
-                  </Text>
-                  <Image maxHeight={"50rem"} width={'auto'} src="/img/blog/F2.large.jpg" alt="Figure 1" />
-                  <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                    Panel a) Kernel Density Estimates (KDE) plot of the backbone RMSD values calculated relative to frame 1 (t = 0) of the trajectory for Region 1 (green) aa 337-353, Region 2 (yellow) aa 439-506, and Region 3 (orange) aa 411-426 of the glycosylated (left plot) and non-glycosylated (right plot) WHu-1 RBDs. Duration of the MD sampling is indicated on the top-right corner of each plot with the conformational equilibration time subtracted as the corresponding data were not included in the analysis. Representative structures from the MD trajectories of the WHu-1 RBD glycosylated (cyan) and non-glycosylated (blue) at N343 are shown on the right-hand side of the panel. The N343 glycan (GlyTouCan-ID G00998NI) is rendered with sticks in white, the hydrophobic residues underneath the N343 glycan are highlighted with VDW spheres, while the protein structure is represented with cartoons. Panel b) KDE plot of the backbone RMSD values (see details in panel a) above) calculated for the alpha (B.1.1.7) RBD glycosylated (left) and non-glycosylated (right) at N343. Representative structures from the MD simulation of the alpha RBDs are shown on the right-hand side of the panel, with the N343 glycosylated RBD shown with pink cartoons and the non-glycosylated alpha RBD in purple cartoons. Panel c) KDE plots of the backbone RMSD values calculated for the beta (B.1.351) RBD glycosylated (left) and non-glycosylated (right) at N343. Representative structures from the MD simulation of the beta RBDs are shown on the right-hand side of the panel, with the N343 glycosylated RBD shown with orange cartoons and the non-glycosylated alpha RBD in red cartoons. Panel d) Binding affinities (1/Kd, x103 M-1) for interactions between different RBDs (including intact and endoF3 treated WHu-1 RBD and alpha and beta RBD) and the GM1os (GlyTouCan-ID G46613JI) and GM2os (GlyTouCan-ID G61168WC) oligosaccharides. HEK293a samples(Nguyen et al., 2021) and shown here as reference. HEK293b samples all carry FLAG and His tags and are shown for WHu-1 (glycosylated and treated with endoF3 treated), alpha and beta sequences. Further details in Supplementary Material. Panel e) Predicted complex between the WHu-1 RBD and GM1os, with GM1os represented with sticks in SNFG colours, the protein represented with cartoons (cyan) and the N343 with sticks (white). Residues directly involved in the GM1os binding or proximal are labelled and highlighted with sticks. All N343 glycosylated RBDs carry also a FA2G2 N-glycan (GlyTouCan-ID G00998NI) at N331, which is not shown for clarity. Rendering done with VMD (https://www.ks.uiuc.edu/Research/vmd/), KDE analysis with seaborn (https://seaborn.pydata.org/) and bar plot with MS Excel.
-                  </Text>
-                  <Image maxHeight={"30rem"} width={'auto'} src="/img/blog/F3.large.jpg" alt="Figure 1" />
-                  <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                    Panel a) KDE plot of the backbone RMSD values calculated relative to frame 1 (t = 0) of the MD1 trajectory for Region 1 (green) aa 337-353, Region 2 (yellow) aa 439-506, and Region 3 (orange) aa 411-426 of the N343 glycosylated delta (B.1.617.2) RBD. The MD1 simulation was started from the open RBD conformation from the cryo-EM structure PDB 7V7Q. Based on the conformation of the N-glycan reconstructed at N353, the first 100 ns of the MD1 production trajectory were considered part of the conformational equilibration and not included in the data analysis. Panel b) KDE plot of the backbone RMSD values calculated relative to frame 1 (t = 0) of the MD2 trajectory for Regions 1-3 (see details above) of the N343 glycosylated delta (B.1.617.2) RBD. The MD2 simulation was started from the open RBD conformation from the cryo-EM structure PDB 7V7Q with different velocities relative to MD1. The first 350 ns of the MD2 production trajectory were considered part of the conformational equilibration and not included in the data analysis. Panel c) KDE plot of the backbone RMSD values calculated relative to frame 1 (t = 0) of the GaMD trajectory for Regions 1-3 of the N343 glycosylated delta (B.1.617.2) RBD. The first 400 ns of the GaMD production trajectory were considered part of the conformational equilibration and not included in the data analysis. Panel e) Graphical representation of the delta RBD with the protein structure (lime cartoon) from a representative snapshot from MD1. The N343 FA2G2 glycan (GlyTouCan-ID G00998NI) is represented in different colours, corresponding to the different MD trajectories, as described in the legend, with snapshots taken at intervals of 100 ns. Residues in the hydrophobic core of the delta RBD are represented with VDW spheres partially visible under the N-glycans overlay. Panel f) Insert showing the junction between Regions 1 and 2 from the left-hand side of the RBD in panel e). The residues involved in the network solidifying the junction are highlighted with sticks and labelled. Panel f) Affinities (1/Kd, x103 M-1) for interactions between GM1os (GlyTouCan-ID G46613JI) and GM2os (GlyTouCan-ID G61168WC) oligosaccharides and the intact and endoF3-treated delta RBD and omicron RBD. Rendering done with VMD (https://www.ks.uiuc.edu/Research/vmd/), KDE analysis with seaborn (https://seaborn.pydata.org/) and bar plot with MS Excel.
-                  </Text>
-                  <Image maxHeight={"20rem"} width={'auto'} src="/img/blog/F4.large.jpg" alt="Figure 1" />
-                  <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                    Panel a) KDE plot of the backbone RMSD values calculated relative to frame 1 (t = 0) of the GaMD trajectory for Region 1 (green) aa 337-353, Region 2 (yellow) aa 439-506, and Region 3 (orange) aa 411-426 of the glycosylated omicron (BA.1) RBD. Panel b) KDE plot of the backbone RMSD values calculated relative to frame 1 (t = 0) of the GaMD trajectory (see details above) of the non-glycosylated omicron (BA.1) RBD. Panel c) Graphical representation of the glycosylated (protein in yellow cartoons and N343-FA2G2 in white sticks, N331 omitted for clarity) and non-glycosylated (protein in cyan cartoons) of the omicron (BA.1) RBD. Structures correspond to the last frame of the GaMD trajectories, see details in the legend. Panel d) KDE plot of the backbone RMSD values calculated relative to frame 1 (t = 0) of the MD trajectory of the omicron BA.2.86 RBD glycosylated with FA2G2 N-glycans at N343, N354 and N331(not shown). Panel e) Graphical representation of the omicron BA.2.86 RBD (protein in violet cartoons and N-glycans in violet sticks) structurally aligned to the glycosylated omicron (BA.1) RBD (protein in yellow cartoons) for reference. The N343 and N354 glycans are intertwined throughout the trajectory. Panel f) Same graphical representation of the omicron BA.2.86 and BA.1 RBDs with the N-glycans not shown. The purple arrow points to the displacement of the loop in response to the presence of the N354 glycan in BA.2.86. Rendering with VMD (https://www.ks.uiuc.edu/Research/vmd/) and KDE analysis with seaborn (https://seaborn.pydata.org/).
-                  </Text>
-                  <Text marginBottom="3rem" fontFamily={'texts'} textAlign="justify" fontSize="md" paddingLeft="0rem" paddingRight="0rem" paddingTop="1rem">
-                    This paper's findings expand our understanding of glycosylation's critical roles in structure-function relationships of viral proteins. The potential for N343 to become a mutational hotspot and the structural dispensability of its glycosylation site may inform immune surveillance and vaccine design, considering the balance between protein fold integrity and immune recognition.
-                  </Text>
-                  <Link href="https://doi.org/10.1101/2023.12.05.570076" isExternal>
-                    <Button alignSelf="center" variant='outline' colorScheme="teal" >Read full paper</Button>
-                  </Link>&nbsp;&nbsp;
-                  <Link href="https://doi.org/10.5281/zenodo.10441732" isExternal>
-                    <Button alignSelf="center" variant='outline' colorScheme="teal" >Download the files</Button>
-                  </Link>
-                </Box>
-
-                <Box marginTop={"1rem"}>
-
-                  <Tag variant='outline' colorScheme='teal'>Covid</Tag>&nbsp;
-                  <Tag variant='outline' colorScheme='teal'>Glycan</Tag>&nbsp;
-                  <Tag variant='outline' colorScheme='teal'>N343</Tag>&nbsp;
-                  <Tag variant='outline' colorScheme='teal'>viral evasion and fitness</Tag>
-
-                </Box>
-
-
-              </Grid>
-
-            </Box>
-          </TabPanel>
+          
 
           <TabPanel>
-            <Container maxWidth={{ base: "100%", sm: "100%", md: "80%", lg: "80%", xl: "80%" }} >
+            {/* Blog TabPanel - render blog posts from fetched markdown */}
+            <Container maxWidth={{ base: "100%", sm: "100%", md: "80%", lg: "80%", xl: "80%" }}>
               <Box>
-                {/* <Heading as="h2" size="xl" paddingBottom={"2rem"}>Selected Publications</Heading> */}
+                {loadingBlogs && <Spinner size="lg" label="Loading blog posts..." />}
+                {blogsError && <Alert status="error"><AlertIcon />{blogsError}</Alert>}
 
-                <VStack spacing={5} align="start">
-                  {publications.map((publication, idx) => (
-                    <Box key={idx}>
-                      <Heading as="h3" size="lg" color={"#6A8A81"} paddingBottom={"1.5rem"}>{publication.type}</Heading>
-                      {publication.entries.map((entry, entryIdx) => (
-                        <Box key={entryIdx} mb={4}>
-                          <Link href={entry.doi} isExternal>
-                            <Text color={"#B07095"} fontWeight="semibold">{entry.title}</Text>
-                            <Text >{entry.authors}</Text>
-                            <Text color="#546AC8">{entry.source}</Text>
-                            <Text color="#2B6CB0">{entry.doi}</Text>
-                          </Link>
-                          {/* Check if files property exists and render link */}
-                          {entry.files_doi !== "" && (
-                            <Link href={entry.files_doi} isExternal>
-                              <Text color="#6A8A81">Files : {entry.files_doi}</Text>
-                            </Link>
-                          )}
+                {!loadingBlogs && !blogsError && slug ? (
+                  (() => {
+                    const post = blogPosts.find(p => p.slug === slug);
+                    if (!post) {
+                      return (
+                        <>
+                          <Alert status="error" mb={4}>
+                            <AlertIcon />
+                            Blog post not found.
+                          </Alert>
+                          <Button onClick={() => navigate('/blog')} colorScheme="teal" variant="outline">
+                            Back to Blog
+                          </Button>
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <Button onClick={() => navigate('/blog')} mb={4} colorScheme="teal" variant="outline">
+                          &larr; All Blog Posts
+                        </Button>
+                        <Heading as="h2" size="xl" paddingBottom={"1rem"}>{post.title}</Heading>
+                        <Text fontSize="sm" color="gray.500" mb={4}>{new Date(post.date).toLocaleDateString()}</Text>
+                        <Box 
+                          className="blog-content"
+                          sx={{
+                            // Consistent styles for blog content
+                            h1: {
+                              fontSize: '3xl',
+                              fontWeight: 'bold',
+                              color: 'gray.800',
+                              mt: 8,
+                              mb: 4,
+                            },
+                            h2: {
+                              fontSize: '2xl',
+                              fontWeight: 'bold',
+                              color: 'gray.700',
+                              mt: 6,
+                              mb: 3,
+                            },
+                            h3: {
+                              fontSize: 'xl',
+                              fontWeight: 'semibold',
+                              color: 'gray.700',
+                              mt: 5,
+                              mb: 2,
+                            },
+                            p: {
+                              fontSize: 'md',
+                              lineHeight: '1.7',
+                              color: 'gray.700',
+                              mb: 4,
+                            },
+                            a: {
+                              color: 'teal.500',
+                              textDecoration: 'underline',
+                              _hover: {
+                                color: 'teal.600',
+                              },
+                            },
+                            img: {
+                              maxWidth: '100%',
+                              height: 'auto',
+                              my: 5,
+                              mx: 'auto',
+                              display: 'block',
+                              borderRadius: 'md',
+                              boxShadow: 'sm',
+                            },
+                            hr: {
+                              my: 8,
+                              borderColor: 'gray.300',
+                            },
+                            ul: { pl: 6, mb: 4, listStyleType: 'disc' },
+                            ol: { pl: 6, mb: 4, listStyleType: 'decimal' },
+                            li: { mb: 2 },
+                            code: { // Styles for INLINE code
+                              bg: 'gray.100',
+                              px: '0.4em',
+                              py: '0.2em',
+                              borderRadius: 'sm',
+                              fontFamily: 'mono',
+                              fontSize: '0.9em',
+                              color: 'purple.600',
+                            },
+                            pre: { // Basic pre styles, SyntaxHighlighter will add more
+                              bg: 'gray.50',
+                              p: 4,
+                              borderRadius: 'md',
+                              overflowX: 'auto',
+                              my: 5,
+                            },
+                            // Style for image captions (Markdown: *italic text* below image)
+                            'p > em': {
+                              display: 'block',
+                              textAlign: 'center',
+                              fontSize: 'sm',
+                              color: 'gray.500',
+                              mt: -3, // Adjust as needed to be closer to image
+                              mb: 4,
+                            },
+                            // Example for specific image styling if needed by alt text
+                            'img[alt="ScienceCast"]': {
+                                width: '120px',
+                                height: '120px',
+                                borderRadius: 'full',
+                                mb: 2,
+                            },
+                          }}
+                        >
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm, remarkMath]}
+                            rehypePlugins={[rehypeRaw, rehypeKatex]}
+                            components={{
+                              code: ({
+                                node,
+                                inline,
+                                className,
+                                children,
+                                ...props
+                              }: React.PropsWithChildren<{
+                                node?: HastElement; // Make node optional
+                                inline?: boolean;
+                                className?: string;
+                              } & React.HTMLAttributes<HTMLElement>>) => {
+                                const match = /language-(\w+)/.exec(className || '');
+                                if (!inline && match && node) { // Added check for node
+                                  return (
+                                    <SyntaxHighlighter
+                                      style={gruvboxLight as any} // Cast to 'any' or a more specific theme type
+                                      language={match[1]}
+                                      PreTag="div"
+                                      {...props}
+                                    >
+                                      {String(children).replace(/\n$/, '')}
+                                    </SyntaxHighlighter>
+                                  );
+                                }
+                                return (
+                                  <code className={className} {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              },
+                            }}
+                          >
+                            {post.content}
+                          </ReactMarkdown>
+                        </Box>
+                      </>
+                    );
+                  })()
+                ) : !loadingBlogs && !blogsError && (
+                  <>
+                    <Heading as="h2" size="xl" paddingBottom={"2rem"}>Blog</Heading>
+                    <VStack spacing={8} align="stretch">
+                      {blogPosts.map((post, idx) => (
+                        <Box key={idx} p={5} borderWidth={1} borderRadius="lg" w="100%" boxShadow="md" _hover={{ boxShadow: "lg" }} transition="box-shadow 0.2s">
+                          {/* Only show title and date from metadata */}
+                          <Heading as="h3" size="lg" color="teal.600" mb={2}>
+                            <RouterLink to={`/blog/${post.slug}`}>{post.title}</RouterLink>
+                          </Heading>
+                          <Text fontSize="sm" color="gray.500" mb={3}>
+                            {new Date(post.date).toLocaleDateString()}
+                          </Text>
+                          {/* Show only the content snippet, not the title/date */}
+                          <Box color="gray.700" noOfLines={4}>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              rehypePlugins={[rehypeRaw]}
+                            >
+                              {post.content.trim().substring(0, 300) + (post.content.length > 300 ? '...' : '')}
+                            </ReactMarkdown>
+                          </Box>
+                          <RouterLink to={`/blog/${post.slug}`}>
+                            <Link color="teal.500" fontWeight="bold" mt={3} display="inline-block">Read more &rarr;</Link>
+                          </RouterLink>
                         </Box>
                       ))}
+                    </VStack>
+                  </>
+                )}
+              </Box>
+            </Container>
+          </TabPanel>
+          <TabPanel>
+            {/* Publications TabPanel - render publications from fetched markdown */}
+            <Container maxWidth={{ base: "100%", sm: "100%", md: "80%", lg: "80%", xl: "80%" }}>
+              <Box>
+                <Heading as="h2" size="xl" paddingBottom={"2rem"}>Selected Publications</Heading>
+                {loadingPublications && <Spinner size="lg" label="Loading publications..." />}
+                {publicationsError && <Alert status="error"><AlertIcon />{publicationsError}</Alert>}
+                <VStack spacing={5} align="start">
+                  {publications.map((pub, idx) => (
+                    <Box key={idx} mb={4}>
+                      <Text color="#B07095" fontWeight="semibold">{pub.title}</Text>
+                      <Text>{pub.authors}</Text>
+                      <Text color="#546AC8">{pub.source}</Text>
+                      {pub.doi && <Link href={pub.doi} isExternal color="#2B6CB0">{pub.doi}</Link>}
+                      {pub.files_doi && pub.files_doi !== "" && (
+                        <Link href={pub.files_doi} isExternal color="#6A8A81">Files: {pub.files_doi}</Link>
+                      )}
+                      {pub.status && <Text color="gray.500">Status: {pub.status}</Text>}
+                      {pub.editor && <Text color="gray.500">Editor: {pub.editor}</Text>}
                     </Box>
                   ))}
                 </VStack>
@@ -577,9 +674,6 @@ const ELab: React.FC = () => {
                 {selectedMember?.socialLinks?.map((link: any, idx: number) => (
 
                   <SocialIcon network={link.platform} url={link.url} />
-                  // <Link key={idx} href={link.url} isExternal>
-                  //     {link.platform}
-                  // </Link>
                 ))}</HStack>
             </SimpleGrid>
           </ModalBody>

@@ -43,6 +43,32 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
+const LightCopyButton: React.FC<{ text: string; variant?: string }> = ({ text, variant = "ghost" }) => {
+  const [hasCopied, setHasCopied] = useState(false);
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text)
+      .then(() => setHasCopied(true))
+      .catch(err => console.error('Failed to copy:', err));
+    
+    setTimeout(() => setHasCopied(false), 800);
+  };
+  
+  return (
+    <Button
+      flexShrink={0}
+      type="submit"
+      borderRadius="full"
+      size="sm"
+      variant={variant}
+      ml={2}
+      onClick={handleCopy}
+    >
+      {hasCopied ? <CheckIcon /> : <CopyIcon />}
+    </Button>
+  );
+};
+
 
 const GlycanPage: React.FC = () => {
 
@@ -307,13 +333,7 @@ const GlycanPage: React.FC = () => {
     Object.entries(data?.archetype.clusters || {}).map(([key, value]) => [key, value])
   );
 
-  const [clustersVisibility, setClustersVisibility] = useState<boolean[]>([]);
 
-  useEffect(() => {
-    if (clusterLength > 0) {
-      setClustersVisibility(new Array(clusterLength).fill(true));
-    }
-  }, [clusterLength]);
 
   const generateDownloadUrls = (): string[] => {
     const baseClusterURL = `${apiUrl}/database/${data?.archetype.ID}/PDB_format_HETATM/cluster`;
@@ -322,17 +342,20 @@ const GlycanPage: React.FC = () => {
     );
   };
 
-  const filteredUrls = Array.from({ length: clusterLength }, (_, i) => ({
-  url: `${apiUrl}/database/${data?.archetype.ID}/PDB_format_HETATM/cluster${i}_alpha.PDB.pdb`,
-  format: 'pdb' as 'pdb'
-})).filter((_, i) => clustersVisibility[i]);
+ 
+  const generateIframeSrc = (clusterLength: number) => {
+    const baseClusterURL = `${apiUrl}/database/${data?.archetype.ID}/PDB_format_HETATM/cluster`;
 
-  const toggleCluster = (index: number) => {
-    const newVisibility = [...clustersVisibility];
-    newVisibility[index] = !newVisibility[index];
-    setClustersVisibility(newVisibility);
+    // Generate an array of cluster URLs based on the clusterLength
+    const clusterUrls = Array.from({ length: clusterLength }, (_, i) => `${baseClusterURL}${i}_alpha.PDB.pdb`);
+
+    // Join the URLs into a single string with commas between them
+    const clusterUrlString = clusterUrls.join(',');
+
+    return `${clusterUrlString}&formats=${"pdb,".repeat(clusterLength).slice(0, -1)}`;
   };
 
+  const iframeSrc = generateIframeSrc(clusterLength);
   return (
 
     <Box >
@@ -363,14 +386,16 @@ const GlycanPage: React.FC = () => {
                     maxWidth={'200px'}
                   />
                   <Show above='lg'>
-                    {
+                    <HStack>
+                      {
                       data?.archetype.glytoucan ?
                         <Text fontSize={{ base: "0", sm: "1xl", md: "3xl", lg: "3xl", xl: "3xl" }}>{data.archetype.glytoucan}</Text> :
                         <Text fontSize={{ base: "0", sm: "1xl", md: "3xl", lg: "3xl", xl: "3xl" }}>
-                          {sequence}
+                        {sequence}
                         </Text>
-                    }
-
+                      }
+                      <LightCopyButton text={data?.archetype.glytoucan || sequence} />
+                    </HStack>
                   </Show>
                 </HStack>
                 <Spacer />
@@ -528,91 +553,101 @@ const GlycanPage: React.FC = () => {
                               w="100%"
                               minH="40vh"
                               position="relative"
-                              zIndex={'10'}
                             >
-                              <MolstarViewer
-                                urls={[
-                                  { url: `${apiUrl}/api/pdb/${sequence}`, format: 'pdb' },
-                                ]}
-                                backgroundColor="#FCFBF9"
-                              />
+                              
+
+                              <iframe
+                        key={sequence}
+                        width="100%"
+                        height="400px"
+
+                        src={
+                          `/viewer/embedded.html?pdbUrl=${apiUrl}/api/pdb/${sequence}&format=pdb`
+                        }
+                        allowFullScreen
+                        title="Protein Structure"
+                      />
+
                             </Box>
                           </SimpleGrid>
-                          <Box paddingLeft={4} marginTop={-5} fontFamily="mono" position={'relative'}>
+                            <Box paddingLeft={4} marginTop={-5} fontFamily="mono" position={'relative'}>
                             <Flex direction="column" align="start">
                               {/* Archetype Section */}
                               <Flex align="center">
-                                <Text width="130px" fontFamily="texts" fontSize="md">
-                                  GlyTouCan:
-                                </Text>
-                                <Link
-                                  href={`${glytoucanBaseUrl}${data?.archetype?.glytoucan || ''}`}
-                                  isExternal
-                                  // textDecoration="underline"
-                                  // fontWeight="bold"
-                                  ml={2}
-                                >
-                                  {data?.archetype?.glytoucan || 'N/A'}
-                                </Link>
+                              <Text width="130px" fontFamily="texts" fontSize="md">
+                                GlyTouCan:
+                              </Text>
+                              <Link
+                                href={`${glytoucanBaseUrl}${data?.archetype?.glytoucan || ''}`}
+                                isExternal
+                                // textDecoration="underline"
+                                // fontWeight="bold"
+                                ml={2}
+                              >
+                                {data?.archetype?.glytoucan || 'N/A'}
+                              </Link>
+                              <LightCopyButton text={data?.archetype?.glytoucan || ''} />
                               </Flex>
                               <Text fontSize="sm" color="gray.500" ml="135px">
-                                (Archetype)
+                              (Archetype)
                               </Text>
 
                               {/* Alpha and Beta Section */}
                               <Box ml="180px" position="relative" mt={2}>
-                                {/* Vertical line connecting alpha and beta */}
+                              {/* Vertical line connecting alpha and beta */}
+                              <Box
+                                position="absolute"
+                                top="0px"
+                                left="-20px"
+                                height="45px"
+                                borderLeft="2px solid grey"
+                              />
+                              {/* Horizontal line for Alpha */}
+                              <Flex align="center" mb={2}>
                                 <Box
-                                  position="absolute"
-                                  top="0px"
-                                  left="-20px"
-                                  height="45px"
-                                  borderLeft="2px solid grey"
+                                position="absolute"
+                                left="-20px"
+                                top="12px"
+                                width="20px"
+                                borderTop="2px solid grey"
                                 />
-                                {/* Horizontal line for Alpha */}
-                                <Flex align="center" mb={2}>
-                                  <Box
-                                    position="absolute"
-                                    left="-20px"
-                                    top="12px"
-                                    width="20px"
-                                    borderTop="2px solid grey"
-                                  />
-                                  <Text color='grey' paddingLeft={'1'}>α →</Text>
-                                  <Link
-                                    href={`${glytoucanBaseUrl}${data?.alpha?.glytoucan || ''}`}
-                                    isExternal
-                                    // textDecoration="underline"
-                                    // fontWeight="bold"
-                                    ml={2}
-                                  >
-                                    {data?.alpha?.glytoucan || 'N/A'}
-                                  </Link>
-                                </Flex>
-                                {/* Horizontal line for Beta */}
-                                <Flex align="center">
-                                  <Box
-                                    position="absolute"
-                                    left="-20px"
-                                    top="45px"
-                                    width="20px"
-                                    borderTop="2px solid grey"
-                                  />
-                                  <Text color='grey' paddingLeft={'1'}>β →</Text>
-                                  <Link
-                                    href={`${glytoucanBaseUrl}${data?.beta?.glytoucan || ''}`}
-                                    isExternal
-                                    // textDecoration="underline"
-                                    // fontWeight="bold"
-                                    ml={2}
-                                  >
-                                    {data?.beta?.glytoucan || 'N/A'}
-                                    {/* &nbsp; {data?.beta?.name?.charAt(data.beta.name.length - 5)  === 'b' ? 'exist' : ''} */}
-                                  </Link>
-                                </Flex>
+                                <Text color='grey' paddingLeft={'1'}>α →</Text>
+                                <Link
+                                href={`${glytoucanBaseUrl}${data?.alpha?.glytoucan || ''}`}
+                                isExternal
+                                // textDecoration="underline"
+                                // fontWeight="bold"
+                                ml={2}
+                                >
+                                {data?.alpha?.glytoucan || 'N/A'}
+                                </Link>
+                                <LightCopyButton text={data?.alpha?.glytoucan || ''} />
+                              </Flex>
+                              {/* Horizontal line for Beta */}
+                              <Flex align="center">
+                                <Box
+                                position="absolute"
+                                left="-20px"
+                                top="45px"
+                                width="20px"
+                                borderTop="2px solid grey"
+                                />
+                                <Text color='grey' paddingLeft={'1'}>β →</Text>
+                                <Link
+                                href={`${glytoucanBaseUrl}${data?.beta?.glytoucan || ''}`}
+                                isExternal
+                                // textDecoration="underline"
+                                // fontWeight="bold"
+                                ml={2}
+                                >
+                                {data?.beta?.glytoucan || 'N/A'}
+                                {/* &nbsp; {data?.beta?.name?.charAt(data.beta.name.length - 5)  === 'b' ? 'exist' : ''} */}
+                                </Link>
+                                <LightCopyButton text={data?.beta?.glytoucan || ''} />
+                              </Flex>
                               </Box>
                             </Flex>
-                          </Box>
+                            </Box>
                           <VStack align="stretch" width="100%" spacing={4} padding={4}>
                             {[
                               { label: "IUPAC", value: data?.archetype.iupac },
@@ -932,14 +967,33 @@ const GlycanPage: React.FC = () => {
                         <Text fontSize="2xl" color={"#2D5E6B"} mb={2}>This glycan has {clusterLength} major conformations clusters</Text>
                         <Divider />
                         
-                          <Box width="100%" height="50vh" position="relative" zIndex={'10'}>
+                          <Box width="100%" height="50vh" position="relative" >
                             {data?.archetype.ID && (
-                              <MolstarViewer
-                                urls={filteredUrls}
-                                backgroundColor="#FCFBF9"
-                              />
+                              // <MolstarViewer
+                              //   urls={filteredUrls}
+                              //   backgroundColor="#FCFBF9"
+                              // />
+<div>
+                              <Hide below='lg'>
+                            <iframe
+                              style={{ width: '100%', height: '60vh' }}
+                              src={"/viewer/embedded_multi.html?pdbUrls=" + iframeSrc}
+                              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              title="Protein Structure"
+                            /> </Hide>
+                          <Show below='lg'>
+                            <iframe
+                              style={{ width: '100%', height: '60vh' }}
+                              src={"/viewer/embedded_multi_closed.html?pdbUrls=" + iframeSrc }
+                              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              title="Protein Structure"
+                            />
+                          </Show>
+                          </div>
                             )}
-                            <HStack spacing={2} paddingTop="1rem">
+                            {/* <HStack spacing={2} paddingTop="1rem">
                             {Array.from({ length: clusterLength }, (_, i) => (
                               <Button
                                 key={i}
@@ -951,7 +1005,7 @@ const GlycanPage: React.FC = () => {
                                 {clustersVisibility[i] ? `Hide Cluster ${i }` : `Show Cluster ${i }`}
                               </Button>
                             ))}
-                          </HStack>
+                          </HStack> */}
                           </Box>
 
                           
