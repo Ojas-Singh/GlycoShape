@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef, } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useBreakpointValue } from "@chakra-ui/react";
 import { useLocation } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
-  Switch, HStack, Hide, Highlight, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack, ButtonGroup, Select
+  Switch, HStack, Hide, Highlight, Input, Button, Text, Flex, Box, Image, Heading, Link, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack, ButtonGroup, Select,
+  FormControl, FormLabel,
+  RangeSlider, RangeSliderTrack, RangeSliderFilledTrack, RangeSliderThumb
 } from "@chakra-ui/react";
-import { SearchIcon } from '@chakra-ui/icons'
+import { SearchIcon, ArrowUpIcon, ArrowDownIcon, UpDownIcon } from '@chakra-ui/icons'
 import bg from './assets/gly.png';
 import { Kbd } from '@chakra-ui/react'
 import Draw from './Draw';
@@ -20,7 +22,7 @@ const SearchPage = () => {
   const [results, setResults] = useState<{ ID: string, glytoucan: string | null, mass: number | null }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchString, setSearchString] = useState<string>(queryParams.get('query') || '');
-  const [isWurcsSearch, setIsWurcsSearch] = useState(true);
+  const [isWurcsSearch, setIsWurcsSearch] = useState(!!queryParams.get('wurcsString'));
   const [wurcsString, setWurcsString] = useState<string>(queryParams.get('wurcsString') || '');
   const [wurcsImageSrc, setWurcsImageSrc] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -28,6 +30,20 @@ const SearchPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // State for dynamic slider bounds, initialized to a default range
+  const [dynamicSliderMinVal, setDynamicSliderMinVal] = useState<number>(0);
+  const [dynamicSliderMaxVal, setDynamicSliderMaxVal] = useState<number>(5000);
+
+  const [minMass, setMinMass] = useState<string>(''); // Will be set by useEffect or slider interaction
+  const [maxMass, setMaxMass] = useState<string>(''); // Will be set by useEffect or slider interaction
+  const [sortOrder, setSortOrder] = useState<string>('none'); // 'none', 'asc', 'desc'
+  const [sliderRange, setSliderRange] = useState<[number, number]>([dynamicSliderMinVal, dynamicSliderMaxVal]);
+
+
+  const handleImageClick = () => {
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     const fetchWurcsImage = async () => {
@@ -120,17 +136,39 @@ const SearchPage = () => {
 
   useEffect(() => {
     handleSearch();
-
+    // Reset dependent states if searchString changes, but not for initial load if queryParams are present
+    if (queryParams.get('query') !== searchString && !queryParams.get('wurcsString')) {
+        setWurcsString('');
+        setIsWurcsSearch(false);
+    }
   }, [searchString]);
 
-  const handleImageClick = () => {
-    setIsModalOpen(true);
-  }
+
+  const processedResults = useMemo(() => {
+    let filtered = [...results]; // Create a new array to avoid mutating the original results
+
+    const min = parseFloat(minMass);
+    const max = parseFloat(maxMass);
+
+    if (!isNaN(min)) {
+      filtered = filtered.filter(item => item.mass !== null && item.mass >= min);
+    }
+    if (!isNaN(max)) {
+      filtered = filtered.filter(item => item.mass !== null && item.mass <= max);
+    }
+
+    if (sortOrder === 'asc') {
+      filtered.sort((a, b) => (a.mass ?? Infinity) - (b.mass ?? Infinity));
+    } else if (sortOrder === 'desc') {
+      filtered.sort((a, b) => (b.mass ?? -Infinity) - (a.mass ?? -Infinity));
+    }
+    return filtered;
+  }, [results, minMass, maxMass, sortOrder]);
 
   const indexOfLastItem = currentPage * pageSize;
   const indexOfFirstItem = indexOfLastItem - pageSize;
-  const currentItems = results.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(results.length / pageSize);
+  const currentItems = processedResults.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(processedResults.length / pageSize);
 
   const PaginationControls = () => (
     <Flex justify="center" align="center" mt={4} mb={8}>
@@ -164,7 +202,7 @@ const SearchPage = () => {
         </Button>
         <Button
           onClick={() => setCurrentPage(totalPages)}
-          isDisabled={currentPage === totalPages}
+          isDisabled={currentPage === totalPages || totalPages === 0}
           colorScheme="teal"
           size="sm"
         >
@@ -173,21 +211,69 @@ const SearchPage = () => {
       </ButtonGroup>
       <Select
         ml={4}
-        width="100px"
+        width="120px"
         value={pageSize}
         onChange={(e) => {
           setPageSize(Number(e.target.value));
           setCurrentPage(1);
         }}
+        size="sm"
       >
-        <option value="10">10</option>
-        <option value="25">25</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-        <option value={results.length}>All</option>
+        <option value="10">10 / page</option>
+        <option value="25">25 / page</option>
+        <option value="50">50 / page</option>
+        <option value="100">100 / page</option>
+        {processedResults.length > 0 && <option value={processedResults.length}>All ({processedResults.length})</option>}
       </Select>
     </Flex>
   );
+
+  const handleSortToggle = () => {
+    let nextSortOrder = 'asc';
+    if (sortOrder === 'asc') {
+      nextSortOrder = 'desc';
+    } else if (sortOrder === 'desc') {
+      nextSortOrder = 'none';
+    }
+    setSortOrder(nextSortOrder);
+    setCurrentPage(1);
+  };
+
+  const getSortButtonProps = () => {
+    if (sortOrder === 'asc') {
+      return { icon: <ArrowUpIcon />, text: "Mass: Low to High" };
+    } else if (sortOrder === 'desc') {
+      return { icon: <ArrowDownIcon />, text: "Mass: High to Low" };
+    }
+    return { icon: <UpDownIcon />, text: "Sort by Mass" };
+  };
+  
+  const sortButtonProps = getSortButtonProps();
+
+
+  useEffect(() => {
+    if (results.length > 0) {
+      // Filter out null mass values and calculate min/max
+      const massValues = results
+        .map(item => item.mass)
+        .filter((mass): mass is number => mass !== null);
+      
+      if (massValues.length > 0) {
+        const minMassFromResults = Math.min(...massValues);
+        const maxMassFromResults = Math.max(...massValues);
+        
+        setDynamicSliderMinVal(minMassFromResults);
+        setDynamicSliderMaxVal(maxMassFromResults);
+        
+        // Update slider range to match the new bounds
+        setSliderRange([minMassFromResults, maxMassFromResults]);
+        
+        // Reset mass filters to show all results initially
+        setMinMass(minMassFromResults.toString());
+        setMaxMass(maxMassFromResults.toString());
+      }
+    }
+  }, [results]);
 
   return (
     <Flex direction="column" width="100%">
@@ -424,8 +510,8 @@ const SearchPage = () => {
         <Flex
           justify="center"
           direction="column"
-          width={{ base: "95%", md: "100%", lg: "100%", xl: "80%" }}
-          margin="0 auto"
+          width={{ base: "95%", md: "100%", lg: "100%", xl: "80%" }} // Ensure this centers the content block
+          margin="0 auto" // Center the overall flex container
         >
           <Flex
             direction={{ base: "column", md: "row" }}
@@ -436,20 +522,109 @@ const SearchPage = () => {
             {/* Filters on the left */}
             <Box
               width={{ base: "100%", md: "30%" }}
-              paddingTop={'2rem'}
-              marginBottom={{ base: "1rem", md: "0" }}
+              paddingRight={{ md: "2rem" }}
+              marginBottom={{ base: "2rem", md: "0" }}
             >
-                <Text fontSize={{ base: "xl", md: "2xl" }} marginBottom="1em">
-                Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, results.length)} of {results.length} results for {
-                  isWurcsSearch
-                  ? <img src={wurcsImageSrc === null ? undefined : wurcsImageSrc} alt="WURCS" style={{ width: '200px', height: 'auto', objectFit: 'contain' }} />
-                  : `"${searchString}"`
-                }
+              <VStack spacing={6} align="stretch">
+                {/* <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="teal.700">
+                  Refine Results
+                </Text> */}
+
+                <Text fontSize={{ base: "sm", md: "md" }} color="gray.600" mt={4} lineHeight="tall">
+                  Showing {processedResults.length > 0 ? indexOfFirstItem + 1 : 0}-
+                  {Math.min(indexOfLastItem, processedResults.length)} of {processedResults.length} results for {
+                  isWurcsSearch && wurcsString
+                  ? (
+                  <>
+                    <Text as="span" fontWeight="semibold" color="teal.700">WURCS Query</Text>
+                    <Image 
+                    src={wurcsImageSrc || undefined} 
+                    alt="WURCS Structure" 
+                    maxHeight="120px" 
+                    width="100%"
+                    objectFit="contain" 
+                    border="1px solid #e2e8f0" 
+                    padding="8px" 
+                    borderRadius="8px"
+                    bg="white"
+                    mt={2}
+                    display="inline-block"
+                    />
+                  </>
+                  )
+                  : searchString ? <Text as="span" fontWeight="semibold" color="teal.700">"{searchString}"</Text> : "your query"
+                  }
                 </Text>
+
+                {/* Mass Filter with RangeSlider */}
+                <Box borderWidth="1px" borderRadius="lg" p={4} shadow="sm">
+                  <Text fontSize="lg" paddingBottom={4} color="gray.700">Filter by Mass</Text>
+                  
+                  <Box position="relative" mt={6} mb={2} mx={4}> {/* Added mx={4} for horizontal margin */}
+                  <RangeSlider
+                    aria-label={['min mass', 'max mass']}
+                    min={dynamicSliderMinVal}
+                    max={dynamicSliderMaxVal}
+                    step={ (dynamicSliderMaxVal - dynamicSliderMinVal) > 100 ? 10 : 1} // Adjust step based on range
+                    value={sliderRange} // sliderRange should always be within dynamic bounds
+                    onChange={(val) => setSliderRange(val as [number, number])}
+                    onChangeEnd={(val) => {
+                    setMinMass(val[0].toString());
+                    setMaxMass(val[1].toString());
+                    setCurrentPage(1);
+                    }}
+                    isDisabled={dynamicSliderMinVal === dynamicSliderMaxVal} // Disable if no range
+                  >
+                    <RangeSliderTrack bg="teal.100">
+                    <RangeSliderFilledTrack bg="teal.500" />
+                    </RangeSliderTrack>
+                    <RangeSliderThumb boxSize={6} index={0} />
+                    <RangeSliderThumb boxSize={6} index={1} />
+                  </RangeSlider>
+                  <Text
+                    position="absolute"
+                    top="-25px"
+                    left={dynamicSliderMaxVal - dynamicSliderMinVal > 0 ? `${((sliderRange[0] - dynamicSliderMinVal) / (dynamicSliderMaxVal - dynamicSliderMinVal)) * 100}%` : '0%'}
+                    transform="translateX(-50%)"
+                    fontSize="xs"
+                    color="teal.500"
+                    // fontWeight="semibold"
+                  >
+                    {sliderRange[0]}
+                  </Text>
+                  <Text
+                    position="absolute"
+                    top="-25px"
+                    left={dynamicSliderMaxVal - dynamicSliderMinVal > 0 ? `${((sliderRange[1] - dynamicSliderMinVal) / (dynamicSliderMaxVal - dynamicSliderMinVal)) * 100}%` : '100%'}
+                    transform="translateX(-50%)"
+                    fontSize="xs"
+                    color="teal.500"
+                    // fontWeight="semibold"
+                  >
+                    {sliderRange[1]}
+                  </Text>
+                  </Box>
+                  <Button
+                    marginTop={'1rem'}
+                    padding={3}
+                    leftIcon={sortButtonProps.icon}
+                    onClick={handleSortToggle}
+                    variant="outline"
+                    colorScheme="teal"
+                    width="100%"
+                    size="sm"
+                  >
+                    {sortButtonProps.text}
+                  </Button>
+                </Box>
+
+
+               
+              </VStack>
             </Box>
 
             <Box width={{ base: "100%", md: "70%" }}>
-              {currentItems.map((glycan, index) => (
+              {currentItems.length > 0 ? currentItems.map((glycan, index) => (
                 <Box
                   key={index}
                   padding="1rem"
@@ -492,8 +667,10 @@ const SearchPage = () => {
                   </Link>
                   </VStack>
                 </Box>
-              ))}
-              {results.length > pageSize && <PaginationControls />}
+              )) : (
+                 <Text mt={10} textAlign="center" color="gray.500">No results match your current filters.</Text>
+              )}
+              {processedResults.length > pageSize && <PaginationControls />}
             </Box>
           </Flex>
         </Flex>
