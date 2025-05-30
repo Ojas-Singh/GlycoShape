@@ -1,41 +1,249 @@
 import requests
 import json
 import os
-from typing import Dict, List, Any, Optional
-import anthropic
+from typing import Dict, List, Any, Optional, Generator
+import openai
 
 class Natural2SPARQL:
     def __init__(self, sparql_endpoint: str = "https://glycoshape.io/sparql/query", 
-                 api_key: Optional[str] = None):
+                 api_key: Optional[str] = None,
+                 base_url: str = "https://openrouter.ai/api/v1",
+                 model: str = "deepseek/deepseek-chat-v3-0324:free"):
         """
         Initialize the Natural2SPARQL converter.
         
         Args:
             sparql_endpoint: URL of the SPARQL endpoint
-            api_key: Anthropic API key for Claude. If not provided, will look for ANTHROPIC_API_KEY in env
+            api_key: OpenRouter API key. If not provided, will look for OPENROUTER_API_KEY in env
+            base_url: Base URL for the OpenRouter API
+            model: Model to use for text generation
         """
         self.sparql_endpoint = sparql_endpoint
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY")
+        self.base_url = base_url
+        self.model = model
         
         if not self.api_key:
-            raise ValueError("Anthropic API key not provided. Set ANTHROPIC_API_KEY environment variable or pass api_key.")
+            raise ValueError("OpenRouter API key not provided. Set OPENROUTER_API_KEY environment variable or pass api_key.")
         
-        self.client = anthropic.Anthropic(api_key=self.api_key)
+        self.client = openai.OpenAI(
+            base_url=self.base_url,
+            api_key=self.api_key
+        )
         
         # Common prefixes used in GlycoShape SPARQL queries
         self.default_prefixes = """
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX gs: <http://glycoshape.io/ontology/>
 PREFIX gso: <http://glycoshape.io/resource/>
 PREFIX glycordf: <http://purl.jp/bio/12/glyco/glycan#>
+PREFIX glytoucan: <http://rdf.glytoucan.org/glycan/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+"""
+
+    def _create_system_prompt(self) -> str:
+        """Create the system prompt for SPARQL generation."""
+        return """
+You are an expert in SPARQL. Your task is to convert a natural language query into a valid SPARQL query
+for the GlycoShape RDF database.
+# System Prompt: GlycoShape SPARQL Query Generator
+
+You are a specialized SPARQL query generator for the GlycoShape RDF database. Your task is to convert natural language queries into valid SPARQL queries. You must respond ONLY with the SPARQL query - no explanations, no additional text, just the query.
+
+## Database Structure Overview
+
+### Core Entity Hierarchy
+```
+gs:GlycoShapeEntry (main database entry)
+├── gs:hasVariant → gs:GlycanVariant (generic variant)
+├── gs:hasArchetype → gs:ArchetypeGlycan
+├── gs:hasAlphaAnomer → gs:AlphaAnomerGlycan  
+└── gs:hasBetaAnomer → gs:BetaAnomerGlycan
+```
+
+### Required Namespaces (Always Include)
+```sparql
+PREFIX gs: <http://glycoshape.io/ontology/>
+PREFIX gso: <http://glycoshape.io/resource/>
+PREFIX glycordf: <http://purl.jp/bio/12/glyco/glycan#>
+PREFIX glytoucan: <http://rdf.glytoucan.org/glycan/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+```
+
+## Entity Types and Properties
+
+### GlycoShapeEntry Properties
+- `rdf:type gs:GlycoShapeEntry`
+- `rdfs:label` (string) - "GlycoShape Entry {ID}"
+- `dcterms:identifier` (string) - main ID
+- `gs:glycoShapeID` (string) - main ID
+- `gs:hasVariant` → variant URIs
+- `gs:hasArchetype` → archetype URI
+- `gs:hasAlphaAnomer` → alpha anomer URI
+- `gs:hasBetaAnomer` → beta anomer URI
+
+### GlycanVariant Properties (All variant types inherit these)
+- `rdf:type gs:GlycanVariant` AND `glycordf:Saccharide`
+- `rdf:type` specific: `gs:ArchetypeGlycan`, `gs:AlphaAnomerGlycan`, `gs:BetaAnomerGlycan`
+
+#### Identifiers & Names
+- `rdfs:label` (string) - primary name
+- `gs:glytoucanID` (string) - GlyTouCan identifier
+- `owl:sameAs` → `glytoucan:{ID}` URI
+- `dcterms:identifier` (string) - GlyTouCan ID
+- `gs:iupacName` (string)
+- `gs:iupacExtendedName` (string)
+- `gs:glycamName` (string)
+- `gs:oxfordName` (string)
+
+#### Physical/Chemical Properties
+- `gs:mass` (xsd:double) - molecular mass
+- `gs:hydrogenBondAcceptors` (xsd:integer)
+- `gs:hydrogenBondDonors` (xsd:integer)
+- `gs:rotatableBonds` (xsd:integer)
+
+#### Sequence Representations
+- `glycordf:has_glycosequence` → sequence node
+  - Sequence node properties:
+    - `rdf:type glycordf:Glycosequence`
+    - `glycordf:has_sequence` (xsd:string) - actual sequence
+    - `glycordf:in_carbohydrate_format` → format URI
+    - Format URIs and labels:
+      - `glycordf:carbohydrate_format_wurcs` → "WURCS"
+      - `glycordf:carbohydrate_format_glycoct` → "GlycoCT"
+      - `glycordf:carbohydrate_format_iupac_condensed` → "IUPAC Condensed"
+      - `gs:carbohydrate_format_iupac_extended` → "IUPAC Extended"
+      - `gs:carbohydrate_format_glycam` → "GLYCAM"
+      - `gs:carbohydrate_format_smiles` → "SMILES"
+
+#### Structural Features
+- `glycordf:has_motif` → motif URI
+  - Motif properties:
+    - `rdf:type glycordf:Motif`
+    - `dcterms:identifier` (string) - motif ID
+    - `rdfs:label` (string) - motif label
+- `glycordf:has_terminal_residue` (string) - terminal residue name
+
+#### Composition
+- `glycordf:has_component` → component node (BNode)
+  - Component properties:
+    - `rdf:type glycordf:Component`
+    - `glycordf:has_monosaccharide` → monosaccharide type URI
+    - `glycordf:has_cardinality` (xsd:integer) - count
+  - Monosaccharide type URI: `gso:monosaccharide/{name}`
+    - `rdfs:label` (string) - monosaccharide name
+- `gs:compositionString` (string) - text composition
+
+#### Simulation Parameters
+- `gs:simulationPackage` (string)
+- `gs:simulationForcefield` (string)
+- `gs:simulationLength` (string)
+- `gs:simulationTemperature` (xsd:double)
+- `gs:simulationPressure` (xsd:double)
+- `gs:simulationSaltConcentration` (string)
+
+#### Simulation Results
+- `gs:hasClusterResult` → cluster result node (BNode)
+  - Cluster result properties:
+    - `rdf:type gs:ClusterResult`
+    - `rdfs:label` (string) - cluster label
+    - `gs:clusterLabel` (string) - safe cluster label
+    - `rdf:value` (xsd:double) - percentage
+    - `gs:clusterPercentage` (xsd:double) - percentage
+
+#### Anomer Relationships
+- `gs:isAnomerOf` → archetype URI (from alpha/beta to archetype)
+
+## URI Patterns
+- Main entries: `gso:{main_id}`
+- Variants: `gso:{main_id}/{variant_type}` where variant_type = "archetype"|"alpha"|"beta"
+- Motifs: `gso:motif/{motif_id}`
+- Monosaccharides: `gso:monosaccharide/{mono_name}`
+- Sequences: `gso:{main_id}/{variant_type}/sequence/{format_label}`
+
+## Query Construction Guidelines
+
+### Common Patterns
+1. **Find entries**: Start with `?entry rdf:type gs:GlycoShapeEntry`
+2. **Find variants**: Use `?entry gs:hasVariant ?variant` or specific type predicates
+3. **Access properties**: Most properties are on variant level, not entry level
+4. **Filter by type**: Use specific variant types for anomer queries
+5. **Numerical filters**: Use appropriate XSD datatypes in FILTER clauses
+6. **Text search**: Use CONTAINS(), LCASE(), REGEX() for string matching
+7. **Aggregation**: Use GROUP BY, COUNT(), AVG(), MAX(), MIN() for statistics
+8. **Optional data**: Use OPTIONAL{} for properties that might not exist
+
+### Default Query Structure
+```sparql
+PREFIX gs: <http://glycoshape.io/ontology/>
+PREFIX gso: <http://glycoshape.io/resource/>
+PREFIX glycordf: <http://purl.jp/bio/12/glyco/glycan#>
+PREFIX glytoucan: <http://rdf.glytoucan.org/glycan/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT ... WHERE {
+    [QUERY PATTERNS]
+}
+[ORDER BY ...]
+[LIMIT ...]
+```
+
+## Natural Language to SPARQL Mapping
+
+### Terms to Properties Mapping
+- "name", "label" → `rdfs:label`
+- "mass", "molecular weight" → `gs:mass`
+- "motif" → `glycordf:has_motif`
+- "component", "monosaccharide" → `glycordf:has_component`
+- "sequence" → `glycordf:has_glycosequence`
+- "WURCS", "GlycoCT", "IUPAC", "GLYCAM", "SMILES" → respective format URIs
+- "simulation", "forcefield" → `gs:simulationForcefield`
+- "temperature" → `gs:simulationTemperature` 
+- "cluster" → `gs:hasClusterResult`
+- "archetype" → `gs:ArchetypeGlycan`
+- "alpha", "α" → `gs:AlphaAnomerGlycan`
+- "beta", "β" → `gs:BetaAnomerGlycan`
+- "anomer" → both alpha and beta
+- "GlyTouCan" → `gs:glytoucanID`
+- "terminal" → `glycordf:has_terminal_residue`
+- "composition" → `gs:compositionString` or component analysis
+
+### Query Type Recognition
+- "list", "show", "find" → SELECT query
+- "count", "how many" → SELECT with COUNT()
+- "average", "mean" → SELECT with AVG()
+- "maximum", "highest" → SELECT with MAX()
+- "compare" → SELECT with multiple variants
+- "with", "containing", "having" → WHERE clause patterns
+- "greater than", "more than", ">" → FILTER with >
+- "less than", "<" → FILTER with <
+- "between" → FILTER with >= AND <=
+
+### Default Behaviors
+- Always include LIMIT 100 unless specified otherwise
+- Use ORDER BY for meaningful sorting
+- Include OPTIONAL{} for GlyTouCan IDs and other optional properties
+- Use DISTINCT when listing unique values
+- Apply FILTER as late as possible for performance
+
+Remember: Respond ONLY with the SPARQL query. No explanations, no markdown formatting, just the raw query.
 """
 
     def generate_sparql(self, search_query: str) -> str:
         """
-        Generate a SPARQL query from a natural language query using Claude.
-        If Claude fails, return a default test query.
+        Generate a SPARQL query from a natural language query using OpenRouter API.
+        If API call fails, return a default test query.
         
         Args:
             search_query: Natural language search query
@@ -43,132 +251,21 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         Returns:
             SPARQL query string
         """
-#         prompt = f"""
-# You are an expert in SPARQL and glycobiology. Your task is to convert a natural language query into a valid SPARQL query 
-# for the GlycoShape database.
-
-# Common entity types and properties in the GlycoShape database:
-# - gs:ArchetypeGlycan - Main glycan entities
-# - gs:glytoucanID - GlyTouCan identifiers (string)
-# - gs:ID - GlycoShape internal ID (integer)
-# - gs:mass - Molecular mass (float)
-# - glycordf:has_glycosequence - Links to sequence information
-# - glycordf:has_sequence - The actual sequence string
-# - glycordf:in_carbohydrate_format - Format specification (like IUPAC)
-
-# You must always include these essential variable bindings in the SELECT clause:
-# - ?glycan - The glycan entity URI
-# - ?glytoucan_id - The GlyTouCan ID (bound using gs:glytoucanID)
-# - ?id - The GlycoShape internal ID (bound using gs:ID)
-# - ?mass - The molecular mass (bound using gs:mass)
-
-# Natural language query: {search_query}
-
-# Please generate a valid SPARQL query using the given prefixes:
-# {self.default_prefixes}
-
-# Return only the SPARQL query with no additional explanations. Make sure to bind ?glycan to gs:ArchetypeGlycan entities.
-# """
-        
-        prompt = f"""
-You are an expert in SPARQL and glycobiology. Your task is to convert a natural language query into a valid SPARQL query
-for the GlycoShape RDF database.
-
-## GlycoShape Database Structure
-The GlycoShape database contains detailed information about glycans with the following key entity types:
-- gs:GlycoShapeEntry - Main entries that contain variants
-- gs:GlycanVariant - Base type for all glycan variants
-- gs:ArchetypeGlycan - Generic/base form of glycans
-- gs:AlphaAnomerGlycan - Alpha anomer variants of glycans
-- gs:BetaAnomerGlycan - Beta anomer variants of glycans
-- glycordf:Saccharide - All variants are also of type Saccharide
-- glycordf:Motif - Structural motifs found in glycans
-- glycordf:Component - Monosaccharide components of glycans
-- gs:ClusterResult - Simulation cluster analysis results
-
-## Key Identifiers and Names
-- gs:glycoShapeID - GlycoShape internal ID (string)
-- gs:glytoucanID - GlyTouCan identifiers (string)
-- dcterms:identifier - Alternative identifier field
-- rdfs:label - Human-readable name/label
-- gs:iupacName - IUPAC nomenclature name
-- gs:iupacExtendedName - Extended IUPAC name
-- gs:glycamName - GLYCAM naming format
-- gs:oxfordName - Oxford nomenclature
-
-## Sequence Representations
-- glycordf:has_glycosequence - Links to sequence information nodes
-- glycordf:has_sequence - The actual sequence string
-- glycordf:in_carbohydrate_format - Format specification (including):
-  - glycordf:carbohydrate_format_wurcs - WURCS format
-  - glycordf:carbohydrate_format_glycoct - GlycoCT format
-  - glycordf:carbohydrate_format_iupac_condensed - IUPAC Condensed format
-  - gs:carbohydrate_format_iupac_extended - IUPAC Extended format
-  - gs:carbohydrate_format_glycam - GLYCAM format
-  - gs:carbohydrate_format_smiles - SMILES format
-
-## Physical/Chemical Properties
-- gs:mass - Molecular mass (float)
-- gs:hydrogenBondAcceptors - Number of H-bond acceptors (integer)
-- gs:hydrogenBondDonors - Number of H-bond donors (integer)
-- gs:rotatableBonds - Number of rotatable bonds (integer)
-
-## Structural Features
-- glycordf:has_motif - Links to motifs present in the glycan
-- glycordf:has_terminal_residue - Terminal residues in the glycan
-- glycordf:has_component - Links to component monosaccharides
-- glycordf:has_monosaccharide - Type of monosaccharide in a component
-- glycordf:has_cardinality - Count of a monosaccharide component
-- gs:compositionString - Text representation of composition
-
-## Simulation Data
-- gs:simulationPackage - Software package used for simulation
-- gs:simulationForcefield - Force field used in simulation
-- gs:simulationLength - Length of simulation
-- gs:simulationTemperature - Temperature of simulation (double)
-- gs:simulationPressure - Pressure of simulation (double)
-- gs:simulationSaltConcentration - Salt concentration used
-- gs:hasClusterResult - Links to clustering results
-- gs:clusterLabel - Label of a conformational cluster
-- gs:clusterPercentage - Percentage of the cluster (double)
-
-## Relationships
-- gs:hasVariant - Links main entry to its variants
-- gs:hasArchetype - Links main entry to its archetype variant
-- gs:hasAlphaAnomer - Links main entry to its alpha anomer variant
-- gs:hasBetaAnomer - Links main entry to its beta anomer variant
-- gs:isAnomerOf - Links alpha/beta variants to their archetype
-
-Natural language query: {search_query}
-
-Please generate a valid SPARQL query using the given prefixes:
-{self.default_prefixes}
-
-For optimal results:
-1. Include any relevant entity types and properties from the above list based on the query
-2. When searching for glycans, use both specific variant types and the base GlycanVariant type as appropriate
-3. Include FILTER clauses for numeric or string pattern matching when needed
-4. Use OPTIONAL clauses for properties that might not exist in all entities
-5. Always include these essential bindings in the SELECT clause:
-   - ?glytoucan_id - The GlyTouCan ID (bound using gs:glytoucanID)
-   - ?id - The GlycoShape internal ID (bound using gs:ID)
-   - ?mass - The molecular mass (bound using gs:mass)
-
-Return only the SPARQL query with no additional explanations.
-"""
         try:
-            response = self.client.messages.create(
-                model="claude-3-7-sonnet-20250219",
-                max_tokens=1000,
-                temperature=0.1,
+            response = self.client.chat.completions.create(
+                model=self.model,
                 messages=[
-                    {"role": "user", "content": prompt}
-                ]
+                    {"role": "system", "content": self._create_system_prompt()},
+                    {"role": "user", "content": f"Natural language query: {search_query}\n\nGenerate a SPARQL query using these prefixes:\n{self.default_prefixes}"}
+                ],
+                max_tokens=1000,
+                temperature=0.1
             )
-            # Extract the SPARQL query from the response
-            sparql_query = response.content[0].text.strip()
+            
+            sparql_query = response.choices[0].message.content.strip()
+            
         except Exception as e:
-            print(f"Anthropic API call failed: {e}. Falling back to default query.")
+            print(f"OpenRouter API call failed: {e}. Falling back to default query.")
             # Fallback SPARQL query
             sparql_query = """
 PREFIX gs: <http://glycoshape.io/ontology/>
@@ -203,27 +300,96 @@ WHERE {
 }
 ORDER BY ?id
 """
-            # Ensure the fallback query includes prefixes
-            if not sparql_query.strip().lower().startswith("prefix"):
-                 # The fallback query already includes prefixes, but this ensures consistency
-                 # In this specific case, the fallback already has them, so this might be redundant
-                 # but good practice if the fallback could change.
-                 pass # Prefixes are included in the fallback string
-            else:
-                 # Remove existing prefixes if they somehow got added before the fallback
-                 # This scenario is unlikely with the current fallback structure
-                 lines = sparql_query.strip().split('\n')
-                 sparql_query = "\n".join(line for line in lines if not line.strip().lower().startswith("prefix"))
 
-
-        # Add default prefixes if the generated query (from Claude) doesn't include them
-        # This check is primarily for the successful Claude response case
+        # Add default prefixes if the generated query doesn't include them
         if not sparql_query.strip().lower().startswith("prefix"):
             sparql_query = self.default_prefixes + "\n" + sparql_query
-        
-        
 
-        return sparql_query.strip() # Return stripped query
+        return sparql_query.strip()
+
+    def natural_to_sparql_stream(self, search_query: str, endpoint: str = "") -> Generator[str, None, None]:
+        """
+        Generate a SPARQL query from a natural language query using streaming response.
+        
+        Args:
+            search_query: Natural language search query
+            endpoint: SPARQL endpoint (optional, for context)
+            
+        Yields:
+            Tokens of the SPARQL query as they are generated
+        """
+        try:
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self._create_system_prompt()},
+                    {"role": "user", "content": f"Natural language query: {search_query}\n\n"}
+                ],
+                max_tokens=1000,
+                temperature=0.1,
+                stream=True
+            )
+            
+            # Track if we need to add prefixes
+            first_token = True
+            content_so_far = ""
+            
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    token = chunk.choices[0].delta.content
+                    content_so_far += token
+                    
+                    # # If this is the first meaningful token and doesn't start with PREFIX, add prefixes
+                    # if first_token and token.strip():
+                    #     if not content_so_far.strip().lower().startswith("prefix"):
+                    #         # Yield the prefixes first
+                    #         for prefix_line in self.default_prefixes.strip().split('\n'):
+                    #             if prefix_line.strip():
+                    #                 yield prefix_line + '\n'
+                    #         yield '\n'
+                    #     first_token = False
+                    
+                    yield token
+                    
+        except Exception as e:
+            print(f"OpenRouter streaming API call failed: {e}. Falling back to default query.")
+            # Fallback - yield the default query token by token
+            fallback_query = """
+PREFIX gs: <http://glycoshape.io/ontology/>
+PREFIX gso: <http://glycoshape.io/resource/>
+PREFIX glycordf: <http://purl.jp/bio/12/glyco/glycan#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?id ?glytoucan ?mass
+WHERE {
+  # Get the main entry ID
+  ?entry rdf:type gs:GlycoShapeEntry ;
+         gs:glycoShapeID ?id ;
+         gs:hasArchetype ?archetype .
+  
+  # Get the archetype variant with its sequence
+  ?archetype rdf:type gs:ArchetypeGlycan ;
+             gs:mass ?mass .
+           
+  # Optional GlyTouCan ID
+  OPTIONAL { ?archetype gs:glytoucanID ?glytoucan }
+  
+  # Get the IUPAC sequence
+  ?archetype glycordf:has_glycosequence ?seq .
+  ?seq glycordf:in_carbohydrate_format glycordf:carbohydrate_format_iupac_condensed ;
+       glycordf:has_sequence ?iupac .
+  
+  # Filter for sequences ending with Man(b1-4)GlcNAc(b1-4)GlcNAc
+  FILTER(STRENDS(?iupac, "Man(b1-4)GlcNAc(b1-4)GlcNAc"))
+}
+ORDER BY ?id
+"""
+            # Yield the fallback query character by character to simulate streaming
+            for char in fallback_query:
+                yield char
 
     def execute_sparql(self, sparql_query: str) -> List[Dict[str, Any]]:
         """
@@ -252,6 +418,7 @@ ORDER BY ?id
         results = response.json()
         print(f"SPARQL query executed successfully. Status code: {response.status_code}")
         print(f"Response: {json.dumps(results, indent=2)}")  # Debugging output
+        
         # Convert the results to a more usable format
         bindings = []
         if "results" in results and "bindings" in results["results"]:
@@ -295,13 +462,11 @@ ORDER BY ?id
             entry = {
                 'glytoucan': item.get('glytoucan'), # Map from SPARQL variable name
                 'ID': item.get('id'),             # Map from SPARQL variable name
-                'mass': float(item.get('mass'))            # Map from SPARQL variable name
+                'mass': float(item.get('mass')) if item.get('mass') is not None else None            # Map from SPARQL variable name
             }
             # Ensure all required keys are present, even if None
             if entry['glytoucan'] is not None and entry['ID'] is not None and entry['mass'] is not None:
                  formatted_results.append(entry)
 
-        
-        # formatted_results.sort(key=lambda x: x['mass'] if x['mass'] is not None else float('inf'))
         print(f"Formatted results: {json.dumps(formatted_results, indent=2)}")  # Debugging output
         return formatted_results

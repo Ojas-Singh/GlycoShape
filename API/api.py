@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response, send_file
+from flask import Flask, request, jsonify, make_response, send_file, Response
 from flask_cors import CORS
 import pandas as pd
 from pathlib import Path
@@ -1273,7 +1273,48 @@ def get_glycan_for_reglyco(identifier):
         download_name=zip_filename  # For Flask >=2.0, use 'download_name' instead of 'attachment_filename'
     )
     
-
+@app.route('/api/natural2sparql', methods=['POST'])
+def natural_language_to_sparql():
+    """
+    Endpoint to convert natural language queries to SPARQL using streaming response.
+    """
+    # Get the request data outside of the generator function
+    data = request.get_json()
+    query = data.get('query', '')
+    endpoint = data.get('endpoint', '')
+    
+    def generate_sparql_stream():
+        try:
+            if not query:
+                yield f"data: {json.dumps({'error': 'Query is required'})}\n\n"
+                return
+            
+            if not n2s_client:
+                yield f"data: {json.dumps({'error': 'Natural2SPARQL client not available'})}\n\n"
+                return
+            
+            # Use the streaming method from the Natural2SPARQL client
+            for token in n2s_client.natural_to_sparql_stream(query, endpoint):
+                if token:
+                    yield f"data: {json.dumps({'token': token})}\n\n"
+            
+            # Send completion signal
+            yield "data: [DONE]\n\n"
+            
+        except Exception as e:
+            print(f"Error in natural language to SPARQL conversion: {e}")
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return Response(
+        generate_sparql_stream(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        }
+    )
 
 if __name__ == '__main__':
     app.run()
