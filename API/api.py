@@ -18,6 +18,7 @@ import geocoder
 import io
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import re
 
 
 app = Flask(__name__)
@@ -767,6 +768,30 @@ def submit_form():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def is_glytoucan(identifier):
+    """
+    Check if the identifier is a valid GlyTouCan ID.
+    A GlyTouCan ID typically starts with 'G' followed by 5 digits.
+    """
+    return identifier.startswith('G') and len(identifier) == 8 
+
+def is_iupac(identifier):
+    """
+    Check if the identifier is a valid IUPAC name.
+    A simple heuristic: IUPAC names often contain parentheses and specific monosaccharide names.
+    """
+    # This is a very basic check; real IUPAC names can be complex
+    monosaccharides = ['GlcNAc', 'GalNAc', 'Man', 'Gal', 'Glc', 'Fuc', 'Xyl', 'Neu5Ac', 'Neu5Gc', 
+                       'IdoA', 'GlcA', 'GalA', 'Kdn', 'Rha', 'Ara', 'Fru', 'All', 'Alt', 'Tal', 
+                       'Qui', 'Api', 'Bac', 'Col', 'Dha', 'MurNAc', 'MurNGc', 'Par', 'Pse', 'Tyv',
+                       'Abe', 'Leg', 'Lep', 'Ery', 'Rib', 'Lyx', 'Sor', 'Tag', 'Sed']
+    
+    return ('(' in identifier or 
+            ' ' in identifier or 
+            any(monosaccharide in identifier for monosaccharide in monosaccharides) or
+            any(linkage in identifier for linkage in ['a1-', 'b1-', 'a2-', 'b2-']))
+
+
 @app.route('/api/search', methods=['POST'])
 def search():
     search_result = []
@@ -1000,59 +1025,135 @@ def search():
             else:
                  return jsonify({'error': 'AI search client not available. Check API key.'}), 503
     else:
-        # Fallback to default search if no specific type is provided
-        # For text search, use fuzzy matching across multiple glycan fields
-        search_terms = search_string.lower().split()
-        scored_results = []
+        is_it_glytoucan = is_glytoucan(search_string)
+        is_it_iupac = is_iupac(search_string)
+        print(f"Search string: {search_string}")
+        print(f"Is GlyTouCan: {is_it_glytoucan}, Is IUPAC: {is_it_iupac}")
 
-        for _, glycan_data in GDB_data.items():
-            # Prepare a combined text from all relevant fields for fuzzy matching
-            search_text = ""
+        if is_it_glytoucan:
+            glytoucan_id = search_string.lower()
+            for _, glycan_data in GDB_data.items():
+                if glycan_data['archetype'].get('glytoucan') and glycan_data['archetype']['glytoucan'].lower() == glytoucan_id:
+                    entry = {
+                        'glytoucan': glycan_data['archetype']['glytoucan'],
+                        'ID': glycan_data['archetype']['ID'],
+                        'mass': glycan_data['archetype']['mass']
+                    }
+                    search_result.append(entry)
+                elif glycan_data['alpha'].get('glytoucan') and glycan_data['alpha']['glytoucan'].lower() == glytoucan_id:
+                    entry = {
+                        'glytoucan': glycan_data['alpha']['glytoucan'],
+                        'ID': glycan_data['alpha']['ID'],
+                        'mass': glycan_data['alpha']['mass']
+                    }
+                    search_result.append(entry)
+                elif glycan_data['beta'].get('glytoucan') and glycan_data['beta']['glytoucan'].lower() == glytoucan_id:
+                    entry = {
+                        'glytoucan': glycan_data['beta']['glytoucan'],
+                        'ID': glycan_data['beta']['ID'],
+                        'mass': glycan_data['beta']['mass']
+                    }
+                    search_result.append(entry)
+            search_result.sort(key=lambda x: x['mass'])
+            return jsonify({'search_string': search_string, 'results': search_result})
+        
+        elif is_it_iupac:
+            # Handle wildcard search with '?'
+            if "?" in search_string:
+                # Convert '?' to regex '.' for single-character wildcard
+                pattern = re.compile(search_string.replace("?", "."), re.IGNORECASE)
+                for _, glycan_data in GDB_data.items():
+                    for key in ['archetype', 'alpha', 'beta']:
+                        iupac_val = glycan_data.get(key, {}).get('iupac', '')
+                        if iupac_val and pattern.fullmatch(iupac_val):
+                            entry = {
+                                'glytoucan': glycan_data[key].get('glytoucan'),
+                                'ID': glycan_data[key].get('ID'),
+                                'mass': glycan_data[key].get('mass')
+                            }
+                            search_result.append(entry)
+                search_result.sort(key=lambda x: x['mass'])
+                return jsonify({'search_string': search_string, 'results': search_result})
+            iupac_id = search_string.lower()
+            for _, glycan_data in GDB_data.items():
+                if glycan_data['archetype'].get('iupac') and glycan_data['archetype']['iupac'].lower() == iupac_id:
+                    entry = {
+                        'glytoucan': glycan_data['archetype']['glytoucan'],
+                        'ID': glycan_data['archetype']['ID'],
+                        'mass': glycan_data['archetype']['mass']
+                    }
+                    search_result.append(entry)
+                # elif glycan_data['alpha']['iupac'] == iupac_id:
+                #     entry = {
+                #         'glytoucan': glycan_data['alpha']['glytoucan'],
+                #         'ID': glycan_data['alpha']['ID'],
+                #         'mass': glycan_data['alpha']['mass']
+                #     }
+                #     search_result.append(entry)
+                # elif glycan_data['beta']['iupac'] == iupac_id:
+                #     entry = {
+                #         'glytoucan': glycan_data['beta']['glytoucan'],
+                #         'ID': glycan_data['beta']['ID'],
+                #         'mass': glycan_data['beta']['mass']
+                #     }
+                #     search_result.append(entry)
+            search_result.sort(key=lambda x: x['mass'])
+            return jsonify({'search_string': search_string, 'results': search_result})
             
-            # Add archetype data
-            archetype = glycan_data.get('archetype', {})
-            if archetype.get('glytoucan'):
-                search_text += archetype.get('glytoucan', '') + " "
-            if archetype.get('iupac'):
-                search_text += archetype.get('iupac', '') + " "
-            if archetype.get('ID'):
-                search_text += archetype.get('ID', '') + " "
-            
-            # Add alpha/beta data for more comprehensive search
-            for anomeric in ['alpha', 'beta']:
-                if anomeric in glycan_data:
-                    if glycan_data[anomeric].get('glytoucan'):
-                        search_text += glycan_data[anomeric].get('glytoucan', '') + " "
-                    if glycan_data[anomeric].get('iupac'):
-                        search_text += glycan_data[anomeric].get('iupac', '') + " "
-            
-            search_text = search_text.lower()
-            
-            # Calculate match score - higher is better
-            score = 0
-            for term in search_terms:
-                # Use partial token matching for each search term
-                partial_score = fuzz.partial_ratio(term, search_text)
-                # Also check for exact substring matches
-                if term in search_text:
-                    partial_score += 30  # Bonus for exact substring match
-                score += partial_score
-            
-            # Only include results with reasonable match scores
-            if score > 50:  # Threshold can be adjusted
-                entry = {
-                    'glytoucan': archetype.get('glytoucan'),
-                    'ID': archetype.get('ID'),
-                    'mass': archetype.get('mass'),
-                    'score': score
-                }
-                scored_results.append((score, entry))
+        else:
+            # Fallback to default search if no specific type is provided
+            # For text search, use fuzzy matching across multiple glycan fields
+            search_terms = search_string.lower().split()
+            scored_results = []
 
-        # Sort by score descending
-        scored_results.sort(key=lambda x: x[0], reverse=True)
-        search_result = [entry for _, entry in scored_results[:20]]  # Return top 20 results
+            for _, glycan_data in GDB_data.items():
+                # Prepare a combined text from all relevant fields for fuzzy matching
+                search_text = ""
+                
+                # Add archetype data
+                archetype = glycan_data.get('archetype', {})
+                if archetype.get('glytoucan'):
+                    search_text += archetype.get('glytoucan', '') + " "
+                if archetype.get('iupac'):
+                    search_text += archetype.get('iupac', '') + " "
+                if archetype.get('ID'):
+                    search_text += archetype.get('ID', '') + " "
+                
+                # Add alpha/beta data for more comprehensive search
+                for anomeric in ['alpha', 'beta']:
+                    if anomeric in glycan_data:
+                        if glycan_data[anomeric].get('glytoucan'):
+                            search_text += glycan_data[anomeric].get('glytoucan', '') + " "
+                        if glycan_data[anomeric].get('iupac'):
+                            search_text += glycan_data[anomeric].get('iupac', '') + " "
+                
+                search_text = search_text.lower()
+                
+                # Calculate match score - higher is better
+                score = 0
+                for term in search_terms:
+                    # Use partial token matching for each search term
+                    partial_score = fuzz.partial_ratio(term, search_text)
+                    # Also check for exact substring matches
+                    if term in search_text:
+                        partial_score += 30  # Bonus for exact substring match
+                    score += partial_score
+                
+                # Only include results with reasonable match scores
+                if score > 50:  # Threshold can be adjusted
+                    entry = {
+                        'glytoucan': archetype.get('glytoucan'),
+                        'ID': archetype.get('ID'),
+                        'mass': archetype.get('mass'),
+                        'score': score
+                    }
+                    scored_results.append((score, entry))
 
-        return jsonify({'search_string': search_string, 'results': search_result})
+            # Sort by score descending
+            scored_results.sort(key=lambda x: x[0], reverse=True)
+            search_result = [entry for _, entry in scored_results[:20]]  # Return top 20 results
+
+            return jsonify({'search_string': search_string, 'results': search_result})
     
     
 
