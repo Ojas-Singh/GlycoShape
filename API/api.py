@@ -1063,16 +1063,16 @@ def search():
                 # Convert '?' to regex '.' for single-character wildcard
                 pattern = re.compile(search_string.replace("?", "."), re.IGNORECASE)
                 for _, glycan_data in GDB_data.items():
-                    for key in ['archetype', 'alpha', 'beta']:
-                        iupac_val = glycan_data.get(key, {}).get('iupac', '')
-                        if iupac_val and pattern.fullmatch(iupac_val):
-                            entry = {
-                                'glytoucan': glycan_data[key].get('glytoucan'),
-                                'ID': glycan_data[key].get('ID'),
-                                'mass': glycan_data[key].get('mass')
-                            }
-                            search_result.append(entry)
-                search_result.sort(key=lambda x: x['mass'])
+                    # Check archetype
+                    iupac_val = glycan_data.get('archetype', {}).get('iupac', '')
+                    if iupac_val and pattern.fullmatch(iupac_val):
+                        entry = {
+                            'glytoucan': glycan_data['archetype'].get('glytoucan'),
+                            'ID': glycan_data['archetype'].get('ID'),
+                            'mass': glycan_data['archetype'].get('mass')
+                        }
+                        search_result.append(entry)
+                search_result.sort(key=lambda x: x['mass'] if x['mass'] is not None else float('inf'))
                 return jsonify({'search_string': search_string, 'results': search_result})
             iupac_id = search_string.lower()
             for _, glycan_data in GDB_data.items():
