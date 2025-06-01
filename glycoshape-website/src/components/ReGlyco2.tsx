@@ -75,6 +75,7 @@ interface Results {
   clash: boolean;
   output: string;
   results: ResultItem[];
+  jobId: string;
 }
 
 interface ResidueOption {
@@ -327,10 +328,14 @@ const ReGlyco = () => {
     "O-linked (Xyl...) (chondroitin sulfate) threonine": "G58785SJ",
     "O-linked (GlcNAc) serine": "G14843DJ",
     "O-linked (GlcNAc) threonine": "G14843DJ",
-    "N-linked (GlcNAc...) asparagine": "G84678BK",
+    "N-linked (GlcNAc...) asparagine": "G00028MO",
+    "N-linked (GlcNAc...) asparagine; partial": "G00028MO",
     "N-linked (GlcNAc...) (complex) asparagine": "G54258NG",
+    "N-linked (GlcNAc...) (complex) asparagine; alternate": "G54258NG",
     "N-linked (GlcNAc...) (hybrid) asparagine": "G74066YL",
-    "N-linked (GlcNAc...) (high mannose) asparagine": "G00028MO"
+    "N-linked (GlcNAc...) (hybrid) asparagine; alternate" : "G74066YL",
+    "N-linked (GlcNAc...) (high mannose) asparagine": "G00028MO",
+    "N-linked (GlcNAc...) (high mannose) asparagine; alternate": "G00028MO",
 
   };
   // --- End Default Glycan Mapping ---
@@ -348,7 +353,8 @@ const ReGlyco = () => {
     box: '',
     clash: false,
     output: '',
-    results: []
+    results: [],
+    jobId: ''
   });
 
   // Parse query parameters when component mounts
@@ -371,8 +377,9 @@ const ReGlyco = () => {
   const [populationSize, setpopulationSize] = useState<number>(128);
   const [maxGenerations, setmaxGenerations] = useState<number>(4);
   const [wiggleAngle, setwiggleAngle] = useState<number>(5);
-  const [wiggleAttempts, setwiggleAttempts] = useState<number>(40);
+  const [wiggleAttempts, setwiggleAttempts] = useState<number>(20);
   const [outputFormat, setOutputFormat] = useState<string>("PDB");
+  const [generateSimFiles, setGenerateSimFiles] = useState<boolean>(false);
   const [selectedGlycans, setSelectedGlycans] = useState<{ [key: string]: string }>({});
   // const [jobId, setJobId] = useState<string>("");
   const [selectedGlycanImage, setSelectedGlycanImage] = useState<{ [key: number]: string }>({});
@@ -457,7 +464,8 @@ const ReGlyco = () => {
             box: '',
             clash: false,
             output: '',
-            results: []
+            results: [],
+            jobId: ''
           });
         }
       } catch (error) {
@@ -557,7 +565,8 @@ const ReGlyco = () => {
             box: '',
             clash: false,
             output: '',
-            results: []
+            results: [],
+            jobId: ''
           });
           setScanResults(null);
           setScanCompleted(false);
@@ -699,6 +708,7 @@ const ReGlyco = () => {
       wiggleAngle: wiggleAngle,
       wiggleAttempts: wiggleAttempts,
       outputFormat: outputFormat,
+      generateSimFiles: generateSimFiles,
     };
 
     try {
@@ -759,6 +769,27 @@ const ReGlyco = () => {
   
     // Navigate to the ensemble route with query parameters
     navigate(`/ensemble?id=${protIdParam}&isUpload=${isUploadParam}&selections=${selectionsString}`);
+  };
+
+  const handleSwitchToSwap = () => {
+    if (!protData || !scanResults) return;
+
+    // Get residue strings (e.g., "ASN123_A") for clashing sites
+    const clashingResidueStrings = scanResults
+      .filter(r => !r.clash_solved)
+      .map(r => r.residue); // Assuming r.residue is the string like "ASN123_A"
+
+    if (clashingResidueStrings.length === 0) {
+      toast({ title: "No Clashing Residues", description: "No clashing residues to swap.", status: "info", duration: 3000, isClosable: true });
+      return;
+    }
+
+    const protIdParam = protData.id;
+    const isUploadParam = isUpload.toString();
+    // Encode the array of residue strings
+    const clashingResiduesParam = encodeURIComponent(JSON.stringify(clashingResidueStrings));
+
+    navigate(`/swap?id=${protIdParam}&isUpload=${isUploadParam}&clashingResidues=${clashingResiduesParam}`);
   };
 
   // Memoize the list of residue selection components
@@ -1162,7 +1193,7 @@ const ReGlyco = () => {
                         </Text>
                         {protData?.glycosylation?.uniprot && protData.glycosylation.uniprot.length > 0 ? (
                           <>
-                            <UnorderedList spacing={0} mb={0}>
+                            <VStack spacing={3} align="stretch" mb={4}>
                               {protData.glycosylation.uniprot.map((glyco, index) => {
                                 // Now defaultGlycanMap should be found
                                 const defaultGlycanId = defaultGlycanMap[glyco.description];
@@ -1174,36 +1205,49 @@ const ReGlyco = () => {
                                 const hasDefault = uniprotDefaultSelections[residueKey];
 
                                 return (
-                                  <ListItem key={`${glyco.begin}-${index}`} display="flex" alignItems="center" flexWrap="wrap">
-                                    <HStack spacing={4} align="center">
-                                      {/* <Badge colorScheme="pink" variant="outline" minW="60px" textAlign="center">
-                                        Residue {glyco.begin} {availableSite ? `(${availableSite.residueName} ${availableSite.residueChain})` : ''}
-                                      </Badge> */}
-                                      <Text fontSize="sm" fontWeight="bold" minW="100px">
+                                  <Flex
+                                    key={`${glyco.begin}-${index}`}
+                                    align="center"
+                                    justify="space-between"
+                                    p={3}
+                                    borderRadius="md"
+                                    bg="gray.50"
+                                    border="1px solid"
+                                    borderColor="gray.200"
+                                    minH="100px"
+                                  >
+                                    <Box minW="150px">
+                                      <Text fontSize="sm" fontWeight="bold">
                                         Residue {glyco.begin} {availableSite ? `(${availableSite.residueName} ${availableSite.residueChain})` : ''}
                                       </Text>
-                                      <Text fontSize="sm" flex="1" minW="200px">{glyco.description}</Text>
+                                    </Box>
+                                    
+                                    <Box flex="1" px={4}>
+                                      <Text fontSize="sm" color="gray.700">{glyco.description}</Text>
+                                    </Box>
+                                    
+                                    <Box minW="120px" textAlign="center">
                                       {hasDefault ? (
-                                        <HStack spacing={1}>
-                                          <Text fontSize="sm" color="gray.600">Default:</Text>
+                                        <VStack spacing={1}>
+                                          <Text fontSize="xs" color="gray.600">Default:</Text>
                                           <Link href={`/glycan?glytoucan=${defaultGlycanId}`} isExternal>
                                             <Image
                                               src={`${apiUrl}/api/svg/${defaultGlycanId}`}
                                               alt={`Default ${defaultGlycanId}`}
-                                              h="80px"
+                                              h="60px"
                                               objectFit="contain"
                                               title={defaultGlycanId}
                                             />
                                           </Link>
-                                        </HStack>
+                                        </VStack>
                                       ) : (
-                                        <Text fontSize="sm" color="gray.400">(No default mapping)</Text>
+                                        <Text fontSize="xs" color="gray.400">(No default mapping)</Text>
                                       )}
-                                    </HStack>
-                                  </ListItem>
+                                    </Box>
+                                  </Flex>
                                 );
                               })}
-                            </UnorderedList>
+                            </VStack>
 
                             <Button
                               position={"relative"}
@@ -1302,31 +1346,46 @@ const ReGlyco = () => {
                                Scan Results
                              </Heading>
                              {scanResults && scanResults.length > 0 ? (
-                               <VStack align="stretch" spacing={3} mb={6}>
-                                 {scanResults.map((result, index) => (
-                                   <Flex
-                                     key={index}
-                                     align="center"
-                                    //  justify="space-between"
-                                    //  p={2}
-                                    //  borderRadius="md"
-                                    //  bg={result.clash_solved ? "green.50" : "red.50"}
-                                    //  border="1px solid"
-                                     borderColor={result.clash_solved ? "green.200" : "red.200"}
+                              <VStack align="stretch" spacing={3} mb={6}>
+                                {scanResults.map((result, index) => (
+                                  <Flex
+                                    key={index}
+                                    align="center"
+                                   //  justify="space-between"
+                                   //  p={2}
+                                   //  borderRadius="md"
+                                   //  bg={result.clash_solved ? "green.50" : "red.50"}
+                                   //  border="1px solid"
+                                    borderColor={result.clash_solved ? "green.200" : "red.200"}
+                                  >
+                                    <HStack spacing={3}>
+                                      <Text fontWeight="medium">Residue: {result.residue}</Text>
+                                      <Text fontSize="xl" color={result.clash_solved ? "green.500" : "red.500"}>
+                                        {result.clash_solved ? '✓' : '✗'}
+                                      </Text>
+                                      <Badge colorScheme={result.clash_solved ? "green" : "red"} variant="subtle">
+                                      {result.clash_solved ? 'N-glycosylation possible' : 'Clash Detected'}
+                                    </Badge>
+                                    </HStack>
+                                    
+                                  </Flex>
+                                ))}
+                                {scanResults && scanResults.filter(r => !r.clash_solved).length > 0 && (
+                                 <Box alignSelf="flex-start">
+                                   <Button
+                                     size="sm"
+                                     mt={2}
+                                     ml={2}
+                                     colorScheme="orange"
+                                     variant="outline"
+                                     onClick={handleSwitchToSwap} // Call the new function
+                                     title="Open Swap tool for clashing residues"
                                    >
-                                     <HStack spacing={3}>
-                                       <Text fontWeight="medium">Residue: {result.residue}</Text>
-                                       <Text fontSize="xl" color={result.clash_solved ? "green.500" : "red.500"}>
-                                         {result.clash_solved ? '✓' : '✗'}
-                                       </Text>
-                                       <Badge colorScheme={result.clash_solved ? "green" : "red"} variant="subtle">
-                                       {result.clash_solved ? 'N-glycosylation possible' : 'Clash Detected'}
-                                     </Badge>
-                                     </HStack>
-                                     
-                                   </Flex>
-                                 ))}
-                               </VStack>
+                                     Swap Clashing Residues
+                                   </Button>
+                                 </Box>
+                                )}
+                              </VStack>
                              ) : (
                                <Text color="gray.500" mb={6}>No successful scan results available or no NXS/T sequons found.</Text>
                              )}
@@ -1408,6 +1467,7 @@ const ReGlyco = () => {
                                    </MenuList>
                                  </Menu>
                                </Box>
+                                
                                {scanAddGlycan && (
                                  <Box w="80px" h="80px">
                                    <Link href={`/glycan?glytoucan=${scanAddGlycan}`} isExternal>
@@ -1421,7 +1481,7 @@ const ReGlyco = () => {
                                  </Box>
                                )}
                              </HStack>
-
+                               
                              <Button
                                position={"relative"}
                                borderRadius="full"
@@ -1450,8 +1510,9 @@ const ReGlyco = () => {
                               ) : (
                                 "Add Selected Glycan to Successful Sites"
                               )}
-                               
+                              
                              </Button>
+                             
                            </Box>
                          )}
 
@@ -1507,7 +1568,7 @@ const ReGlyco = () => {
                         <br />
 
                         {/* Add Advanced Settings Accordion */}
-                        <Accordion allowToggle width="100%" mb={2} borderRadius="md" boxShadow="sm">
+                        <Accordion allowToggle width="100%" mb={2} borderRadius="md" boxShadow="sm" defaultIndex={[0]}>
                           <AccordionItem border="1px solid" borderColor="gray.200" borderRadius="md">
                             <h2>
                               <AccordionButton bg="gray.50" _hover={{ bg: "gray.100" }} borderRadius="md">
@@ -1573,7 +1634,7 @@ const ReGlyco = () => {
                                 <FormControl>
                                   <FormLabel fontWeight="medium" color="#B07095" mb={2}>
                                     <Tooltip label="Wiggle angle for the glycan. Higher values produce more diverse conformations but may be less realistic.">
-                                    Wiggle Angle: {wiggleAngle}
+                                    Wiggle Angle: {wiggleAngle}°
                                     </Tooltip>
                                   </FormLabel>
                                   <Slider
@@ -1626,14 +1687,19 @@ const ReGlyco = () => {
                                 <FormControl>
                                   <HStack spacing={2}>
                                     <FormLabel justifySelf={'center'} fontWeight="medium" color="#B07095" mb={2}>
-                                      <Tooltip label="Select the output format for the generated structure.">
-                                        Output Format
+                                      <Tooltip label="Select the output residue naming for the generated structure.">
+                                        Output Residue Name
                                       </Tooltip>
                                     </FormLabel>
                                     {["PDB", "GLYCAM", "CHARMM"].map((format) => (
                                       <Button
                                         key={format}
-                                        onClick={() => setOutputFormat(format)}
+                                        onClick={() => {
+                                          setOutputFormat(format);
+                                          if (generateSimFiles && format !== "GLYCAM") {
+                                            setGenerateSimFiles(false);
+                                          }
+                                        }}
                                         colorScheme={outputFormat === format ? "teal" : "gray"}
                                         variant={outputFormat === format ? "solid" : "outline"}
                                         size="sm"
@@ -1643,6 +1709,34 @@ const ReGlyco = () => {
                                       </Button>
                                     ))}
                                   </HStack>
+                                </FormControl>
+
+                                {/* Simulation prep files */}
+                                {/* Generate Simulation Files Toggle */}
+                                <FormControl>
+                                  <HStack spacing={4} align="center">
+                                    <FormLabel fontWeight="medium" color="#B07095" mb={0}>
+                                      <Tooltip label="Generate additional files for molecular dynamics simulations (GROMACS topology files)">
+                                        Generate Simulation Files
+                                      </Tooltip>
+                                    </FormLabel>
+                                    <Switch
+                                      id="simulation-files-toggle"
+                                      colorScheme="teal"
+                                      size="md"
+                                      isChecked={generateSimFiles}
+                                      onChange={(e) => {
+                                        const isChecked = e.target.checked;
+                                        setGenerateSimFiles(isChecked);
+                                        if (isChecked) {
+                                          setOutputFormat("GLYCAM");
+                                        }
+                                      }}
+                                    />
+                                  </HStack>
+                                  <FormHelperText fontSize="xs" color="gray.600">
+                                    Enable to generate Amber topology and parameter files for MD simulations. This will set Output Residue Name to GLYCAM.
+                                  </FormHelperText>
                                 </FormControl>
                               </VStack>
                             </AccordionPanel>
@@ -1739,6 +1833,22 @@ const ReGlyco = () => {
                           Download Re-glycosylated Structure PDB File
                         </Button>
                       </a>
+
+                      {generateSimFiles && (
+                        <a href={`${apiUrl}/api/reglyco/download/${Results.jobId}`} download>
+                          <Button
+                            position={"relative"}
+                            margin={'1rem'}
+                            borderRadius="full"
+                            isDisabled={isLoading}
+                            backgroundColor="#81D8D0"
+                            _hover={{ backgroundColor: "#008081" }}
+                            size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                          >
+                            Download full job Files
+                          </Button>
+                        </a>
+                      )}
                       
                       <Button
                 position={"relative"}
@@ -1830,6 +1940,7 @@ const ReGlyco = () => {
             alignItems="left"
             p={2}
             marginTop={"0"}
+           
             direction="column"
           >
             <Flex

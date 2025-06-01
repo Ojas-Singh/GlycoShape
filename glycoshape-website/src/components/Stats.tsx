@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Flex, Text, SimpleGrid, Stat, StatLabel, StatNumber } from '@chakra-ui/react';
+import { Box, Flex, Text, SimpleGrid, Stat, StatLabel, StatNumber, VStack, Container } from '@chakra-ui/react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Title } from 'chart.js';
@@ -62,66 +62,177 @@ const Stats: React.FC = () => {
         data: Object.values(visitsPerDay),
         fill: false,
         borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.1)',
         tension: 0.1,
+        pointBackgroundColor: 'rgb(75, 192, 192)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
       },
     ],
   };
 
+  // Chart options for better mobile display
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Daily Visits',
+        font: {
+          size: 16,
+          weight: 'bold' as const, // Fix: Use 'as const' or specific type
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+      },
+      x: {
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+      },
+    },
+  };
+
   return (
-    <Box p={6}>
-      <Flex justifyContent="space-between" alignItems="center" mb={8}>
-        
+    <Container maxW="7xl" p={6}>
+      {/* Header */}
+      <Box mb={8}>
         <Text 
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
-          fontSize={{base: "5xl",sm: "5xl", md: "5xl", lg: "5xl",xl: "5xl"}}
+          fontSize={{base: "4xl", sm: "5xl", md: "6xl"}}
           fontWeight='extrabold'
-          // align={"start"}
-          
-          paddingLeft={"0rem"}
+          textAlign={{base: "center", md: "left"}}
         >
           Statistics
         </Text>
-      </Flex>
+      </Box>
 
-      <SimpleGrid columns={[1, null, 2]} spacing="40px" mb={8}>
-        <Stat>
-          <StatLabel>Total number of visitors in the last month:</StatLabel>
-          <StatNumber>{visitors.length}</StatNumber>
+      {/* Stats Cards */}
+      <SimpleGrid columns={[1, 2, 3]} spacing={6} mb={8}>
+        <Stat
+          bg="white"
+          p={6}
+          borderRadius="xl"
+          boxShadow="md"
+          border="1px solid"
+          borderColor="gray.100"
+        >
+          <StatLabel color="gray.600" fontSize="sm">Total Visitors (Last Month)</StatLabel>
+          <StatNumber color="teal.600" fontSize={["2xl", "3xl"]}>{visitors.length}</StatNumber>
         </Stat>
 
-        {/* <Stat>
-          <StatLabel>Number of visits in the last 7 days:</StatLabel>
-          <StatNumber>{Object.values(visitsPerDay).slice(-7).reduce((a, b) => a + b, 0)}</StatNumber>
-        </Stat> */}
+        <Stat
+          bg="white"
+          p={6}
+          borderRadius="xl"
+          boxShadow="md"
+          border="1px solid"
+          borderColor="gray.100"
+        >
+          <StatLabel color="gray.600" fontSize="sm">Unique Locations</StatLabel>
+          <StatNumber color="blue.600" fontSize={["2xl", "3xl"]}>
+            {visitors.filter(v => v.latitude && v.longitude).length}
+          </StatNumber>
+        </Stat>
+
+        <Stat
+          bg="white"
+          p={6}
+          borderRadius="xl"
+          boxShadow="md"
+          border="1px solid"
+          borderColor="gray.100"
+        >
+          <StatLabel color="gray.600" fontSize="sm">Avg Daily Visits</StatLabel>
+          <StatNumber color="purple.600" fontSize={["2xl", "3xl"]}>
+            {Object.keys(visitsPerDay).length > 0 
+              ? Math.round(Object.values(visitsPerDay).reduce((a, b) => a + b, 0) / Object.keys(visitsPerDay).length)
+              : 0
+            }
+          </StatNumber>
+        </Stat>
       </SimpleGrid>
 
-      <Flex justifyContent="space-between" alignItems="center" mb={8}>
+      {/* Charts and Map - Stack on mobile, side by side on desktop */}
+      <VStack spacing={8} align="stretch">
         {/* Line chart for visits per day */}
-        <Box width="100%" height="300px" mb={8}>
-          <Line data={chartData} />
+        <Box
+          bg="white"
+          p={6}
+          borderRadius="xl"
+          boxShadow="md"
+          border="1px solid"
+          borderColor="gray.100"
+        >
+          <Box height={{base: "250px", md: "350px"}}>
+            <Line data={chartData} options={chartOptions} />
+          </Box>
         </Box>
 
         {/* Map for showing visitor locations */}
-        <Box width="100%" height="300px">
-          <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            {visitors
-              .filter(visitor => visitor.latitude && visitor.longitude) // Only show valid coordinates
-              .map((visitor, index) => (
-                <CircleMarker
-                  key={index}
-                  center={[visitor.latitude!, visitor.longitude!]} // Position of the circle
-                  radius={1}  // Size of the circle
-                  fillOpacity={0.1}  // Adjust transparency here (0.2 means 20% opaque)
-                  stroke={true}
-                  color="#CF6385" // Border color of the circle
-                />
-              ))}
-          </MapContainer>
+        <Box
+          bg="white"
+          p={6}
+          borderRadius="xl"
+          boxShadow="md"
+          border="1px solid"
+          borderColor="gray.100"
+        >
+          <Text 
+            fontSize="lg" 
+            fontWeight="bold" 
+            mb={4} 
+            color="gray.700"
+            textAlign={{base: "center", md: "left"}}
+          >
+            Visitor Locations
+          </Text>
+          <Box 
+            height={{base: "300px", sm: "400px", md: "500px"}} 
+            borderRadius="lg" 
+            overflow="hidden"
+            border="2px solid"
+            borderColor="gray.200"
+          >
+            <MapContainer 
+              center={[20, 0]} 
+              zoom={2} 
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={true}
+              scrollWheelZoom={false} // Disable scroll zoom for better mobile experience
+            >
+              <TileLayer 
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              {visitors
+                .filter(visitor => visitor.latitude && visitor.longitude)
+                .map((visitor, index) => (
+                  <CircleMarker
+                    key={index}
+                    center={[visitor.latitude!, visitor.longitude!]}
+                    radius={3}
+                    fillOpacity={0.6}
+                    stroke={true}
+                    color="#2D3748"
+                    fillColor="#4299E1"
+                    weight={1}
+                  />
+                ))}
+            </MapContainer>
+          </Box>
         </Box>
-      </Flex>
-    </Box>
+      </VStack>
+    </Container>
   );
 };
 

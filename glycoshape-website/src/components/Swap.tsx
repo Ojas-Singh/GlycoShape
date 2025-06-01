@@ -47,64 +47,50 @@ interface ScanResults {
 
 interface ResidueOption {
   label: string;
-  value: number;
+  value: number; // This usually corresponds to residueTag
 }
 
-
-interface Glycosylation {
+// Updated Interfaces to align with ReGlyco2.tsx and the /api/reglyco/init endpoint
+interface UniProtGlycosylation {
   begin: string;
   category: string;
   description: string;
   end: string;
-  evidences: Evidence[];
-  ftId: string;
-  molecule: string;
+  evidences?: { code: string }[];
+  ftId?: string;
+  molecule?: string;
   type: string;
 }
 
-interface Evidence {
-  code: string;
-  source: Source;
-}
-
-interface Source {
-  alternativeUrl: string;
-  id: string;
-  name: string;
-  url: string;
-}
-
-interface GlycosylationData {
-  glycosylations: Glycosylation[];
-  sequence: string;
-  sequenceLength: number;
-}
-
-
-interface GlycoConf {
+interface GlycosylationSite {
   residueTag: number;
   residueID: number;
-  residueName: string;
+  residueName: 'ASN' | 'SER' | 'THR' | 'HYP' | 'PRO' | 'TRP' | 'CYS';
   residueChain: string;
-  glycanIDs: boolean[];
 }
 
-interface UniprotData {
-  glycosylation_locations: GlycosylationData;
-  uniprot: string;
-  requestURL: string;
-  configuration: [GlycoConf];
+interface ProtData {
+  id: string; // Canonical ID (Uniprot ID or generated for upload)
+  filename: string; // Original filename for uploads
+  requestURL: string; // URL for fetching PDB/CIF, or data URL for uploads
+  sequence: string;
+  glycosylation: {
+    available: GlycosylationSite[]; // All potential sites
+    uniprot: UniProtGlycosylation[]; // Sites reported by UniProt
+  };
+  // configurations might not be needed if Swap only deals with ASN and doesn't show glycan options
 }
 
-const ReGlyco = () => {
+
+const Swap = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
 
   
 
-  const [uniprotID, setUniprotID] = useState<string>("");
-  const [UniprotData, setUniprotData] = useState<UniprotData | null>(null);
+  const [protID, setProtID] = useState<string>(""); // Stores the ID used for fetching or the ID from uploaded file
+  const [protData, setProtData] = useState<ProtData | null>(null);
   const [isUpload, setIsUpload] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState(67);
   const [isUploading, setIsUploading] = useState(false);
@@ -136,47 +122,48 @@ const ReGlyco = () => {
 
   const fetchProteinData = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/uniprot_swap`, {
+      const response = await fetch(`${apiUrl}/api/reglyco/init`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ uniprot: uniprotID.toUpperCase() })
+        body: JSON.stringify({ protID: protID, isUpload: false })
       });
 
-      const data: UniprotData = await response.json();
-      setUniprotID(data.uniprot);
-      setUniprotData(data);
+      if (!response.ok) {
+        // Try PDB ID if Uniprot ID failed or if it was a PDB ID initially
+        const pdbResponse = await fetch(`${apiUrl}/api/reglyco/init`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ protID: protID, isUpload: false, isPDB: true }) // Assuming backend can check PDB
+        });
+        if (!pdbResponse.ok) {
+          throw new Error(`Failed to fetch data for ID: ${protID}`);
+        }
+        const pdbData: ProtData = await pdbResponse.json();
+        setProtID(pdbData.id);
+        setProtData(pdbData);
+
+      } else {
+        const data: ProtData = await response.json();
+        setProtID(data.id); // data.id should be the canonical ID from backend
+        setProtData(data);
+      }
+      
       setIsUpload(false);
       setSelectedGlycans({});
-      setSelectedGlycanImage({});
+      setSelectedGlycanImage({}); // Reset this if it's used for visual cues
       setActiveStep(1);
+      setError(null);
     } catch (error) {
       if (error instanceof Error) {
-
-        try {
-          const response = await fetch(`${apiUrl}/api/rcsb_swap`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ uniprot: uniprotID })
-          });
-
-          const data: UniprotData = await response.json();
-          setUniprotData(data);
-          setIsUpload(false);
-          setSelectedGlycans({});
-          setSelectedGlycanImage({});
-          setActiveStep(1);
-
-        } catch (error) {
-          if (error instanceof Error) {
-            
-          } else {
-            setError("An unknown error occurred.");
-          }
-        }
+        setError(`Error fetching protein data: ${error.message}`);
+        setProtData(null);
+      } else {
+        setError("An unknown error occurred while fetching protein data.");
+        setProtData(null);
       }
     }
   }
@@ -187,59 +174,72 @@ const ReGlyco = () => {
   const queryParams = new URLSearchParams(location.search);
   const [id, setId] = useState<string>(queryParams.get('id') || '');
 
+  // Add new state variables for URL parameters
+  const [urlIsUpload, setUrlIsUpload] = useState<boolean>(queryParams.get('isUpload') === 'true');
+  const [urlClashingResidues, setUrlClashingResidues] = useState<string[]>([]);
+
   useEffect(() => {
-    // Update uniprotID based on id from the URL
-    if (id) {
-      setUniprotID(id); // Assuming setId is meant to update uniprotID. If not, directly set uniprotID here if it's stateful.
+    // Parse URL parameters
+    const idParam = queryParams.get('id');
+    const isUploadParam = queryParams.get('isUpload');
+    const clashingResiduesParam = queryParams.get('clashingResidues');
+
+    if (idParam) {
+      // setId(idParam); // id state might be redundant if protID is the primary one
+      setProtID(idParam); // Set protID to trigger fetch if needed
     }
-  
-    const debounceDelay = 1000;
-  
-    const timeoutId = setTimeout(() => {
-      const fetchData = async () => {
-        try {
-          // Now checking for id as well to ensure it triggers when id is set
-          if (!isUpload && (uniprotID.length > 3 || id)) {
-            await fetchProteinData();
-            setScanResults({
-              box: '',
-              clash: false,
-              output: '',
-              results: [] 
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching protein data:", error);
-        }
-      };
-  
-      fetchData();
-    }, debounceDelay);
-  
-    return () => clearTimeout(timeoutId);
-  
-    // Including id in the dependencies array ensures that the effect runs when id changes
-  }, [isUpload, uniprotID, id]); 
 
+    if (isUploadParam) {
+      const uploadStatus = isUploadParam === 'true';
+      setUrlIsUpload(uploadStatus);
+      setIsUpload(uploadStatus); // Set main isUpload state
+    }
 
-
-
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault();
-        if (searchRef.current) {
-          (searchRef.current as any).focus();
-        }
+    if (clashingResiduesParam) {
+      try {
+        const decodedClashingResidues = JSON.parse(decodeURIComponent(clashingResiduesParam));
+        setUrlClashingResidues(decodedClashingResidues);
+      } catch (error) {
+        console.error("Failed to parse clashingResidues parameter:", error);
       }
-    };
+    }
+  }, [location.search]);
 
-    window.addEventListener('keydown', handleKeyPress);
+  // Add useEffect to auto-select clashing residues after UniprotData is loaded
+  useEffect(() => {
+    if (protData?.glycosylation?.available && urlClashingResidues.length > 0) {
+      const matchingOptions: ResidueOption[] = [];
+      const matchingSelections: { [key: string]: string } = {};
+      const matchingImageSelections: { [key: number]: string } = {}; // If used
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, []);
+      urlClashingResidues.forEach(residueString => {
+        const [residueIdStr, chain] = residueString.split('_');
+        
+        const matchingSite = protData.glycosylation.available.find(site =>
+          site.residueName === 'ASN' &&
+          site.residueID.toString() === residueIdStr &&
+          site.residueChain === chain
+        );
+
+        if (matchingSite) {
+          matchingOptions.push({
+            value: matchingSite.residueTag,
+            label: `${matchingSite.residueName}${matchingSite.residueID}${matchingSite.residueChain}`
+          });
+          matchingSelections[`${matchingSite.residueID}_${matchingSite.residueChain}`] = "true";
+          matchingImageSelections[matchingSite.residueTag] = "true"; // if selectedGlycanImage is for visual toggle state
+        }
+      });
+
+      if (matchingOptions.length > 0) {
+        setValue(matchingOptions);
+        setSelectedGlycans(matchingSelections);
+        setSelectedGlycanImage(matchingImageSelections);
+      }
+    }
+  }, [protData, urlClashingResidues]);
+
+
 
   useEffect(() => {
     let index = 0;
@@ -282,15 +282,19 @@ const ReGlyco = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Assuming you want to fetch data when upload is not in progress and uniprotID is set
-        if (!isUpload && uniprotID) {
+        // Fetch data if protID is set (e.g., from URL) and not an upload flow initially
+        if (protID && !isUpload && !protData) { // Added !protData to prevent re-fetch on param change if data exists
+          await fetchProteinData();
+        }
+        // Reset scan results if it's not an upload or if protID changes
+        // This part might need adjustment based on how scanResults is used in Swap
+        if ((!isUpload || protID) && scanResults) { // Condition to reset scanResults
           setScanResults({
             box: '',
             clash: false,
             output: '',
             results: [] // Empty results array as initial value
           })
-
         }
       } catch (error) {
         // Handle or log error
@@ -299,7 +303,7 @@ const ReGlyco = () => {
     };
 
     fetchData();
-  }, [isUpload, uniprotID]);
+  }, [isUpload, protID]);
 
 
   const [scanResults, setScanResults] = useState<ScanResults | null>({
@@ -314,8 +318,8 @@ const ReGlyco = () => {
     const file = event.target.files?.[0];
     if (file) {
 
-      const allowedExtensions = [".pdb"]; // Example extensions
-      const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1);
+      const allowedExtensions = [".pdb", ".cif"]; // Allow PDB and CIF
+      const fileExtension = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1).toLowerCase();
 
       if (!allowedExtensions.includes("." + fileExtension)) {
         console.error("File type not allowed.");
@@ -323,15 +327,20 @@ const ReGlyco = () => {
         return;
       }
       const formData = new FormData();
-      formData.append('pdbFile', file);
+      formData.append('pdbFile', file); // Changed from 'protFile' to 'pdbFile' if backend expects that for swap init
+      // If backend /api/reglyco/init uses 'protFile', keep it as 'protFile'
+      // For consistency with ReGlyco2, 'protFile' is likely correct.
+      formData.append('protFile', file);
+
+
       setSelectedGlycans({});
       setSelectedGlycanImage({});
       // Other state updates...
 
       try {
-        setIsUploading(true); // Set uploading state to true when upload begins
+        setIsUploading(true); 
 
-        const response = await axios.post(`${apiUrl}/api/upload_pdb_swap`, formData, {
+        const response = await axios.post(`${apiUrl}/api/reglyco/init`, formData, {
           timeout: 600000,
           onUploadProgress: (progressEvent) => {
             const percentage = progressEvent.total ? (progressEvent.loaded * 100) / progressEvent.total : 0;
@@ -341,18 +350,19 @@ const ReGlyco = () => {
         });
 
         if (response.status === 200) {
-          setUniprotData(response.data);
-          console.log(UniprotData?.uniprot);
+          const data: ProtData = response.data;
+          setProtData(data);
+          setProtID(data.id); // Set protID from the response
           setIsUpload(true);
           setActiveStep(1);
           setError(null);
           setIsUploading(false); // Reset uploading state once upload is finished
           setUploadProgress(0);
-          const data: UniprotData = response.data;
-          setUniprotData(data);
+          // const data: ProtData = response.data; // This is a redeclaration
+          // setProtData(data); // Already set above
           setSelectedGlycans({});
           setSelectedGlycanImage({});
-          setActiveStep(1);
+          // setActiveStep(1); // Already set above
           setScanResults({
             box: '',
             clash: false,
@@ -395,13 +405,13 @@ const ReGlyco = () => {
     setActiveStep(2);
     const payload = {
       selectedGlycans: selectedGlycans,
-      uniprotID: UniprotData?.uniprot,
-      isUpload: isUpload,
-
+      filename:  protData?.filename,
+      customPDB: isUpload,
+      jobType: "swap",
     };
 
     try {
-      const response = await fetch(`${apiUrl}/api/process_pdb_swap`, {
+      const response = await fetch(`${apiUrl}/api/reglyco/job`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -417,7 +427,7 @@ const ReGlyco = () => {
         setActiveStep(3);  // Move to the 'Download' step after processing
         setElapsedTime(0);
         // console.log(responseData);
-        console.log(UniprotData?.uniprot);
+        console.log(protData?.id); // Changed from protData?.uniprot to protData?.id
         // Handle the response data as needed
       } else {
         console.error("Failed to post data.");
@@ -527,14 +537,14 @@ const ReGlyco = () => {
 
       {/* Rest of the content */}
       <VStack spacing={4} w="100%" p={2} justify={'left'}>
-        {UniprotData && (
+        {protData && (
           <Flex w="100%" justifyContent="left" alignItems="center" p={2} marginTop={"0"} direction="column"  >
             <Flex w="100%"
               align="center"
               justify="center"
               flex="1"
               padding="2rem" paddingTop={'0rem'} direction={{ base: "column", sm: "column", md: "row", lg: "row", xl: "row" }}>
-              <Heading margin={"0rem"} marginLeft={"0"} marginBottom={'0rem'} as='h4' size='xl'>  {isUpload ? "File:" : `Uniprot/PDB ID: `} {UniprotData.uniprot}</Heading>
+              <Heading margin={"0rem"} marginLeft={"0"} marginBottom={'0rem'} as='h4' size='xl'>  {isUpload ? `File: ${protData.filename}` : `ID: ${protData.id}`}</Heading>
 
               <Spacer />
               <Box >
@@ -606,14 +616,11 @@ const ReGlyco = () => {
                         </Text>
                       </Box>
                       <iframe
-                        key={isUpload ? "uploaded" : UniprotData.requestURL}
+                        key={isUpload ? protData.filename : protData.requestURL}
                         width="100%"
                         height="400px"
 
-                        src={isUpload ?
-                          `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` :
-                          `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb`
-                        }
+                        src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'mmcif'}`}
                         allowFullScreen
                         title="Protein Structure"
                       /></SimpleGrid>
@@ -622,14 +629,11 @@ const ReGlyco = () => {
 
 
                     <iframe
-                      key={isUpload ? "uploaded" : UniprotData.requestURL}
+                      key={isUpload ? protData.filename : protData.requestURL}
                       width="100%"
                       height="400px"
 
-                      src={isUpload ?
-                        `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb` :
-                        `/viewer/embedded.html?pdbUrl=${UniprotData.requestURL}&format=pdb`
-                      }
+                      src={`/viewer/embedded.html?pdbUrl=${protData.requestURL}&format=${protData.requestURL.endsWith('.pdb') ? 'pdb' : 'mmcif'}`}
                       allowFullScreen
                       title="Protein Structure"
                     /></SimpleGrid>)}
@@ -652,44 +656,45 @@ const ReGlyco = () => {
                     // onSelectResetsInput = {false}
                     closeMenuOnSelect={false}
 
-                    options={UniprotData?.configuration?.map((glycoConf: GlycoConf) => ({
-                      value: glycoConf.residueTag,
-                      label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
-                    }))}
+                    options={protData?.glycosylation?.available
+                      ?.filter(site => site.residueName === 'ASN')
+                      .map((asnSite: GlycosylationSite) => ({
+                        value: asnSite.residueTag,
+                        label: `${asnSite.residueName}${asnSite.residueID}${asnSite.residueChain}`
+                      })) || []}
                   />
 
-                  {UniprotData?.configuration && UniprotData.configuration.map((glycoConf: GlycoConf, index: number) => {
-                    const isSelected = value.find(option => option.value === glycoConf.residueTag);
-                    return isSelected ? (
-                      <div key={index}>
-                        <HStack>
-                          <Heading margin={'0.5rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "1xl", xl: "1xl" }} id={`glycan-${index}`} fontFamily={'texts'}>
-                            {`Residue: ${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`}
-                          </Heading>
-                          <FormControl display="flex" alignItems="center">
-                            <FormLabel htmlFor="glycan-switch" mb="0" fontWeight="normal" color={"#1A202C"}>
-                              {selectedGlycanImage[glycoConf.residueTag] ? 'Swap ND2 and OD1?' : 'False'}
-                            </FormLabel>
-                            <Switch
-                              id="glycan-switch"
-                              colorScheme="yellow"
-                              isChecked={selectedGlycanImage[glycoConf.residueTag] === "true"}
-                              onChange={(e) =>
-                                handleToggleChange(
-                                  e.target.checked,
-                                  `${glycoConf.residueID}_${glycoConf.residueChain}`,
-                                  glycoConf.residueTag
-                                )
-                              }
-                            />
-
-                          </FormControl>
-
-
-                        </HStack>
-                      </div>
-                    ) : null;
-                  })}
+                  {protData?.glycosylation?.available
+                    .filter(site => site.residueName === 'ASN') // Process only ASN sites
+                    .map((asnSite: GlycosylationSite) => {
+                      const isSelected = value.find(option => option.value === asnSite.residueTag);
+                      return isSelected ? (
+                        <div key={asnSite.residueTag}>
+                          <HStack>
+                            <Heading margin={'0.5rem'} fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "1xl", xl: "1xl" }} id={`glycan-${asnSite.residueTag}`} fontFamily={'texts'}>
+                              {`Residue: ${asnSite.residueName}${asnSite.residueID}${asnSite.residueChain}`}
+                            </Heading>
+                            <FormControl display="flex" alignItems="center">
+                              <FormLabel htmlFor={`swap-switch-${asnSite.residueTag}`} mb="0" fontWeight="normal" color={"#1A202C"}>
+                                {selectedGlycanImage[asnSite.residueTag] === "true" ? 'Swap ND2 and OD1' : 'Do not swap'}
+                              </FormLabel>
+                              <Switch
+                                id={`swap-switch-${asnSite.residueTag}`}
+                                colorScheme="yellow"
+                                isChecked={selectedGlycanImage[asnSite.residueTag] === "true"}
+                                onChange={(e) =>
+                                  handleToggleChange(
+                                    e.target.checked,
+                                    `${asnSite.residueID}_${asnSite.residueChain}`, // Key for selectedGlycans
+                                    asnSite.residueTag // Key for selectedGlycanImage
+                                  )
+                                }
+                              />
+                            </FormControl>
+                          </HStack>
+                        </div>
+                      ) : null;
+                    })}
 <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
              Flip the toggle button to swap the atoms.
             </Text>
@@ -787,7 +792,7 @@ const ReGlyco = () => {
 
           </Flex>
         )}
-        {!UniprotData && (
+        {!protData && (
 
           <Flex w="100%" minHeight={'60vh'} justifyContent="left" alignItems="left" p={2} marginTop={"0"} direction="column" >
             <Flex w="100%"
@@ -803,7 +808,7 @@ const ReGlyco = () => {
                 marginBottom="0.2em"
                 marginLeft={'2rem'}
               >
-                Swap
+                Swap ASN Side-Chain Atoms
               </Text>
 
               <Spacer />
@@ -834,9 +839,22 @@ const ReGlyco = () => {
             </Flex>
 
 
-            <SimpleGrid alignSelf="center" justifyItems="center" columns={[1, 2]} spacing={0} paddingTop={'1rem'} paddingBottom={'2rem'}>
-
-
+            <SimpleGrid alignSelf="center" justifyItems="center" columns={[1, 1]} spacing={4} paddingTop={'1rem'} paddingBottom={'2rem'} px={'2rem'}>
+              <Box>
+                <Text fontFamily={'texts'} color='#B195A2' justifySelf="left" align={'left'} fontSize={'lg'}>
+                  The Swap Atoms tool is designed to address steric clashes involving asparagine (ASN) residues, particularly in the context of N-glycosylation.
+                  When an ASN side-chain is oriented unfavorably, it can lead to clashes with attached glycans or surrounding protein structure.
+                </Text>
+                <Text fontFamily={'texts'} color='#B195A2' justifySelf="left" align={'left'} fontSize={'lg'} mt={2}>
+                  This tool attempts to resolve such clashes by swapping the positions of the ND2 and OD1 atoms in the amide group of the specified ASN residue(s).
+                  This effectively rotates the amide plane by 180 degrees, which can often alleviate the steric hindrance without significantly altering the local backbone conformation.
+                </Text>
+                <Text fontFamily={'texts'} color='#B195A2' justifySelf="left" align={'left'} fontSize={'lg'} mt={2}>
+                  Upload your PDB/CIF structure or enter a UniProt/PDB ID to begin. If you are coming from the ReGlyco2 GlcNAc scan, clashing ASN residues will be pre-selected for swapping.
+                </Text>
+              </Box>
+              {/* You can add an illustrative image or video here if desired */}
+              {/* <video width={'50%'} autoPlay loop muted> <source src="/path_to_swap_video.mp4" type="video/mp4" /> </video> */}
             </SimpleGrid>
 
 
@@ -857,4 +875,4 @@ const ReGlyco = () => {
 
 
 
-export default ReGlyco;
+export default Swap;

@@ -162,7 +162,7 @@ const Navbar: React.FC = () => {
         <Flex align="center" >
           <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }}  marginRight="20px">Database</Link>
 
-          {isDevelopment ? (
+          
         <Menu>
         <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
           Tools
@@ -170,13 +170,18 @@ const Navbar: React.FC = () => {
         <MenuList bg="#28363F" borderColor="#28363F">
           <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
           <MenuItem fontWeight="bold" as={RouterLink} to="/ensemble" onClick={() =>  handleNavigation('/ensemble')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Ensemble</MenuItem>
-          <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() =>  handleNavigation('/fit')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Fit</MenuItem>
+            {isDevelopment && (
+            <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() => handleNavigation('/fit')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>
+              Re-Glyco Fit
+            </MenuItem>
+            )}
           <MenuItem fontWeight="bold" as={RouterLink} to="/swap" onClick={() =>  handleNavigation('/swap')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
-          <MenuItem fontWeight="bold" as={RouterLink} to="/chat" onClick={() =>  handleNavigation('/chat')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>GlyCopilot</MenuItem>
-        </MenuList>
-      </Menu>) : (
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} marginRight="20px">Re-Glyco</Link>
-        )}
+          
+          {isDevelopment && (
+            <MenuItem fontWeight="bold" as={RouterLink} to="/chat" onClick={() =>  handleNavigation('/chat')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>GlyCopilot</MenuItem>
+            )}
+            </MenuList>
+      </Menu>
   
           
           

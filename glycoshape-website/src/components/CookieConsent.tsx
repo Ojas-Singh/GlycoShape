@@ -18,12 +18,12 @@ import {
   Input,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useLocation } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 // --- Constants ---
 const COOKIE_CONSENT_KEY = 'cookieConsent';
 const BETA_ACCESS_KEY = 'betaAccessGranted';
-const BETA_ACCESS_DURATION_MS = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+const BETA_ACCESS_DURATION_MS = 9 * 60 * 60 * 1000; // 3 hours in milliseconds
 
 const CookieConsent = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -39,7 +39,7 @@ const CookieConsent = () => {
   const { isOpen: isBetaModalOpen, onOpen: openBetaModal, onClose: closeBetaModal } = useDisclosure();
   const location = useLocation();
 
-  const betaModalPaths = ['/fit', '/chat'];
+  const betaModalPaths = ['/fit', '/chat', '/FIT', '/CHAT'];
 
   // --- Effects ---
 
@@ -48,13 +48,13 @@ const CookieConsent = () => {
     const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
     if (consent === 'given') {
       setIsCookieConsentGiven(true);
-      setIsBannerVisible(false); // Don't show banner if already given
+      setIsBannerVisible(false); 
     } else {
       setIsCookieConsentGiven(false);
-      setIsBannerVisible(true); // Show banner initially if consent not given
+      setIsBannerVisible(true); 
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // <-- Empty dependency array ensures this runs only once on mount
+   
+  }, []); 
 
   // Check Beta Access Validity on mount and location change
   useEffect(() => {
@@ -88,7 +88,7 @@ const CookieConsent = () => {
     }
   }, [isCookieConsentGiven, apiUrl]);
 
-  // Control Beta Modal visibility (no changes needed here)
+  // Control Beta Modal visibility 
   useEffect(() => {
     const shouldShowModal = isDevelopment && betaModalPaths.includes(location.pathname) && !isBetaAccessValid;
     if (shouldShowModal && !isBetaModalOpen) {
@@ -166,7 +166,7 @@ const CookieConsent = () => {
         </Slide>
       )}
 
-      {/* Beta Key Modal (remains the same) */}
+      {/* Beta Key Modal */}
       <Modal
         isCentered
         motionPreset='scale'
@@ -175,9 +175,9 @@ const CookieConsent = () => {
         isOpen={isBetaModalOpen}
         onClose={() => {
           if (!isBetaAccessValid) {
-            window.location.href = `${apiUrl}`;
+        window.location.href = `/`;
           } else {
-            closeBetaModal();
+        closeBetaModal();
           }
         }}
       >
@@ -188,28 +188,28 @@ const CookieConsent = () => {
         />
         <ModalContent>
           <ModalHeader fontFamily={'texts'}>Beta Access Required</ModalHeader>
-          <ModalCloseButton />
+          {/* <ModalCloseButton /> */}
           <ModalBody>
-            <Text mb={4} fontSize="sm">
-              Enter the beta key to access this page on the development server (valid for 3 hours).
-            </Text>
-            <Input
-              colorScheme="teal"
-              placeholder="Enter beta key"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handlePinSubmit()}
-            />
-            <Link href={`${apiUrl}`} isExternal>
-              <Text margin={'2'} fontFamily='texts' fontSize={'sm'} color="blue.500">
-                Or visit the home page: {apiUrl}
-              </Text>
-            </Link>
+        <Text mb={4} fontSize="sm">
+          Enter the beta key to access this page on the development server (valid for 9 hours).
+        </Text>
+        <Input
+          colorScheme="teal"
+          placeholder="Enter beta key"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handlePinSubmit()}
+        />
+        <Link as={RouterLink} to="/">
+          <Text margin={'2'} fontFamily='texts' fontSize={'sm'} color="blue.500">
+          Or visit the home page.
+          </Text>
+        </Link>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handlePinSubmit}>
-              Submit Key
-            </Button>
+        <Button colorScheme="teal" mr={3} onClick={handlePinSubmit}>
+          Submit Key
+        </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

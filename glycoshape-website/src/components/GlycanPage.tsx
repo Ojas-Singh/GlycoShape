@@ -278,6 +278,26 @@ const GlycanPage: React.FC = () => {
     Par: number;
     Dig: number;
     Col: number;
+    
+  }
+
+  interface Composition {
+    Hex?: number;
+    HexNAc?: number;
+    dHex?: number; // Deoxyhexose, often Fucose
+    NeuAc?: number; // Generic Sialic Acid (could be Neu5Ac, Neu5Gc)
+    Neu5Ac?: number;
+    Neu5Gc?: number;
+    Pen?: number; // Pentose, often Xylose or Arabinose
+    GlcA?: number;
+    GalA?: number;
+    Man?: number;
+    Gal?: number;
+    Glc?: number;
+    Xyl?: number;
+    Fuc?: number;
+
+    [key: string]: number | undefined; // Allows for other keys not explicitly defined
   }
 
   interface ComponentsSearch {
@@ -292,8 +312,8 @@ const GlycanPage: React.FC = () => {
     clusters: ClusterData;
     components: Components;
     components_search: ComponentsSearch;
-    composition: string | null;
-    composition_search: string | null;
+    composition: Composition; 
+    composition_search: Composition;
     forcefield: string;
     glycam: string;
     glycoct: string;
@@ -741,7 +761,45 @@ const GlycanPage: React.FC = () => {
                                   </Wrap>
                                 )
                               },
-                              { label: "Composition", value: JSON.stringify(data?.archetype.composition) || "Not Available" },
+                              {
+                                label: "Composition",
+                                value: (
+                                  <Wrap>
+                                    {data?.archetype.composition ? ( // Check if the composition object exists
+                                      (() => {
+                                        try {
+                                          // Directly use the composition object, no parsing needed
+                                          const compositionObject: Composition = data.archetype.composition;
+                                          return Object.entries(compositionObject)
+                                            // Filter out entries where count is undefined, null, or not a positive number
+                                            .filter(([_, count]) => typeof count === 'number' && count > 0)
+                                            .map(([name, count]) => (
+                                              <WrapItem key={name}>
+                                                <HStack>
+                                                  <Image
+                                                    src={`${apiUrl}/api/draw/${name}`} // Ensure your /api/draw endpoint can handle these names
+                                                    alt={name}
+                                                    height="50px"
+                                                    width="50px"
+                                                    // Add a fallback image if needed
+                                                    onError={(e) => (e.currentTarget.style.display = 'none')} // Hide if image fails to load
+                                                  />
+                                                  <Text fontSize="sm">×{count as number}</Text>
+                                                </HStack>
+                                              </WrapItem>
+                                            ));
+                                        } catch (e) {
+                                          // This catch block might be less relevant now unless Object.entries or mapping fails
+                                          console.error("Failed to render composition object:", e, data.archetype.composition);
+                                          return <Text fontSize="sm" color="red.500">Error displaying composition</Text>;
+                                        }
+                                      })()
+                                    ) : (
+                                      <Text fontSize="sm">Not Available</Text>
+                                    )}
+                                  </Wrap>
+                                )
+                              },
                               // { label: "Motifs", value: JSON.stringify(data?.archetype.motifs) || "Not Available" },
                               {
                                 label: "Motifs",

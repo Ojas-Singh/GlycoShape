@@ -14,10 +14,21 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { gruvboxLight } from 'react-syntax-highlighter/dist/esm/styles/prism'; // Choose a style
 import 'katex/dist/katex.min.css'; // KaTeX CSS
 
-import elab_logo from '.././assets/eLAB.png';
 
 import { Tag, Divider, Show, SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Button, VStack, Grid, Flex, Image, Container, Box, Tab, Tabs, TabList, TabPanels, TabPanel, Text, Link, List, ListItem, Heading, HStack, Spacer, Hide, Spinner, Alert, AlertIcon } from '@chakra-ui/react';
 import { Element as HastElement } from 'hast'; // Import HastElement for typing the AST node
+
+// Define an interface for team members
+interface TeamMember {
+  name: string;
+  role: string;
+  image: string;
+  hoverImage: string;
+  coolImage: string;
+  bio: string;
+  socialLinks: Array<{ platform: string; url: string }>;
+  status: "current" | "past"; // Added status field
+}
 
 interface BlogPost {
   title: string;
@@ -36,20 +47,38 @@ interface Publication {
   editor?: string;
 }
 
-// GitHub configuration
-const GITHUB_CONFIG = {
+const ELAB_DATA_REPO_CONFIG = {
   owner: 'Ojas-Singh', 
-  repo: 'GlycoShape', 
-  path: '/', 
-  branch: 'main' 
+  repo: 'GlycoShape-Resources', 
+  branch: 'main',
+  // Base URL for raw content from this new repository
+  rawBaseUrl: `https://raw.githubusercontent.com/Ojas-Singh/GlycoShape-Resources/main/`, 
+  // Base URL for API calls to this new repository (for directory listings, etc.)
+  apiBaseUrl: `https://api.github.com/repos/Ojas-Singh/GlycoShape-Resources/contents/` 
 };
+
+// Configuration for fetching BLOG posts from the new data repository
+const BLOG_CONTENT_CONFIG = {
+  owner: ELAB_DATA_REPO_CONFIG.owner,
+  repo: ELAB_DATA_REPO_CONFIG.repo,
+  path: 'blog', // Path to the blog directory in the new repo
+  branch: ELAB_DATA_REPO_CONFIG.branch
+};
+
+
 
 const ELab: React.FC = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<any | null>(null);
-  const [hoveredMember, setHoveredMember] = useState<number | null>(null);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null); // Updated type
+  const [hoveredCurrentMember, setHoveredCurrentMember] = useState<number | null>(null);
+  const [hoveredPastMember, setHoveredPastMember] = useState<number | null>(null);
   
+  // State for team members
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
+  const [teamError, setTeamError] = useState<string | null>(null);
+
   // New state for markdown content
   const [publications, setPublications] = useState<Publication[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -57,6 +86,11 @@ const ELab: React.FC = () => {
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [publicationsError, setPublicationsError] = useState<string | null>(null);
   const [blogsError, setBlogsError] = useState<string | null>(null);
+
+  // State for eLab main content
+  const [elabMainContent, setElabMainContent] = useState<string>('');
+  const [loadingElabMain, setLoadingElabMain] = useState(true);
+  const [elabMainError, setElabMainError] = useState<string | null>(null);
 
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -82,8 +116,8 @@ const ELab: React.FC = () => {
   }, [location.pathname]);
 
   // GitHub API functions
-  const fetchGitHubDirectoryContents = async (): Promise<string[]> => {
-    const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?ref=${GITHUB_CONFIG.branch}`;
+  const fetchGitHubDirectoryContents = async (config: typeof BLOG_CONTENT_CONFIG): Promise<string[]> => { // Updated to take config
+    const url = `${ELAB_DATA_REPO_CONFIG.apiBaseUrl}${config.path}?ref=${config.branch}`;
     
     try {
       const response = await fetch(url);
@@ -116,13 +150,14 @@ const ELab: React.FC = () => {
     }
   };
 
-  // Updated fetchBlogPosts function to use GitHub API
+  // Updated fetchBlogPosts function to use GitHub API with new config
   const fetchBlogPosts = async () => {
     try {
       setLoadingBlogs(true);
+      setBlogsError(null); // Reset error
       
-      // Get list of markdown files from GitHub
-      const fileUrls = await fetchGitHubDirectoryContents();
+      // Get list of markdown files from GitHub using BLOG_CONTENT_CONFIG
+      const fileUrls = await fetchGitHubDirectoryContents(BLOG_CONTENT_CONFIG);
       
       // Fetch content for each file
       const blogPromises = fileUrls.map(async (downloadUrl) => {
@@ -154,12 +189,13 @@ const ELab: React.FC = () => {
     }
   };
 
-  // Keep your existing fetchPublications function unchanged
+  // Keep your existing fetchPublications function unchanged for now, will modify next
   const fetchPublications = async () => {
     try {
       setLoadingPublications(true);
-      const response = await fetch('/publications.md'); // Keep local for publications
-      if (!response.ok) throw new Error('Failed to fetch publications');
+      setPublicationsError(null); // Reset error
+      const response = await fetch(`${ELAB_DATA_REPO_CONFIG.rawBaseUrl}publications/publications.md`); // Fetch from new repo
+      if (!response.ok) throw new Error(`Failed to fetch publications from ${ELAB_DATA_REPO_CONFIG.repo}`);
       
       const markdownContent = await response.text();
       const parsedPublications = parsePublicationsMarkdown(markdownContent);
@@ -207,6 +243,52 @@ const ELab: React.FC = () => {
     return publications;
   };
 
+  // Function to fetch team members
+  const fetchTeamMembers = async () => {
+    setLoadingTeam(true);
+    setTeamError(null);
+    try {
+      const response = await fetch(`${ELAB_DATA_REPO_CONFIG.rawBaseUrl}team/members.json`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch team members: ${response.status}`);
+      }
+      const data: TeamMember[] = await response.json();
+      // Prepend base URL to image paths
+      const membersWithFullImagePaths = data.map(member => ({
+        ...member,
+        image: member.image.startsWith('http') ? member.image : `${ELAB_DATA_REPO_CONFIG.rawBaseUrl}team/images/${member.image}`,
+        hoverImage: member.hoverImage.startsWith('http') ? member.hoverImage : `${ELAB_DATA_REPO_CONFIG.rawBaseUrl}team/images/${member.hoverImage}`,
+        coolImage: member.coolImage.startsWith('http') ? member.coolImage : `${ELAB_DATA_REPO_CONFIG.rawBaseUrl}team/images/${member.coolImage}`,
+      }));
+      setTeamMembers(membersWithFullImagePaths);
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      setTeamError(error instanceof Error ? error.message : 'Failed to load team members');
+    } finally {
+      setLoadingTeam(false);
+    }
+  };
+
+  // Function to fetch eLab main content
+  const fetchElabMainContent = async () => {
+    setLoadingElabMain(true);
+    setElabMainError(null);
+    try {
+      const response = await fetch(`${ELAB_DATA_REPO_CONFIG.rawBaseUrl}eLab/main.md`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch eLab content: ${response.status}`);
+      }
+      const markdown = await response.text();
+      setElabMainContent(markdown);
+    } catch (error) {
+      console.error('Error fetching eLab main content:', error);
+      setElabMainError(error instanceof Error ? error.message : 'Failed to load eLab content');
+    } finally {
+      setLoadingElabMain(false);
+    }
+  };
+
+
   // Extract blog metadata from markdown frontmatter
   const extractBlogMetadata = (content: string) => {
   // Support both \n and \r\n line endings
@@ -225,11 +307,13 @@ const ELab: React.FC = () => {
 };
 
   useEffect(() => {
+    fetchTeamMembers(); // Add this
     fetchPublications();
     fetchBlogPosts();
+    fetchElabMainContent(); // Fetch eLab main content
   }, []);
 
-  const handleOpenModal = (member: any) => {
+  const handleOpenModal = (member: TeamMember) => { // Updated type
     setSelectedMember(member);
     setIsOpen(true);
   }
@@ -237,6 +321,11 @@ const ELab: React.FC = () => {
     setSelectedMember(null);
     setIsOpen(false);
   }
+
+  // Filter members by status
+  const currentMembers = teamMembers.filter(member => member.status === 'current');
+  const pastMembers = teamMembers.filter(member => member.status === 'past');
+
   let defaultIndex: number;
   // Updated defaultIndex logic to handle /blog/:slug
   if (location.pathname.startsWith('/team')) {
@@ -251,53 +340,6 @@ const ELab: React.FC = () => {
    else {
     defaultIndex = 0; // Default to eLab tab
   }
-  const members = [
-    {
-      name: 'Dr. Elisa Fadda', role: 'Principal Investigator', image: '/img/Fadda.png', hoverImage: '/img/cat2.jpg', coolImage: '/img/elisa.jpg', bio: 'Elisa (she/her) got a BSc and MSc (Laurea 110/110 cum laude) in Chemistry from the Università degli Studi di Cagliari. She obtained her Ph.D. in theoretical chemistry at the Université de Montréal in 2004 under the supervision of Prof Dennis R. Salahub. After her Ph.D. she worked as a Postdoctoral Fellow in Molecular Structure and Function at the Hospital for Sick Children (Sickkids) Research Institute in Toronto, where she specialised in biophysics and statistical mechanics-based methods in Dr Regis Pomes’ research group. In 2008 Elisa joined Prof Rob Woods’ Computational Glycobiology Laboratory as a Senior Research Scientist in the School of Chemistry at the University of Galway. She started her independent career in 2013 in the Department of Chemistry at Maynooth University, where she is now an Associate Professor. From January 2024 Elisa will be taking a new position in the School of Biological Sciences at the University of Southampton, where she will be an Associate Professor in Pharmacology. Elisa loves cats, running (slowly), good food, nice drinks, reading and most of all travelling to visit friends and places. Her astrological sign (and favourite monosaccharide) is a-L-fucose.'
-      , socialLinks: [
-        { platform: 'twitter', url: 'https://twitter.com/ElisaTelisa' },
-        { platform: 'mastodon', url: 'https://mastodon.world/@Elisa' },
-
-
-      ]
-    },
-    {
-      name: 'Dr. Callum Ives', role: 'Postdoctoral Researcher', image: '/img/Ives.png', hoverImage: '/img/cat1.jpeg', coolImage: '/img/Ives.png', bio: 'Callum (he/him) obtained a BSc (Hons) in biochemistry from the University of Surrey. During this time he undertook a professional training year in the lab of Professor Martin Caffrey at Trinity College Dublin, where he conducted structure-function studies of membrane proteins using X-ray crystallography. Following on from this, he obtained a PhD with a focus on computational chemistry and biophysics from the University of Dundee under the supervision of Professor Ulrich Zachariae, where he conducted novel research on the cation selectivity mechanisms of the TRP family of ion channels. In the eLab, his current research focuses on determining the structure of glycans, and understanding how glycosylation modulates the structure and function of membrane proteins and antibodies. Outside of science, Callum enjoys watching sport, and hiking in the hills of Donegal.', socialLinks: [
-        { platform: 'twitter', url: 'https://twitter.com/CallumMIves' },
-
-      ]
-    },
-    {
-      name: 'Ojas Singh', role: 'PhD Student', image: '/img/Singh.jpg', hoverImage: '/img/cat3.jpg', coolImage: '/img/ojas.jpg', bio: "Ojas (he/him) got his BSc and MSc in Chemistry from the Indian Institute of Science Education and Research Mohali. During his masters under the supervision of Dr. P. Balanarayan, he dabbled with different low level programming languages to develop code to optimize the Configuration Interaction (CI) Hamiltonian construction. Working as a research assistant for a year in the lab of Dr. Sabyasachi Rakshit, he designed a high-performance algorithm for magnetic tweezers to monitor real-time protein folding and unfolding at the millisecond temporal resolution and nanometer spatial resolution. Currently, He is pursuing a PhD in computational chemistry at Maynooth University in Ireland. In the eLab, he is building the glycoshape database and creating Re-Glyco. Outside of work, Ojas likes to playing CS, Valorant with his buddies, analysing sci-fi movies, hiding cat pics in this website.", socialLinks: [
-        { platform: 'twitter', url: 'https://twitter.com/Ojas_Singh_' },
-        { platform: 'github', url: 'https://github.com/Ojas-Singh' },
-        { platform: 'linkedin', url: 'https://www.linkedin.com/in/ojas-singh-192477200/' }
-
-      ]
-    },
-    {
-      name: "Silvia D'Andrea", role: 'PhD Student', image: '/img/andrea.jpg', hoverImage: '/img/cat4.jpeg', coolImage: '/img/silvia.jpg', bio: "Silvia D'Andrea holds a master's degree in Industrial Pharmacy from the University of Luigi Vanvitelli in Caserta, Italy. She is currently pursuing a PhD in computational chemistry at Maynooth University in Ireland, with a specific interest in characterizing the structure and dynamics of N/O-glycans to understand the crucial role of glycosylation in proteins. Beyond her studies and career, Silvia loves pizza and enjoys spending time with friends and family. Additionally, she is learning to play the piano to accompany Christmas songs all year round.", socialLinks: [
-        { platgorm: 'linkedin', url: 'https://www.linkedin.com/in/silvia-d-andrea-8b2b10187/' }]
-    },
-    {
-      name: 'Akash Satheesan', role: 'PhD Student', image: '/img/Satheesan.png', hoverImage: '/img/cat5.jpeg', coolImage: '/img/akash.jpg', bio: "Akash Satheesan (he/him) earned his BSc in Pharmaceutical and Biomedical Chemistry in Maynooth University during which he completed an industrial placement where he conducted solid phase peptide synthesis of peptide therapeutics coupled with comprehensive analysis utilizing HPLC and UPLC techniques. Currently, he is pursuing a PhD in Computational Chemistry in Maynooth University. His research is mainly focused on the characterisation of glycan interactions in the context of bacterial infection. Outside of research, Akash enjoys playing basketball, kick-boxing and picking up injuries all year round.", socialLinks: [
-
-        { platform: 'linkedin', url: 'https://www.linkedin.com/in/akash-s-471435124/' }
-
-      ]
-    },
-    {
-      name: 'Beatrice Tropea', role: 'PhD Student', image: '/img/Tropea.png', hoverImage: '/img/cat6.jpeg', coolImage: '/img/bea.jpg', bio: "Beatrice is from Italy, and her interests and background span across medicinal chemistry, life sciences, and data science. With a Master’s degree in Medicinal Chemistry from 'La Sapienza' University of Rome, she discovered her passion for computational chemistry. While working at the 'Policlinico A. Gemelli' hospital in Rome, she combined her expertise in computational chemistry with data science. Now, as a PhD student at eLab, her focus is on understanding the selectivity of the N-glycosylation process. She not only loves sugars but also has a passion for cats, astronomy, and travelling.", socialLinks: [
-        { platform: 'twitter', url: 'https://twitter.com/beatrice_tropea' },
-        { platform: 'linkedin', url: 'http://linkedin.com/in/beatrice-tropea-8b9524182' }
-      ]
-    },
-    {
-      name: 'Carl A Fogarty', role: 'PhD Student', image: '/img/Carl.jpeg', hoverImage: '/img/cat7.jpeg', coolImage: '/img/Fogarty.jpeg', bio: "Carl Fogarty earned a BSc in Chemistry and Statistics from Maynooth University, Beginning In E-lab during his BSc his 4th year project involved iminosuggar derivatives and their 𝛼 ‑ Glucosidase activity. Continuing in the group under the Government of Ireland Postgraduate Scholarship he worked on Characterisation of structure to function relationships in glycans and glycosylated proteins by computer simulation techniques which he created structural models from oligomannose glycan to the SARS-CoV-2 S protein. Currently finishing writing his thesis with the same name. Outside of science Carl is working on getting himself into some semblance of fitness.", socialLinks: [
-        { platform: 'twitter', url: 'https://twitter.com/2016Carl' },
-      ]
-    },
-  ];
 
   return (
 
@@ -353,33 +395,75 @@ const ELab: React.FC = () => {
         <TabPanels>
           <TabPanel paddingTop={"2rem"}>
             <Container maxWidth={{ base: "100%", sm: "100%", md: "80%", lg: "80%", xl: "80%" }} >
-              <Heading size="lg" marginBottom="5" >
-                Molecular Structure and Function of Glycans and Glycoproteins in the Biology of Health and Disease      </Heading>
-
-              <Text mb={4} >
-                In our research group we use high-performance computing (HPC) molecular simulation techniques to reconstruct complex carbohydrates (glycans) and to understand their many different roles in biology. During the past few years we have dedicated a huge amount of our time and computational resources to the creation of the GlycoShape DB, where we are continuously depositing equilibrium 3D structures of glycans, glycan fragments and epitopes, from all-atom molecular dynamics (MD) simulations, that can be used in combination with molecular docking and/or MD to study glycan recognition and with Re-Glyco to rebuild glycoproteins to their native functional state. In addition to the development of GlycoShape to advance research in structural glycobiology, we are actively working in the following research areas:
-              </Text>
-              
-              
-              <SimpleGrid alignSelf="center" justifyItems="center" columns={[1, 2]} spacing={10} paddingTop={'2rem'} paddingBottom={'2rem'}>
-                <div>
-              <Heading size="md" mb={2}>Current research topics include,</Heading>
-              <List styleType="disc" pl={5} mb={4}>
-                <ListItem>Viral glycobiology</ListItem>
-                <ListItem>Glycans recognition in bacterial infection</ListItem>
-                <ListItem>Glycan recognition in immune response</ListItem>
-                <ListItem>Glycosylation in adhesion-GPCRs</ListItem>
-                <ListItem>OST regulation of protein N-glycosylation</ListItem>
-                <ListItem>Hierarchy and control in N-glycosylation pathways</ListItem>
-                <ListItem>Development of statistical and ML tools for advancing glycomics and glycoanalytics </ListItem>
-
-              </List>
-              </div>
-              
-              <Image  marginLeft={"2rem"} width="400px" src={elab_logo} /></SimpleGrid>
-              <Text mt={4}>
-                For more information please contact <Link href="mailto:elisa.fadda@soton.ac.uk " color="blue.500">elisa.fadda@soton.ac.uk</Link>
-              </Text>
+              {loadingElabMain && <Spinner size="xl" label="Loading content..." />}
+              {elabMainError && <Alert status="error"><AlertIcon />{elabMainError}</Alert>}
+              {!loadingElabMain && !elabMainError && (
+                <Box
+                  className="elab-content" // Add a class if you want specific global styles
+                  sx={{
+                    // Consistent styles for eLab content, similar to blog
+                    h1: {
+                      fontSize: '2xl', // Adjusted from lg for this context
+                      fontWeight: 'bold',
+                      color: 'gray.800',
+                      mb: 5,
+                    },
+                    h2: {
+                      fontSize: 'xl', // Adjusted from md
+                      fontWeight: 'semibold',
+                      color: 'gray.700',
+                      mt: 6,
+                      mb: 3,
+                    },
+                    p: {
+                      fontSize: 'md',
+                      lineHeight: '1.7',
+                      color: 'gray.700',
+                      mb: 4,
+                    },
+                    a: {
+                      color: 'blue.500', // Changed from teal for general links
+                      textDecoration: 'underline',
+                      _hover: {
+                        color: 'blue.600',
+                      },
+                    },
+                    img: {
+                      maxWidth: '400px', // Max width for the eLab image
+                      height: 'auto',
+                      my: 5,
+                      mx: 'auto', // Center images by default
+                      display: 'block',
+                      borderRadius: 'md',
+                      boxShadow: 'sm',
+                    },
+                    ul: { pl: 5, mb: 4, listStyleType: 'disc' },
+                    li: { mb: 2, ml: 2 },
+                  }}
+                >
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                      // Ensure relative image paths from markdown are correctly prefixed
+                      img: ({ node, src, alt, ...props }) => {
+                        const imageSrc = src?.startsWith('http') ? src : `${ELAB_DATA_REPO_CONFIG.rawBaseUrl}${src}`;
+                        // Specific styling for the eLab Logo if needed by alt text
+                        if (alt === "eLab Logo") {
+                           return <Image src={imageSrc} alt={alt} width={{base: "80%", md:"400px"}} mx="auto" my={5} />;
+                        }
+                        return <Image src={imageSrc} alt={alt} {...props} />;
+                      },
+                       // You can add more custom components here if needed
+                       // For example, to use Chakra's Heading, Text, List etc.
+                       // h1: ({node, ...props}) => <Heading as="h1" size="lg" marginBottom="5" {...props} />,
+                       // p: ({node, ...props}) => <Text mb={4} {...props} />,
+                    }}
+                  >
+                    {elabMainContent}
+                  </ReactMarkdown>
+                </Box>
+              )}
             </Container>
           </TabPanel>
 
@@ -387,32 +471,128 @@ const ELab: React.FC = () => {
             <Container maxWidth={{ base: "100%", sm: "100%", md: "80%", lg: "80%", xl: "80%" }} >
 
               <Box padding="5rem" paddingTop={"1rem"}>
-                <Heading marginBottom="2rem">Research Lab Team</Heading>
-
-                <Grid templateColumns={["repeat(1, 1fr)", "repeat(2, 1fr)", "repeat(3, 1fr)"]} gap={6}>
-                  {members.map((member, idx) => (
-                    <Flex
-                      flexDirection="column"
-                      alignItems="center"
-                      key={idx}
-                      onMouseEnter={() => setHoveredMember(idx)}
-                      onMouseLeave={() => setHoveredMember(null)}
-                    >
-                      <Image
-                        boxSize="150px"
-                        objectFit="cover"
-                        borderRadius="full"
-                        src={hoveredMember === idx ? member.hoverImage : member.image}
-                        alt={member.name}
-                        marginBottom="1rem"
+                <Heading marginBottom="2rem" color="gray.800">Current Lab Members</Heading>
+                {loadingTeam && <Spinner size="xl" label="Loading team..." />}
+                {teamError && <Alert status="error"><AlertIcon />{teamError}</Alert>}
+                {!loadingTeam && !teamError && (
+                  <Grid templateColumns={["repeat(1, 1fr)", "repeat(2, 1fr)", "repeat(3, 1fr)"]} gap={8} mb={12}>
+                    {currentMembers.map((member, idx) => (
+                      <Box
+                        key={`current-${idx}`}
+                        bg="white"
+                        borderRadius="xl"
+                        boxShadow="md"
+                        p={6}
+                        textAlign="center"
+                        transition="all 0.3s ease"
+                        _hover={{
+                          transform: "translateY(-4px)",
+                          boxShadow: "xl",
+                          bg: "gray.50"
+                        }}
+                        cursor="pointer"
                         onClick={() => handleOpenModal(member)}
-                      />
-                      <Link onClick={() => handleOpenModal(member)}>
-                        <Heading size="md" marginBottom="0.5rem">{member.name}</Heading>
-                        <Text>{member.role}</Text></Link>
-                    </Flex>
-                  ))}
-                </Grid>
+                        onMouseEnter={() => setHoveredCurrentMember(idx)}
+                        onMouseLeave={() => setHoveredCurrentMember(null)}
+                      >
+                        <Image
+                          boxSize="150px"
+                          objectFit="cover"
+                          borderRadius="full"
+                          src={hoveredCurrentMember === idx ? member.hoverImage : member.image}
+                          alt={member.name}
+                          mb={4}
+                          mx="auto"
+                          border="4px solid"
+                          borderColor={hoveredCurrentMember === idx ? "teal.400" : "gray.200"}
+                          transition="all 0.3s ease"
+                          _hover={{
+                            borderColor: "teal.400",
+                          }}
+                        />
+                        <Heading size="md" mb={2} color="gray.800" _hover={{ color: "teal.600" }}>
+                          {member.name}
+                        </Heading>
+                        <Text color="gray.600" fontSize="sm" fontWeight="medium">
+                          {member.role}
+                        </Text>
+                        <Text 
+                          mt={2} 
+                          fontSize="xs" 
+                          color="teal.500" 
+                          fontWeight="semibold"
+                          opacity={hoveredCurrentMember === idx ? 1 : 0}
+                          transition="opacity 0.2s ease"
+                        >
+                          Click to view bio
+                        </Text>
+                      </Box>
+                    ))}
+                  </Grid>
+                )}
+
+                {pastMembers.length > 0 && !loadingTeam && !teamError && (
+                  <>
+                    <Divider my={8} />
+                    <Heading marginBottom="2rem" mt={10} color="gray.800">Past Lab Members</Heading>
+                    <Grid templateColumns={["repeat(1, 1fr)", "repeat(2, 1fr)", "repeat(3, 1fr)"]} gap={8}>
+                      {pastMembers.map((member, idx) => (
+                        <Box
+                          key={`past-${idx}`}
+                          bg="white"
+                          borderRadius="xl"
+                          boxShadow="sm"
+                          p={6}
+                          textAlign="center"
+                          transition="all 0.3s ease"
+                          _hover={{
+                            transform: "translateY(-2px)",
+                            boxShadow: "md",
+                            bg: "gray.50",
+                            opacity: 1,
+                          }}
+                          cursor="pointer"
+                          onClick={() => handleOpenModal(member)}
+                          onMouseEnter={() => setHoveredPastMember(idx)}
+                          onMouseLeave={() => setHoveredPastMember(null)}
+                          opacity={0.85}
+                          
+                        >
+                          <Image
+                            boxSize="140px"
+                            objectFit="cover"
+                            borderRadius="full"
+                            src={hoveredPastMember === idx ? member.hoverImage : member.image}
+                            alt={member.name}
+                            mb={4}
+                            // _hover for Image is now handled by parent Box
+                            filter={hoveredPastMember === idx ? "none" : "grayscale(20%)"}
+                            _hover={{
+                              borderColor: "gray.400",
+                              filter: "none"
+                            }}
+                          />
+                          <Heading size="sm" mb={2} color="gray.700" _hover={{ color: "gray.800" }}>
+                            {member.name}
+                          </Heading>
+                          <Text color="gray.500" fontSize="sm">
+                            {member.role}
+                          </Text>
+                          <Text 
+                            mt={2} 
+                            fontSize="xs" 
+                            color="gray.400" 
+                            fontWeight="semibold"
+                            opacity={hoveredPastMember === idx ? 1 : 0}
+                            transition="opacity 0.2s ease"
+                          >
+                            Click to view bio
+                          </Text>
+                        </Box>
+                      ))}
+                    </Grid>
+                  </>
+                )}
               </Box>
             </Container>
           </TabPanel>
