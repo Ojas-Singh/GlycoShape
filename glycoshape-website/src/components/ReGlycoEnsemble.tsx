@@ -1139,7 +1139,7 @@ import { set } from 'lodash';
                               Output Format
                               </Tooltip>
                             </FormLabel>
-                              {["PDB", "GLYCAM", "CHARMM"].map((format) => (
+                              {["PDB", "GLYCAM"].map((format) => (
                               <Button
                               key={format}
                               onClick={() => setOutputFormat(format)}

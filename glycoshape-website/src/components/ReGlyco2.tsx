@@ -1691,7 +1691,7 @@ const ReGlyco = () => {
                                         Output Residue Name
                                       </Tooltip>
                                     </FormLabel>
-                                    {["PDB", "GLYCAM", "CHARMM"].map((format) => (
+                                    {["PDB", "GLYCAM"].map((format) => (
                                       <Button
                                         key={format}
                                         onClick={() => {
