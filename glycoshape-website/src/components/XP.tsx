@@ -38,19 +38,9 @@ import {
   FormLabel,
   Switch,
   Tooltip,
-  Tabs,
-  Tab,
-  TabList,
-  TabPanels,
-  TabPanel,
-  UnorderedList,
-  ListItem
 } from '@chakra-ui/react';
 import { Kbd } from '@chakra-ui/react';
 import bg from './assets/gly.png';
-import uniprot_logo from './assets/uniprot.svg';
-import Scanner from './assets/Scanner.png';
-import Setting from './assets/setting.png';
 import Select, { ActionMeta, OnChangeValue } from 'react-select';
 
 import { useNavigate, useLocation } from 'react-router-dom'; // Import useLocation
@@ -307,16 +297,7 @@ const ReGlyco = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
 
-  // --- Define Default Glycan Mapping HERE ---
-  const defaultGlycanMap: { [key: string]: string } = {
-    'N-linked (GlcNAc...) asparagine': 'G00028MO',    // Example: Default N-glycan core
-    'O-linked (GalNAc...) serine': 'G00055MO',    // Example: Default O-GalNAc
-    'O-linked (GalNAc...) threonine': 'G00055MO',   // Example: Default O-GalNAc
-    'O-linked (GlcNAc...) serine': 'G00050MO',     // Example: Default O-GlcNAc
-    'O-linked (GlcNAc...) threonine': 'G00050MO',   // Example: Default O-GlcNAc
-    // Add more mappings as needed
-  };
-  // --- End Default Glycan Mapping ---
+  
 
   const [searchTerm, setSearchTerm] = useState('');
   const [protID, setprotID] = useState<string>("");
@@ -376,12 +357,11 @@ const ReGlyco = () => {
       }
     }
     
-    // If an ID was present in the URL, trigger fetch (the other useEffect will handle it)
-    // Or, if protData is already loaded and selections came from URL, apply them now.
+
     if (idParam && !protData && shouldFetchData) {
-        // fetchProteinData will be called by the useEffect watching protID
+        
     } else if (protData && selectionsParam) {
-        // Apply selections if protData is already loaded
+       
         applySelectionsFromURL(selectionsParam, protData);
     }
 
@@ -569,55 +549,9 @@ const ReGlyco = () => {
       }
 
 
-      // --- Populate UniProt Default Selections ---
-      // Only apply UniProt defaults if no selections are coming from the URL
-      if (!queryParams.has('selections')) {
-        const defaults: { [key: string]: string } = {};
-        if (data.glycosylation?.uniprot && data.glycosylation.available) {
-          data.glycosylation.uniprot.forEach(uniGlyco => {
-            const defaultGlycanId = defaultGlycanMap[uniGlyco.description];
-            if (defaultGlycanId) {
-              const availableSite = data.glycosylation.available.find(
-                avail => avail.residueID.toString() === uniGlyco.begin && avail.residueName === uniGlyco.type // More specific match
-              );
-              if (availableSite) {
-                const residueKey = `${availableSite.residueID}_${availableSite.residueChain}`;
-                defaults[residueKey] = defaultGlycanId;
-              }
-            }
-          });
-        }
-        setUniprotDefaultSelections(defaults);
-        // If uniprot defaults are applied, also update the main selectedGlycans and selectedGlycanImage
-        // This ensures the UI reflects these defaults immediately.
-        if (Object.keys(defaults).length > 0) {
-            setSelectedGlycans(prev => ({ ...prev, ...defaults })); // Merge, don't overwrite if some selections exist
-            const newImageSelections: { [key: number]: string } = { ...selectedGlycanImage };
-            const newSelectedOptions: ResidueOption[] = [ ...value ];
-
-            Object.entries(defaults).forEach(([resKey, glycanToucan]) => {
-                const site = data.glycosylation.available.find(g => `${g.residueID}_${g.residueChain}` === resKey);
-                if (site) {
-                    newImageSelections[site.residueTag] = glycanToucan;
-                    // Add to react-select `value` if not already present
-                    if (!newSelectedOptions.some(opt => opt.value === site.residueTag)) {
-                        newSelectedOptions.push({
-                            value: site.residueTag,
-                            label: `${site.residueName}${site.residueID}${site.residueChain}`
-                        });
-                    }
-                }
-            });
-            setSelectedGlycanImage(newImageSelections);
-            setValue(newSelectedOptions);
-        }
-      }
-      // --- End Populate UniProt Defaults ---
 
       setActiveStep(1);
       setResults(null); // Clear previous job results
-      setScanResults(null);
-      setScanCompleted(false);
       setLastSuccessfulSelections(null); // Clear last successful for ensemble switch
 
     } catch (error) {
@@ -674,8 +608,6 @@ const ReGlyco = () => {
             output: '',
             results: []
           });
-          setScanResults(null);
-          setScanCompleted(false);
           setLastSuccessfulSelections(null);
         } else {
           console.error("Failed to upload file.");
@@ -705,12 +637,6 @@ const ReGlyco = () => {
 
   // Add state for job results
   const [jobResults, setJobResults] = useState<ResultItem[] | null>(null);
-  const [scanResults, setScanResults] = useState<ResultItem[] | null>(null);
-  const [scanCompleted, setScanCompleted] = useState<boolean>(false);
-  const [scanAddGlycan, setScanAddGlycan] = useState<string | null>(null); // Store selected glycan ID (e.g., G00028MO)
-  const [scanSearchTerm, setScanSearchTerm] = useState(''); // State for scan tab search
-  const scanSearchInputRef = useRef<HTMLInputElement>(null); // Ref for scan tab search input
-  
   // Debounce Hook 
   const useDebounce = <T,>(value: T, delay: number): T => {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -728,70 +654,16 @@ const ReGlyco = () => {
     return debouncedValue;
   };
 
-  const debouncedScanSearchTerm = useDebounce(scanSearchTerm, 300); // Debounce the scan search term
-  
+
 
   const [lastSuccessfulSelections, setLastSuccessfulSelections] = useState<{ [key: string]: string } | null>(null);
 
 
   // Unified handler for processing jobs
-  const handleProcessJob = async (source: 'advanced' | 'uniprot' | 'scan' | 'scan_add') => {
-    let selections: { [key: string]: string } = {};
-    let jobDescription: string = "";
-    let currentJobType: "optimization" | "scan" = "optimization"; // Default to optimization
-
-    if (source === 'uniprot') {
-      if (!protData || Object.keys(uniprotDefaultSelections).length === 0) {
-        toast({ title: "No Defaults", description: "No default UniProt glycosylations found or applicable.", status: "warning" });
-        return;
-      }
-      selections = uniprotDefaultSelections;
-      jobDescription = "UniProt defaults";
-      currentJobType = "optimization";
-    } else if (source === 'advanced') {
-      if (Object.keys(selectedGlycans).length === 0) {
-        toast({ title: "No Glycans Selected", description: "Please select at least one residue and glycan in the Advanced tab.", status: "warning" });
-        return;
-      }
-      selections = selectedGlycans;
-      jobDescription = "advanced selections";
-      currentJobType = "optimization";
-    } else if (source === 'scan') {
-      if (!protData) {
-        toast({ title: "Protein Data Missing", description: "Cannot perform scan without protein data.", status: "warning" });
-        return;
-      }
-      // For scan, selections might be empty or handled differently by backend
-      selections = {}; // Assuming backend handles scan without specific selections
-      jobDescription = "GlcNAc scan";
-      currentJobType = "scan"; // Set job type to scan
-    } else if (source === 'scan_add') {
-      if (!scanResults || scanResults.length === 0) {
-        toast({ title: "No Scan Results", description: "Please run the scan first.", status: "warning" });
-        return;
-      }
-      if (!scanAddGlycan) {
-        toast({ title: "No Glycan Selected", description: "Please select a glycan to add.", status: "warning" });
-        return;
-      }
-
-      // Filter successful scan results and build selections
-      const successfulSites = scanResults.filter(r => r.clash_solved);
-      if (successfulSites.length === 0) {
-        toast({ title: "No Successful Sites", description: "No sites passed the GlcNAc scan.", status: "info" });
-        return;
-      }
-
-      selections = successfulSites.reduce((acc, site) => {
-        // Assuming site.residue is in the format "ASN123_A" or similar key format
-        // If not, adjust this key extraction based on actual `result.residue` format
-        const residueKey = site.residue; // Adjust if needed
-        acc[residueKey] = scanAddGlycan;
-        return acc;
-      }, {} as { [key: string]: string });
-
-      jobDescription = "adding glycan to scanned sites";
-      currentJobType = "optimization"; // This is an optimization job
+  const handleProcessJob = async () => {
+    if (Object.keys(selectedGlycans).length === 0) {
+      toast({ title: "No Glycans Selected", description: "Please select at least one residue and glycan.", status: "warning" });
+      return;
     }
 
     // --- Common Job Execution Logic ---
@@ -799,16 +671,11 @@ const ReGlyco = () => {
     setActiveStep(2);
     setJobResults(null); // Clear previous results
 
-
-    // const currentJobId = new Date().toISOString(); // Remove if backend generates ID
-    // setJobId(currentJobId); // Remove if backend generates ID
-
     const payload = {
-      // jobId: currentJobId, // Remove if backend generates ID
-      selectedGlycans: selections,
+      selectedGlycans: selectedGlycans,
       filename: protData?.filename,
       customPDB: isUpload,
-      jobType: currentJobType, // Use the determined job type
+      jobType: "optimization_xp",
       populationSize: populationSize,
       maxGenerations: maxGenerations,
       wiggleAngle: wiggleAngle,
@@ -826,20 +693,16 @@ const ReGlyco = () => {
       if (response.ok) {
         const responseData = await response.json();
         setResults(responseData); // Keep setting the main Results state
-        setJobResults(responseData.results || []); // Store detailed results
-        if (currentJobType === 'scan') {
-          setScanResults(responseData.results || []); // Store scan-specific results
-          setScanCompleted(true); // Mark that a scan has been completed
-        }
+        setJobResults(responseData.results || []); 
         
-        setLastSuccessfulSelections(selections); // <-- Store successful selections
+        setLastSuccessfulSelections(selectedGlycans); // <-- Store successful selections
 
         setActiveStep(3);
         setElapsedTime(0);
       } else {
-        console.error(`Failed to post data for ${jobDescription}.`);
+        console.error(`Failed to post data.`);
         // Try to parse error message from server response
-        let errorMsg = `Failed to process job with ${jobDescription}. Server responded with status ${response.status}.`;
+        let errorMsg = `Failed to process job. Server responded with status ${response.status}.`;
         try {
           const errorData = await response.json();
           if (errorData && (errorData.error || errorData.message)) {
@@ -852,7 +715,7 @@ const ReGlyco = () => {
         setActiveStep(1);
       }
     } catch (error) {
-      console.error(`Error occurred during ${jobDescription} processing:`, error);
+      console.error(`Error occurred during processing:`, error);
       toast({ title: "Network Error", description: "Could not connect to the processing server.", status: "error" });
       setActiveStep(1);
     } finally {
@@ -861,9 +724,7 @@ const ReGlyco = () => {
   };
 
 
-  // Add state for UniProt default selections
-  const [uniprotDefaultSelections, setUniprotDefaultSelections] = useState<{ [key: string]: string }>({});
-  
+
   const navigate = useNavigate();
   const handleSwitchToEnsemble = () => {
     if (!protData || !lastSuccessfulSelections) {
@@ -964,14 +825,14 @@ const ReGlyco = () => {
       // --- End Conditional Rendering Logic ---
     }).filter(Boolean); // Filter out null values if any residues were skipped
   }, [
-      protData, // Dependency: Main data source
-      value, // Dependency: List of selected residues
-      advancedMode, // Dependency: Toggle state
-      selectedGlycanImage, // Dependency: State holding selected glycan images/IDs for fancy mode
-      selectedGlycans, // Dependency: State holding selected glycan IDs for lightweight mode
-      handleResidueSelect, // Dependency: Callback function (should be stable due to useCallback)
-      apiUrl // Dependency: API URL (should be stable)
-  ]); // Dependencies for useMemo
+      protData, 
+      value, 
+      advancedMode, 
+      selectedGlycanImage, 
+      selectedGlycans, 
+      handleResidueSelect, 
+      apiUrl 
+  ]);
 
   // Render
   return (
@@ -1462,7 +1323,7 @@ const ReGlyco = () => {
                             backgroundColor="#ECD292"
                             _hover={{ backgroundColor: "#D27254" }}
                             size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                            onClick={() => handleProcessJob('advanced')}
+                            onClick={() => handleProcessJob()}
                             isDisabled={isLoading}
                           >
                             {isLoading ? (
@@ -1475,7 +1336,7 @@ const ReGlyco = () => {
                                   isIndeterminate
                                   marginLeft={"15rem"}
                                   capIsRound
-                                >
+                                  onClick={() => handleProcessJob()}>
                                   <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
                                 </CircularProgress>
                                 Processing...
@@ -1703,7 +1564,7 @@ const ReGlyco = () => {
                   align={"center"}
                   marginLeft={'2rem'}
                 >
-                  About
+                  eXtended Potential
                 </Text>
                 <Text fontFamily={'texts'} color='#B195A2' paddingTop="10rem" padding={"0rem"} justifySelf="left" align={'left'} fontSize={'lg'}>
 
@@ -1723,14 +1584,7 @@ const ReGlyco = () => {
                 <Text fontFamily={'texts'} paddingTop="2rem" color='#B195A2' alignSelf={"right"} fontSize={'xs'}>
                   Currently supported function includes :<br />
                   N-GlcNAcylation<br />
-                  {/* O-GalNAcylation<br />
-                  O-GlcNAcylation<br />
-                  O-Fucosylation<br />
-                  O-Mannosylation<br />
-                  O-Glucosylation<br />
-                  O-Xylosylation<br />
-                  C-Mannosylation<br />
-                  O-Arabinosylation */}
+                  O-GalNAcylation<br />
                 </Text>
               </Box>
             </SimpleGrid>

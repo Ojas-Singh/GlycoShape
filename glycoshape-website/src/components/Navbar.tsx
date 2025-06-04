@@ -175,6 +175,11 @@ const Navbar: React.FC = () => {
               Re-Glyco Fit
             </MenuItem>
             )}
+            {isDevelopment && (
+            <MenuItem fontWeight="bold" as={RouterLink} to="/xp" onClick={() => handleNavigation('/xp')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>
+              Re-Glyco XP
+            </MenuItem>
+            )}
           <MenuItem fontWeight="bold" as={RouterLink} to="/swap" onClick={() =>  handleNavigation('/swap')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Swap</MenuItem>
           
           {isDevelopment && (

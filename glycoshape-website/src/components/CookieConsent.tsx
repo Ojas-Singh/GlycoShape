@@ -39,7 +39,7 @@ const CookieConsent = () => {
   const { isOpen: isBetaModalOpen, onOpen: openBetaModal, onClose: closeBetaModal } = useDisclosure();
   const location = useLocation();
 
-  const betaModalPaths = ['/fit', '/chat', '/FIT', '/CHAT'];
+  const betaModalPaths = ['/fit', '/chat', '/FIT', '/CHAT', '/xp', 'XP'];
 
   // --- Effects ---
 
