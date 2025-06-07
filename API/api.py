@@ -398,6 +398,70 @@ def get_pdb(identifier):
             
     return jsonify({"error": f"Glycan not found for identifier: {identifier}"}), 404
 
+@app.route('/api/glycam/<identifier>', methods=['GET'])
+def get_pdb(identifier):
+    glycoshape_entry = None
+    is_alpha = False
+    is_beta = False
+    is_archetype = False
+    
+    # First check if it's a direct glycan ID match
+    for glycan_id, glycan_data in GDB_data.items():
+        if glycan_id == identifier:
+            glycoshape_entry = glycan_data['archetype']['ID']
+            is_archetype = True
+            break
+    
+    # If not found by ID, check for glytoucan ID match
+    if not glycoshape_entry:
+        for glycan_id, glycan_data in GDB_data.items():
+            if glycan_data['alpha']['glytoucan'] == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                is_alpha = True
+                break
+            elif glycan_data['beta']['glytoucan'] == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                is_beta = True
+                break
+            elif glycan_data['archetype']['glytoucan'] == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                is_archetype = True
+                break
+    
+    # Check for IUPAC match (if the identifier contains parentheses, likely an IUPAC notation)
+    if not glycoshape_entry and "(" in identifier:
+        for glycan_id, glycan_data in GDB_data.items():
+            if glycan_data.get('archetype', {}).get('iupac') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                is_archetype = True
+                break
+            elif glycan_data.get('alpha', {}).get('iupac') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                is_alpha = True
+                break
+            elif glycan_data.get('beta', {}).get('iupac') == identifier:
+                glycoshape_entry = glycan_data['archetype']['ID']
+                is_beta = True
+                break
+    
+    if glycoshape_entry:
+        if is_alpha or is_archetype:
+            pdb_file_path = GLYCOSHAPE_DIR / f'{glycoshape_entry}/GLYCAM_format_HETATM/cluster0_alpha.GLYCAM.pdb'
+            alt_file_path = GLYCOSHAPE_DIR / f'{glycoshape_entry}/GLYCAM_format_HETATM/cluster0_beta.GLYCAM.pdb'
+        elif is_beta:
+            pdb_file_path = GLYCOSHAPE_DIR / f'{glycoshape_entry}/GLYCAM_format_HETATM/cluster0_beta.GLYCAM.pdb'
+            alt_file_path = GLYCOSHAPE_DIR / f'{glycoshape_entry}/GLYCAM_format_HETATM/cluster0_alpha.GLYCAM.pdb'
+        
+        if pdb_file_path.exists():
+            return send_file(pdb_file_path, as_attachment=True)
+        elif alt_file_path.exists():
+            return send_file(alt_file_path, as_attachment=True)
+        else:
+            return jsonify({"error": "PDB file not found"}), 404
+            
+    return jsonify({"error": f"Glycan not found for identifier: {identifier}"}), 404
+
+
 @app.route('/api/svg/<identifier>', methods=['GET'])
 def get_svg(identifier):
     glycoshape_entry = None

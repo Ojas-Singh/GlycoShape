@@ -63,6 +63,7 @@ interface Results {
   clash: boolean;
   output: string;
   results: ResultItem[];
+  jobId: string;
 }
 
 interface ResidueOption {
@@ -309,11 +310,12 @@ const ReGlyco = () => {
   const searchRef = useRef(null);
   const [placeholderText, setPlaceholderText] = useState('Enter Uniprot Id');
   const [Results, setResults] = useState<Results | null>({
-    box: '',
-    clash: false,
-    output: '',
-    results: []
-  });
+      box: '',
+      clash: false,
+      output: '',
+      results: [],
+      jobId: ''
+    });
   const location = useLocation(); // Get location object
 
   // Parse query parameters when component mounts or URL changes
@@ -606,7 +608,8 @@ const ReGlyco = () => {
             box: '',
             clash: false,
             output: '',
-            results: []
+            results: [],
+            jobId: ''
           });
           setLastSuccessfulSelections(null);
         } else {
@@ -1398,6 +1401,20 @@ const ReGlyco = () => {
                           Download Re-glycosylated Structure PDB File
                         </Button>
                       </a>
+
+                      <a href={`${apiUrl}/api/reglyco/download/${Results.jobId}`} download>
+                                                <Button
+                                                  position={"relative"}
+                                                  margin={'1rem'}
+                                                  borderRadius="full"
+                                                  isDisabled={isLoading}
+                                                  backgroundColor="#81D8D0"
+                                                  _hover={{ backgroundColor: "#008081" }}
+                                                  size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                                                >
+                                                  Download full job Files
+                                                </Button>
+                                              </a>
                       
                       <Button
                 position={"relative"}
