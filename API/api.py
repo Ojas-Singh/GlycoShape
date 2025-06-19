@@ -581,6 +581,8 @@ def GOTW_process(url: str):
     """
     zip_file_path = None
     try:
+        print("Starting GOTW process...")
+        
         # Configure a session with retry logic
         session = requests.Session()
         retry_strategy = Retry(
@@ -597,6 +599,8 @@ def GOTW_process(url: str):
         with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
             zip_file_path = zip_file.name
 
+        print(f"Created temp file: {zip_file_path}")
+
         # Check if we have a partial download already
         resume_position = 0
         if os.path.exists(zip_file_path):
@@ -609,6 +613,7 @@ def GOTW_process(url: str):
         else:
             headers["Range"] = "bytes=0-"
 
+        print(f"Making request to: {url}")
         response = session.get(
             url,
             stream=True,
@@ -629,6 +634,8 @@ def GOTW_process(url: str):
             else:
                 total_size = int(response.headers.get("Content-Length", 0))
 
+        print(f"Total size: {total_size}")
+
         file_mode = "ab" if resume_position > 0 else "wb"
         with open(zip_file_path, file_mode) as f:
             bytes_written = resume_position
@@ -638,6 +645,8 @@ def GOTW_process(url: str):
                     bytes_written += len(chunk)
                     print(f"Downloaded {bytes_written} bytes of {total_size if total_size > 0 else 'unknown size'}")
 
+        print("Download completed. Starting extraction...")
+
         if total_size > 0 and bytes_written != total_size:
             raise ValueError(
                 f"Download incomplete: {bytes_written} bytes received, "
@@ -646,30 +655,59 @@ def GOTW_process(url: str):
 
         # --- Everything below is now inside a single tempdir context ---
         with tempfile.TemporaryDirectory() as tmpdir:
+            print(f"Created temp directory: {tmpdir}")
+            
             # Extract the zip file
+            print("Extracting zip file...")
             with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
                 zip_ref.extractall(tmpdir)
+            print("Extraction completed.")
 
             glycan_name = None
 
             # Find the only folder inside tmpdir (should be the puuid folder)
+            print("Looking for subfolders...")
             subfolders = [f for f in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, f))]
+            print(f"Found subfolders: {subfolders}")
+            
             if not subfolders:
                 print("No subfolder found in extracted zip.")
                 return None, None
+                
             puuid_folder = os.path.join(tmpdir, subfolders[0])
+            print(f"PUUID folder: {puuid_folder}")
+            
             requested_builds_dir = os.path.join(puuid_folder, "Requested_Builds")
+            print(f"Looking for Requested_Builds at: {requested_builds_dir}")
+            
             if not os.path.isdir(requested_builds_dir):
                 print("Requested_Builds folder not found in extracted zip.")
+                # List contents to debug
+                print(f"Contents of {puuid_folder}:")
+                try:
+                    for item in os.listdir(puuid_folder):
+                        print(f"  {item}")
+                except Exception as e:
+                    print(f"Error listing contents: {e}")
                 return None, None
 
+            print("Starting to process files in Requested_Builds...")
+            processed_count = 0
+            
             for root, dirs, files in os.walk(requested_builds_dir):
+                print(f"Processing directory: {root}")
+                print(f"Files found: {files}")
+                
                 if "structure.off" in files and "structure.pdb" in files:
+                    print("Found structure files, processing...")
+                    processed_count += 1
+                    
                     json_file = os.path.join(root, "info.json")
                     off_file = os.path.join(root, "structure.off")
                     pdb_file = os.path.join(root, "structure.pdb")
 
                     if os.path.exists(json_file):
+                        print("Processing info.json...")
                         with open(json_file, 'r') as f:
                             data = json.load(f)
                         glycam = data.get("indexOrderedSequence", "output")
@@ -681,32 +719,41 @@ def GOTW_process(url: str):
                         else:
                             glycan_name = glycam
                         conformer_id = data.get("conformerID", "output")
+                        
+                        print(f"Processing with GOTW_script: {glycan_name}/{conformer_id}")
                         output_folder_path = GOTW_script.process_app(f'{glycan_name}/{conformer_id}', pdb_file, off_file, 200)
+                        print(f"GOTW_script completed: {output_folder_path}")
 
                         # Move the processed folder to the temp output directory
                         processed_subfolder = Path(output_folder_path)
                         target_subfolder = Path(tmpdir) / processed_subfolder.name
                         shutil.move(processed_subfolder, target_subfolder)
                         shutil.move(json_file, target_subfolder / "info.json")
+                        print(f"Moved processed folder to: {target_subfolder}")
                     else:
                         print(f"info.json not found in {root}")
 
+            print(f"Processed {processed_count} structures")
+
             # Remove the original extracted folder to avoid including it in the final zip
+            print("Removing original extracted folder...")
             shutil.rmtree(puuid_folder)
 
             # Create a new temp directory for the final result
+            print("Creating final result directory...")
             result_dir = tempfile.mkdtemp()
             # Copy only the processed folders to the result directory
             shutil.copytree(tmpdir, result_dir, dirs_exist_ok=True)
 
+            print(f"Final result directory: {result_dir}")
             # Return the final result directory and glycam name
             return Path(result_dir), glycan_name
 
     except requests.exceptions.RequestException as e:
         print(f"Network error: {e}")
         return None, None
-    except zipfile.BadZipFile:
-        print("Error: The downloaded file is not a valid zip file.")
+    except zipfile.BadZipFile as e:
+        print(f"Error: The downloaded file is not a valid zip file: {e}")
         if zip_file_path and os.path.exists(zip_file_path):
             os.remove(zip_file_path)
         return None, None
@@ -715,11 +762,14 @@ def GOTW_process(url: str):
         return None, None
     except Exception as e:
         print(f"Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
         return None, None
     finally:
         if zip_file_path and os.path.exists(zip_file_path):
             try:
                 os.remove(zip_file_path)
+                print(f"Cleaned up temp file: {zip_file_path}")
             except Exception as e:
                 print(f"Failed to remove temporary file {zip_file_path}: {e}")
 
