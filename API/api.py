@@ -657,7 +657,6 @@ def GOTW_process(url: str):
                     f"expected {total_size} bytes"
                 )
 
-            # Create a temporary folder for extracting the files
             with tempfile.TemporaryDirectory() as tmpdir:
                 # Extract the zip file
                 with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
@@ -665,10 +664,16 @@ def GOTW_process(url: str):
 
             glycan_name = None  # Initialize name variable
 
-            # --- CHANGE: Only scan subfolders inside Requested_Builds ---
-            requested_builds_dir = os.path.join(tmpdir, "Requested_Builds")
+            # --- CHANGE: Find the only folder inside tmpdir, then go into its Requested_Builds ---
+            # Find the only folder inside tmpdir (should be the puuid folder)
+            subfolders = [f for f in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, f))]
+            if not subfolders:
+                print("No subfolder found in extracted zip.")
+                return None, None
+            puuid_folder = os.path.join(tmpdir, subfolders[0])
+            requested_builds_dir = os.path.join(puuid_folder, "Requested_Builds")
             if not os.path.isdir(requested_builds_dir):
-                print("Requested_Builds folder not found in zip.")
+                print("Requested_Builds folder not found in extracted zip.")
                 return None, None
 
             for root, dirs, files in os.walk(requested_builds_dir):
@@ -684,7 +689,7 @@ def GOTW_process(url: str):
                         glycam_tidy = glycam[:-5]
                         iupac = name.glycam2iupac(glycam_tidy)
                         glytoucan = name.iupac2wurcs_glytoucan(iupac)[0]
-                        if glytoucan is not None and len(glycam) > 250 :
+                        if glytoucan is not None and len(glycam) > 250:
                             glycan_name = glytoucan
                         else:
                             glycan_name = glycam
