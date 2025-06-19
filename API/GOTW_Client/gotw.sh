@@ -28,8 +28,8 @@ Usage:
   $0 [COMMAND] [OPTIONS]
 
 Commands:
-  run <GLYCAM URL>    Download simulation files from the GlycoShape API,
-                      and sbatch all replicas. (need GLYCAM json URL, when all minimizations are done, the link of "Download All")
+  run <GLYCAM Build pUUID>    Download simulation files from the GlycoShape API,
+                      and sbatch all replicas. (when all minimizations are done, the Build pUUID will be at bottom of the page)
   submit [OPTIONS]    Submit all finished simulation folder(s) to GlycoShape Server.
   update              Update this script to newer version.
   iupac <IUPAC>       Convert IUPAC condensed notation to GLYCAM via WURCS
@@ -96,12 +96,15 @@ update_script() {
 # GOTW FUNCTION: Download and unpack .zip, replicate folders, run sbatch
 # -----------------------------------------------------------------------------
 gotw_func() {
-    local url="$1"
-    if [ -z "$url" ]; then
-        echo "Error: missing URL argument."
-        echo "Usage: $0 run <GLYCAM URL>"
+    local puuid="$1"
+    if [ -z "$puuid" ]; then
+        echo "Error: missing Build pUUID argument."
+        echo "Usage: $0 run <Build pUUID>"
         exit 1
     fi
+
+    # Construct the new glycam.org zip URL
+    local url="https://glycam.org/json/download/cb/project/zip/${puuid}/"
 
     local apiUrl="https://glycoshape.io"
     local response_headers
@@ -109,7 +112,7 @@ gotw_func() {
     local response_body
     response_body=$(mktemp)
 
-    # POST request to GlycoShape
+    # POST request to GlycoShape with the new URL
     curl -X POST -H "Content-Type: application/json" -d "{\"url\":\"$url\"}" \
       -D "$response_headers" -o "$response_body" "$apiUrl/api/gotw"
 

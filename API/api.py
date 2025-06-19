@@ -663,44 +663,50 @@ def GOTW_process(url: str):
                 with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
                     zip_ref.extractall(tmpdir)
 
-                glycan_name = None  # Initialize name variable
-                # Process each subdirectory
-                for root, dirs, files in os.walk(tmpdir):
-                    if "structure.off" in files and "structure.pdb" in files:
-                        json_file = os.path.join(root, "info.json")
-                        off_file = os.path.join(root, "structure.off")
-                        pdb_file = os.path.join(root, "structure.pdb")
+            glycan_name = None  # Initialize name variable
 
-                        if os.path.exists(json_file):
-                            with open(json_file, 'r') as f:
-                                data = json.load(f)
-                            glycam = data.get("indexOrderedSequence", "output")
-                            glycam_tidy = glycam[:-5]
-                            iupac = name.glycam2iupac(glycam_tidy)
-                            glytoucan = name.iupac2wurcs_glytoucan(iupac)[0]
-                            if glytoucan is not None and len(glycam) > 250 :
-                                glycan_name = glytoucan
-                            else:
-                                glycan_name = glycam
-                            conformer_id = data.get("conformerID", "output")
-                            output_folder_path = GOTW_script.process_app(f'{glycan_name}/{conformer_id}', pdb_file, off_file, 200)
+            # --- CHANGE: Only scan subfolders inside Requested_Builds ---
+            requested_builds_dir = os.path.join(tmpdir, "Requested_Builds")
+            if not os.path.isdir(requested_builds_dir):
+                print("Requested_Builds folder not found in zip.")
+                return None, None
 
-                            # Move the processed folder to the temp output directory
-                            processed_subfolder = Path(output_folder_path)
-                            target_subfolder = output_path / processed_subfolder.name
-                            shutil.move(processed_subfolder, target_subfolder)
-                            shutil.move(json_file, target_subfolder / "info.json")
+            for root, dirs, files in os.walk(requested_builds_dir):
+                if "structure.off" in files and "structure.pdb" in files:
+                    json_file = os.path.join(root, "info.json")
+                    off_file = os.path.join(root, "structure.off")
+                    pdb_file = os.path.join(root, "structure.pdb")
+
+                    if os.path.exists(json_file):
+                        with open(json_file, 'r') as f:
+                            data = json.load(f)
+                        glycam = data.get("indexOrderedSequence", "output")
+                        glycam_tidy = glycam[:-5]
+                        iupac = name.glycam2iupac(glycam_tidy)
+                        glytoucan = name.iupac2wurcs_glytoucan(iupac)[0]
+                        if glytoucan is not None and len(glycam) > 250 :
+                            glycan_name = glytoucan
                         else:
-                            print(f"info.json not found in {root}")
+                            glycan_name = glycam
+                        conformer_id = data.get("conformerID", "output")
+                        output_folder_path = GOTW_script.process_app(f'{glycan_name}/{conformer_id}', pdb_file, off_file, 200)
 
-                # Create a new temp directory for the final result
-                result_dir = tempfile.mkdtemp()
+                        # Move the processed folder to the temp output directory
+                        processed_subfolder = Path(output_folder_path)
+                        target_subfolder = Path(tmpdir) / processed_subfolder.name
+                        shutil.move(processed_subfolder, target_subfolder)
+                        shutil.move(json_file, target_subfolder / "info.json")
+                    else:
+                        print(f"info.json not found in {root}")
 
-                # Copy the contents from output_path to result_dir
-                shutil.copytree(output_path, result_dir, dirs_exist_ok=True)
+            # Create a new temp directory for the final result
+            result_dir = tempfile.mkdtemp()
 
-            # Return the final result directory and glycam name
-            return Path(result_dir), glycan_name
+            # Copy the contents from tmpdir to result_dir
+            shutil.copytree(tmpdir, result_dir, dirs_exist_ok=True)
+
+        # Return the final result directory and glycam name
+        return Path(result_dir), glycan_name
 
     except requests.exceptions.RequestException as e:
         print(f"Network error: {e}")
