@@ -565,8 +565,9 @@ def zip_directory(folder_path, zip_path):
         for root, _, files in os.walk(folder_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                zipf.write(file_path, os.path.relpath(file_path, folder_path))
-
+                # Only include files relative to the folder_path (no parent folder in zip)
+                arcname = os.path.relpath(file_path, folder_path)
+                zipf.write(file_path, arcname)
 
 def GOTW_process(url: str):
     """
@@ -691,9 +692,22 @@ def GOTW_process(url: str):
                     else:
                         print(f"info.json not found in {root}")
 
-            # Create a new temp directory for the final result
+            # Instead of copying the whole tmpdir (which includes the puuid folder), 
+            # copy only the processed folders directly into result_dir
             result_dir = tempfile.mkdtemp()
-            shutil.copytree(tmpdir, result_dir, dirs_exist_ok=True)
+            # Find all processed folders (created by GOTW_script.process_app) in tmpdir
+            processed_folders = [
+                os.path.join(tmpdir, d) for d in os.listdir(tmpdir)
+                if os.path.isdir(os.path.join(tmpdir, d)) and d != subfolders[0]
+            ]
+            for folder in processed_folders:
+                for item in os.listdir(folder):
+                    s = os.path.join(folder, item)
+                    d = os.path.join(result_dir, item)
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(s, d)
 
             # Return the final result directory and glycam name
             return Path(result_dir), glycan_name
