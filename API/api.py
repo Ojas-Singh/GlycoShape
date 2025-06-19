@@ -584,87 +584,74 @@ def GOTW_process(url: str):
         # Configure a session with retry logic
         session = requests.Session()
         retry_strategy = Retry(
-            total=3,  # Maximum number of retries
-            backoff_factor=1.5,  # Exponential backoff: 1.5s, 3s, 4.5s, etc.
-            status_forcelist=[500, 502, 503, 504, 408, 429],  # Retry on these HTTP errors
+            total=3,
+            backoff_factor=1.5,
+            status_forcelist=[500, 502, 503, 504, 408, 429],
             allowed_methods=["GET"]
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
 
-        # Create a temporary directory for output
-        with tempfile.TemporaryDirectory() as output_folder:
-            output_path = Path(output_folder)
+        # Create a temp file for the zip download that persists until we're done with it
+        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
+            zip_file_path = zip_file.name
 
-            # Create a temp file for the zip download that persists until we're done with it
-            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as zip_file:
-                zip_file_path = zip_file.name
-            
-            # Check if we have a partial download already
-            resume_position = 0
-            if os.path.exists(zip_file_path):
-                resume_position = os.path.getsize(zip_file_path)
-                print(f"Partial download found. Resuming from byte {resume_position}")
+        # Check if we have a partial download already
+        resume_position = 0
+        if os.path.exists(zip_file_path):
+            resume_position = os.path.getsize(zip_file_path)
+            print(f"Partial download found. Resuming from byte {resume_position}")
 
-            # Set the range header to resume download if needed
-            headers = {}
+        headers = {}
+        if resume_position > 0:
+            headers["Range"] = f"bytes={resume_position}-"
+        else:
+            headers["Range"] = "bytes=0-"
+
+        response = session.get(
+            url,
+            stream=True,
+            timeout=(10, 60),
+            headers=headers
+        )
+        response.raise_for_status()
+
+        total_size = 0
+        if "Content-Range" in response.headers:
+            content_range = response.headers.get("Content-Range", "")
+            total_size_match = content_range.split("/")[-1]
+            if total_size_match.isdigit():
+                total_size = int(total_size_match)
+        elif "Content-Length" in response.headers:
             if resume_position > 0:
-                headers["Range"] = f"bytes={resume_position}-"
+                total_size = resume_position + int(response.headers.get("Content-Length", 0))
             else:
-                headers["Range"] = "bytes=0-"  # Ensure full file is requested if starting fresh
+                total_size = int(response.headers.get("Content-Length", 0))
 
-            # Download the zip file with streaming and resume capability
-            response = session.get(
-                url,
-                stream=True,
-                timeout=(10, 60),  # Connect timeout: 10s, Read timeout: 60s
-                headers=headers
+        file_mode = "ab" if resume_position > 0 else "wb"
+        with open(zip_file_path, file_mode) as f:
+            bytes_written = resume_position
+            for chunk in response.iter_content(chunk_size=512 * 1024):
+                if chunk:
+                    f.write(chunk)
+                    bytes_written += len(chunk)
+                    print(f"Downloaded {bytes_written} bytes of {total_size if total_size > 0 else 'unknown size'}")
+
+        if total_size > 0 and bytes_written != total_size:
+            raise ValueError(
+                f"Download incomplete: {bytes_written} bytes received, "
+                f"expected {total_size} bytes"
             )
-            response.raise_for_status()  # Raise an exception for bad status codes
 
-            # Get the total file size from headers (if available)
-            total_size = 0
-            if "Content-Range" in response.headers:
-                # Extract total size from Content-Range: bytes X-Y/TOTAL
-                content_range = response.headers.get("Content-Range", "")
-                total_size_match = content_range.split("/")[-1]
-                if total_size_match.isdigit():
-                    total_size = int(total_size_match)
-            elif "Content-Length" in response.headers:
-                if resume_position > 0:
-                    # If resuming, Content-Length is just the remaining bytes
-                    total_size = resume_position + int(response.headers.get("Content-Length", 0))
-                else:
-                    total_size = int(response.headers.get("Content-Length", 0))
+        # --- Everything below is now inside a single tempdir context ---
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Extract the zip file
+            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                zip_ref.extractall(tmpdir)
 
-            # Determine file mode based on resume state
-            file_mode = "ab" if resume_position > 0 else "wb"
-            
-            # Save the streamed content to the temporary zip file
-            with open(zip_file_path, file_mode) as f:
-                bytes_written = resume_position
-                for chunk in response.iter_content(chunk_size=512 * 1024):  # 512KB chunks
-                    if chunk:  # Filter out keep-alive new chunks
-                        f.write(chunk)
-                        bytes_written += len(chunk)
-                        print(f"Downloaded {bytes_written} bytes of {total_size if total_size > 0 else 'unknown size'}")
+            glycan_name = None
 
-            # Verify the download size matches the expected size (if provided)
-            if total_size > 0 and bytes_written != total_size:
-                raise ValueError(
-                    f"Download incomplete: {bytes_written} bytes received, "
-                    f"expected {total_size} bytes"
-                )
-
-            with tempfile.TemporaryDirectory() as tmpdir:
-                # Extract the zip file
-                with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-                    zip_ref.extractall(tmpdir)
-
-            glycan_name = None  # Initialize name variable
-
-            # --- CHANGE: Find the only folder inside tmpdir, then go into its Requested_Builds ---
             # Find the only folder inside tmpdir (should be the puuid folder)
             subfolders = [f for f in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, f))]
             if not subfolders:
@@ -706,19 +693,16 @@ def GOTW_process(url: str):
 
             # Create a new temp directory for the final result
             result_dir = tempfile.mkdtemp()
-
-            # Copy the contents from tmpdir to result_dir
             shutil.copytree(tmpdir, result_dir, dirs_exist_ok=True)
 
-        # Return the final result directory and glycam name
-        return Path(result_dir), glycan_name
+            # Return the final result directory and glycam name
+            return Path(result_dir), glycan_name
 
     except requests.exceptions.RequestException as e:
         print(f"Network error: {e}")
         return None, None
     except zipfile.BadZipFile:
         print("Error: The downloaded file is not a valid zip file.")
-        # If we have a bad zip file, remove it so we don't try to resume from it
         if zip_file_path and os.path.exists(zip_file_path):
             os.remove(zip_file_path)
         return None, None
@@ -729,13 +713,11 @@ def GOTW_process(url: str):
         print(f"Unexpected error: {e}")
         return None, None
     finally:
-        # Ensure the temporary zip file is deleted
         if zip_file_path and os.path.exists(zip_file_path):
             try:
                 os.remove(zip_file_path)
             except Exception as e:
                 print(f"Failed to remove temporary file {zip_file_path}: {e}")
-
 
 @app.route('/api/gotw', methods=['POST'])
 def gotw():
