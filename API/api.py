@@ -399,7 +399,7 @@ def get_pdb(identifier):
     return jsonify({"error": f"Glycan not found for identifier: {identifier}"}), 404
 
 @app.route('/api/glycam/<identifier>', methods=['GET'])
-def get_pdb(identifier):
+def get_glycam_pdb(identifier):
     glycoshape_entry = None
     is_alpha = False
     is_beta = False
