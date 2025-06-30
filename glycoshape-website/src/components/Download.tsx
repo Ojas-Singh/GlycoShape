@@ -15,8 +15,6 @@ import {
   BreadcrumbLink,
   BreadcrumbSeparator,
   Icon,
-  Grid,
-  GridItem,
   Badge,
   useToast,
   Modal,
@@ -34,6 +32,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { ChevronRightIcon, DownloadIcon, ExternalLinkIcon, AttachmentIcon, AddIcon } from "@chakra-ui/icons";
+import { FaFolder, FaFile } from "react-icons/fa";
 
 interface FileItem {
   name: string;
@@ -52,6 +51,14 @@ interface UploadModalProps {
   currentPath: string;
   onUploadSuccess: () => void;
 }
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath, onUploadSuccess }) => {
   const [uploadKey, setUploadKey] = useState('');
@@ -123,9 +130,12 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
       formData.append('upload_key', uploadKey);
       formData.append('target_path', currentPath);
 
-      // Add all selected files
+      // Add all selected files with their relative paths
       Array.from(selectedFiles).forEach((file, index) => {
         formData.append('files', file);
+        // Include the relative path for folder structure preservation
+        const relativePath = file.webkitRelativePath || file.name;
+        formData.append('file_paths', relativePath);
       });
 
       const response = await fetch(`${apiUrl}/api/upload`, {
@@ -140,9 +150,16 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
 
       const result = await response.json();
       
+      // Check if any files had folder structure
+      const hasSubfolders = Array.from(selectedFiles).some(file => 
+        file.webkitRelativePath && file.webkitRelativePath.includes('/')
+      );
+      
       toast({
         title: "Upload Successful",
-        description: `Successfully uploaded ${selectedFiles.length} file(s)`,
+        description: hasSubfolders 
+          ? `Successfully uploaded ${selectedFiles.length} file(s) with folder structure preserved`
+          : `Successfully uploaded ${selectedFiles.length} file(s)`,
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -196,59 +213,108 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
               <Text fontSize="sm" color="gray.600">
                 {currentPath ? `/files/${currentPath}` : '/files/'}
               </Text>
+              <Text fontSize="xs" color="gray.500" mt={1}>
+                Files will be uploaded to this directory. Folder structure will be preserved.
+              </Text>
             </FormControl>
 
             <FormControl>
-              <FormLabel>Select Files</FormLabel>
-              <Box
-                border="2px dashed"
-                borderColor={dragActive ? "blue.300" : borderColor}
-                borderRadius="md"
-                p={6}
-                textAlign="center"
-                bg={dragActive ? "blue.50" : bgColor}
-                cursor="pointer"
-                transition="all 0.2s"
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <VStack spacing={2}>
-                  <AddIcon color="gray.400" />
-                  <Text>
-                    {selectedFiles && selectedFiles.length > 0
-                      ? `${selectedFiles.length} file(s) selected`
-                      : 'Drag & drop files here, or click to select'}
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    Supports multiple files
-                  </Text>
-                </VStack>
+              <FormLabel>Select Files or Folders</FormLabel>
+              <VStack spacing={3}>
+                <HStack spacing={3} width="100%">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.removeAttribute('webkitdirectory');
+                        fileInputRef.current.click();
+                      }
+                    }}
+                    disabled={uploading}
+                  >
+                    Select Files
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.setAttribute('webkitdirectory', '');
+                        fileInputRef.current.click();
+                      }
+                    }}
+                    disabled={uploading}
+                  >
+                    Select Folder
+                  </Button>
+                </HStack>
+                
+                <Box
+                  border="2px dashed"
+                  borderColor={dragActive ? "blue.300" : borderColor}
+                  borderRadius="md"
+                  p={6}
+                  textAlign="center"
+                  bg={dragActive ? "blue.50" : bgColor}
+                  cursor="pointer"
+                  transition="all 0.2s"
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  width="100%"
+                >
+                  <VStack spacing={2}>
+                    <AddIcon color="gray.400" />
+                    <Text>
+                      {selectedFiles && selectedFiles.length > 0
+                        ? `${selectedFiles.length} file(s) selected`
+                        : 'Drag & drop files or folders here'}
+                    </Text>
+                    <Text fontSize="sm" color="gray.500">
+                      Folder structure will be preserved
+                    </Text>
+                  </VStack>
+                </Box>
+                
                 <Input
                   ref={fileInputRef}
                   type="file"
                   multiple
                   onChange={handleFileSelect}
                   display="none"
-                  {...({ webkitdirectory: "" } as any)}
                 />
-              </Box>
+              </VStack>
             </FormControl>
 
             {selectedFiles && selectedFiles.length > 0 && (
               <Box w="100%">
-                <Text fontSize="sm" fontWeight="medium" mb={2}>Selected Files:</Text>
-                <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={2}>
-                  {Array.from(selectedFiles).slice(0, 10).map((file, index) => (
-                    <Text key={index} fontSize="xs" color="gray.600">
-                      {file.webkitRelativePath || file.name}
-                    </Text>
-                  ))}
-                  {selectedFiles.length > 10 && (
-                    <Text fontSize="xs" color="gray.500">
-                      ... and {selectedFiles.length - 10} more files
+                <Text fontSize="sm" fontWeight="medium" mb={2}>
+                  Selected Files ({selectedFiles.length} total):
+                </Text>
+                <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={3}>
+                  {Array.from(selectedFiles).slice(0, 20).map((file, index) => {
+                    const displayPath = file.webkitRelativePath || file.name;
+                    const isInFolder = displayPath.includes('/');
+                    
+                    return (
+                      <HStack key={index} fontSize="xs" color="gray.600" spacing={2}>
+                        <Icon 
+                          as={isInFolder ? ExternalLinkIcon : AttachmentIcon} 
+                          boxSize={3}
+                          color={isInFolder ? "blue.400" : "gray.400"}
+                        />
+                        <Text flex={1}>{displayPath}</Text>
+                        <Text color="gray.400">
+                          {formatFileSize(file.size)}
+                        </Text>
+                      </HStack>
+                    );
+                  })}
+                  {selectedFiles.length > 20 && (
+                    <Text fontSize="xs" color="gray.500" mt={2} fontStyle="italic">
+                      ... and {selectedFiles.length - 20} more files
                     </Text>
                   )}
                 </Box>
@@ -360,14 +426,6 @@ const FileBrowser: React.FC<FileBrowserProps> = ({ initialFolder }) => {
     const [, numStr, unit] = match;
     const num = parseFloat(numStr);
     return num * (units[unit] || 1);
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const navigateToFolder = (folderName: string) => {
@@ -493,31 +551,39 @@ const FileBrowser: React.FC<FileBrowserProps> = ({ initialFolder }) => {
 
       {/* Files list */}
       {!loading && !error && (
-        <Grid templateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={4}>
+        <VStack spacing={2} align="stretch">
           {files.map((file, index) => (
-            <GridItem key={index}>
-              <Box
-                p={4}
-                border="1px solid"
-                borderColor="gray.200"
-                borderRadius="md"
-                _hover={{ bg: "gray.50", cursor: "pointer" }}
-                onClick={() => {
-                  if (file.type === 'directory') {
-                    navigateToFolder(file.name);
-                  }
-                }}
-              >
-                <HStack justify="space-between">
-                  <HStack>
-                    <Icon 
-                      as={file.type === 'directory' ? ExternalLinkIcon : AttachmentIcon} 
-                      color={file.type === 'directory' ? "blue.500" : "gray.500"}
-                    />
-                    <VStack align="start" spacing={1}>
-                      <Text fontWeight="medium" fontSize="sm">
-                        {file.name}
-                      </Text>
+            <Box
+              key={index}
+              p={4}
+              border="1px solid"
+              borderColor="gray.200"
+              borderRadius="md"
+              _hover={{ bg: "gray.50", cursor: file.type === 'directory' ? "pointer" : "default" }}
+              onClick={() => {
+                if (file.type === 'directory') {
+                  navigateToFolder(file.name);
+                }
+              }}
+            >
+              <HStack justify="space-between" width="100%">
+                <HStack spacing={3} flex={1} minWidth={0}>
+                  <Icon 
+                    as={file.type === 'directory' ? FaFolder : FaFile} 
+                    color={file.type === 'directory' ? "blue.500" : "gray.600"}
+                    boxSize={4}
+                    flexShrink={0}
+                  />
+                  <VStack align="start" spacing={1} flex={1} minWidth={0}>
+                    <Text 
+                      fontWeight="medium" 
+                      fontSize="sm"
+                      isTruncated
+                      width="100%"
+                    >
+                      {file.name}
+                    </Text>
+                    <HStack spacing={2}>
                       {file.size && (
                         <Badge colorScheme="gray" size="sm">
                           {formatFileSize(file.size)}
@@ -528,27 +594,28 @@ const FileBrowser: React.FC<FileBrowserProps> = ({ initialFolder }) => {
                           {file.lastModified}
                         </Text>
                       )}
-                    </VStack>
-                  </HStack>
-                  
-                  {file.type === 'file' && (
-                    <Button
-                      size="xs"
-                      colorScheme="blue"
-                      leftIcon={<DownloadIcon />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        downloadFile(file.name);
-                      }}
-                    >
-                      Download
-                    </Button>
-                  )}
+                    </HStack>
+                  </VStack>
                 </HStack>
-              </Box>
-            </GridItem>
+                
+                {file.type === 'file' && (
+                  <Button
+                    size="sm"
+                    colorScheme="blue"
+                    leftIcon={<DownloadIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadFile(file.name);
+                    }}
+                    flexShrink={0}
+                  >
+                    Download
+                  </Button>
+                )}
+              </HStack>
+            </Box>
           ))}
-        </Grid>
+        </VStack>
       )}
 
       {!loading && !error && files.length === 0 && (
@@ -595,8 +662,8 @@ const Download: React.FC = () => {
 
       <VStack spacing={5} align="start">
         {/* Download Resource 1 */}
-        <Box>
-          <HStack justifyContent="space-between" width="100%">
+        <Box width="100%">
+          <HStack justify="space-between" align="center" width="100%">
             <Text fontSize="xl" fontWeight="bold">Glycan Structures Data</Text>
             <Button colorScheme="blue" size="sm" onClick={() => {
                                 const link = document.createElement('a');
@@ -607,16 +674,15 @@ const Download: React.FC = () => {
                                 document.body.removeChild(link);
                               }}>Download</Button>
           </HStack>
-          <Text mt={2}> The cluster centroids in PDB file format of every glycan in our database in one zipped file! &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</Text>
+          <Text mt={2}> The cluster centroids in PDB file format of every glycan in our database in one zipped file!</Text>
         </Box>
 
         <Divider />
 
         {/* Download Resource 2 */}
-        <Box>
-          <HStack justifyContent="space-between" width="100%">
+        <Box width="100%">
+          <HStack justify="space-between" align="center" width="100%">
             <Text fontSize="xl" fontWeight="bold">Molecular Dynamics Simulations Trajectory Data</Text>
-            
             <Button colorScheme="blue" size="sm" isDisabled={true} onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = `/database/Simulation.zip`;
