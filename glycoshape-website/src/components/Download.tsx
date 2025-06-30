@@ -31,7 +31,7 @@ import {
   Progress,
   useColorModeValue,
 } from "@chakra-ui/react";
-import { ChevronRightIcon, DownloadIcon, ExternalLinkIcon, AttachmentIcon, AddIcon } from "@chakra-ui/icons";
+import { ChevronRightIcon, DownloadIcon, ExternalLinkIcon, AttachmentIcon, AddIcon, CloseIcon } from "@chakra-ui/icons";
 import { FaFolder, FaFile } from "react-icons/fa";
 
 interface FileItem {
@@ -96,6 +96,26 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setSelectedFiles(e.target.files);
+    }
+  };
+
+  const removeFile = (indexToRemove: number) => {
+    if (!selectedFiles) return;
+    
+    const filesArray = Array.from(selectedFiles);
+    filesArray.splice(indexToRemove, 1);
+    
+    // Create a new FileList-like object
+    const newFileList = new DataTransfer();
+    filesArray.forEach(file => {
+      newFileList.items.add(file);
+    });
+    
+    setSelectedFiles(newFileList.files.length > 0 ? newFileList.files : null);
+    
+    // Also update the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.files = newFileList.files;
     }
   };
 
@@ -219,94 +239,98 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
             </FormControl>
 
             <FormControl>
-              <FormLabel>Select Files or Folders</FormLabel>
-              <VStack spacing={3}>
-                <HStack spacing={3} width="100%">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.removeAttribute('webkitdirectory');
-                        fileInputRef.current.click();
-                      }
-                    }}
-                    disabled={uploading}
-                  >
-                    Select Files
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.setAttribute('webkitdirectory', '');
-                        fileInputRef.current.click();
-                      }
-                    }}
-                    disabled={uploading}
-                  >
-                    Select Folder
-                  </Button>
-                </HStack>
-                
-                <Box
-                  border="2px dashed"
-                  borderColor={dragActive ? "blue.300" : borderColor}
-                  borderRadius="md"
-                  p={6}
-                  textAlign="center"
-                  bg={dragActive ? "blue.50" : bgColor}
-                  cursor="pointer"
-                  transition="all 0.2s"
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                  width="100%"
-                >
-                  <VStack spacing={2}>
-                    <AddIcon color="gray.400" />
-                    <Text>
-                      {selectedFiles && selectedFiles.length > 0
-                        ? `${selectedFiles.length} file(s) selected`
-                        : 'Drag & drop files or folders here'}
-                    </Text>
-                    <Text fontSize="sm" color="gray.500">
-                      Folder structure will be preserved
-                    </Text>
-                  </VStack>
-                </Box>
-                
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  onChange={handleFileSelect}
-                  display="none"
-                />
-              </VStack>
+              <FormLabel>Select Folder</FormLabel>
+              <Box
+                border="2px dashed"
+                borderColor={dragActive ? "blue.300" : borderColor}
+                borderRadius="md"
+                p={6}
+                textAlign="center"
+                bg={dragActive ? "blue.50" : bgColor}
+                cursor="pointer"
+                transition="all 0.2s"
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => {
+                  if (fileInputRef.current) {
+                    // Set to allow both files and directories
+                    fileInputRef.current.setAttribute('webkitdirectory', '');
+                    fileInputRef.current.click();
+                  }
+                }}
+                width="100%"
+              >
+                <VStack spacing={2}>
+                  <AddIcon color="gray.400" />
+                  <Text>
+                    {selectedFiles && selectedFiles.length > 0
+                      ? `${selectedFiles.length} file(s) selected`
+                      : 'Drag & drop files or folders here, or click to select'}
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    You can deselect files once selected.
+                  </Text>
+                </VStack>
+              </Box>
+              
+              <Input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                display="none"
+              />
             </FormControl>
 
             {selectedFiles && selectedFiles.length > 0 && (
               <Box w="100%">
-                <Text fontSize="sm" fontWeight="medium" mb={2}>
-                  Selected Files ({selectedFiles.length} total):
-                </Text>
+                <HStack justify="space-between" align="center" mb={2}>
+                  <Text fontSize="sm" fontWeight="medium">
+                    Selected Files ({selectedFiles.length} total):
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    colorScheme="red"
+                    onClick={() => {
+                      setSelectedFiles(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    disabled={uploading}
+                  >
+                    Clear All
+                  </Button>
+                </HStack>
                 <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={3}>
                   {Array.from(selectedFiles).slice(0, 20).map((file, index) => {
                     const displayPath = file.webkitRelativePath || file.name;
                     const isInFolder = displayPath.includes('/');
                     
                     return (
-                      <HStack key={index} fontSize="xs" color="gray.600" spacing={2}>
+                      <HStack key={index} fontSize="xs" color="gray.600" spacing={2} py={1}>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="red"
+                          minWidth="auto"
+                          height="auto"
+                          padding={1}
+                          onClick={() => removeFile(index)}
+                          disabled={uploading}
+                        >
+                          <CloseIcon boxSize={2} />
+                        </Button>
                         <Icon 
                           as={isInFolder ? ExternalLinkIcon : AttachmentIcon} 
                           boxSize={3}
                           color={isInFolder ? "blue.400" : "gray.400"}
                         />
-                        <Text flex={1}>{displayPath}</Text>
-                        <Text color="gray.400">
+                        <Text flex={1} isTruncated>{displayPath}</Text>
+                        <Text color="gray.400" flexShrink={0}>
                           {formatFileSize(file.size)}
                         </Text>
                       </HStack>
