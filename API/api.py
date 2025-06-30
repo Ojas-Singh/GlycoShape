@@ -73,6 +73,7 @@ def ensure_directory_exists(directory_path):
 GLYCOSHAPE_DIR = Path(config.glycoshape_database_dir)
 GLYCOSHAPE_CSV = Path(config.glycoshape_inventory_csv)
 GLYCOSHAPE_RAWDATA_DIR = Path(config.glycoshape_rawdata_dir)
+GLYCOSHAPE_NEWDATA_DIR = Path(config.glycoshape_newdata_dir)
 GLYCOSHAPE_UPLOAD_DIR = Path(config.glycoshape_upload_dir)
 
 # Ensure upload directory exists
@@ -207,7 +208,7 @@ def is_exist(identifier):
     try:
         # 1. Check if the identifier corresponds to an existing raw data or upload folder
         folder_path = GLYCOSHAPE_RAWDATA_DIR / identifier
-        folder2_path = GLYCOSHAPE_UPLOAD_DIR / identifier
+        folder2_path = GLYCOSHAPE_NEWDATA_DIR / identifier
         if folder_path.is_dir() or folder2_path.is_dir():
             return jsonify({'exists': True, 'reason': 'Folder found'})
         # 1b. Check if a folder exists matching the identifier minus the last 5 characters
@@ -228,8 +229,8 @@ def is_exist(identifier):
                             })
             
             # Check upload directory
-            if GLYCOSHAPE_UPLOAD_DIR.is_dir():
-                for folder in GLYCOSHAPE_UPLOAD_DIR.iterdir():
+            if GLYCOSHAPE_NEWDATA_DIR.is_dir():
+                for folder in GLYCOSHAPE_NEWDATA_DIR.iterdir():
                     if folder.is_dir() and len(folder.name) == len(identifier):
                         # Check if the folder matches the base and only differs in the last 5 chars
                         if folder.name.startswith(base_identifier) and folder.name != identifier:
@@ -835,7 +836,7 @@ def gotw():
 
 @app.route('/api/submit', methods=['POST'])
 def submit_form():
-    downloadLocation = GLYCOSHAPE_UPLOAD_DIR
+    downloadLocation = GLYCOSHAPE_NEWDATA_DIR
     csvLocation = GLYCOSHAPE_CSV
 
     try:
@@ -1505,7 +1506,7 @@ def natural_language_to_sparql():
 
 @app.route('/api/upload', methods=['POST'])
 def upload_files():
-    """Handle file upload with authentication."""
+    """Handle file upload with authentication and directory structure preservation."""
     try:
         # Validate upload key
         upload_key = request.form.get('upload_key')
@@ -1524,24 +1525,47 @@ def upload_files():
         except ValueError as e:
             return jsonify({'error': str(e)}), 400
         
-        # Create full upload directory path
-        upload_dir = os.path.join(str(GLYCOSHAPE_UPLOAD_DIR), clean_target_path)
-        ensure_directory_exists(upload_dir)
-        
         # Get uploaded files
         uploaded_files = request.files.getlist('files')
         if not uploaded_files or all(f.filename == '' for f in uploaded_files):
             return jsonify({'error': 'No files selected'}), 400
         
+        # Get file paths for directory structure
+        file_paths = request.form.getlist('file_paths')
+        
+        # Validate that we have matching files and paths
+        if len(file_paths) != len(uploaded_files):
+            return jsonify({'error': 'Mismatch between number of files and file paths'}), 400
+        
         successful_uploads = []
         failed_uploads = []
         
-        for file in uploaded_files:
+        for file, relative_path in zip(uploaded_files, file_paths):
             if file and file.filename:
                 try:
+                    # Sanitize the relative path to prevent directory traversal
+                    try:
+                        clean_relative_path = sanitize_path(relative_path)
+                    except ValueError as e:
+                        failed_uploads.append({
+                            'filename': file.filename,
+                            'error': f'Invalid file path: {str(e)}'
+                        })
+                        continue
+                    
+                    # Create the full directory path
+                    if clean_target_path:
+                        full_relative_path = os.path.join(clean_target_path, clean_relative_path)
+                    else:
+                        full_relative_path = clean_relative_path
+                    
+                    # Get directory part of the path
+                    file_dir = os.path.dirname(full_relative_path)
+                    filename = os.path.basename(full_relative_path)
+                    
                     # Secure the filename
-                    filename = secure_filename(file.filename)
-                    if not filename:
+                    secure_filename_result = secure_filename(filename)
+                    if not secure_filename_result:
                         failed_uploads.append({
                             'filename': file.filename,
                             'error': 'Invalid filename'
@@ -1549,17 +1573,26 @@ def upload_files():
                         continue
                     
                     # Check file extension
-                    if not allowed_file(filename):
+                    if not allowed_file(secure_filename_result):
                         failed_uploads.append({
-                            'filename': filename,
+                            'filename': file.filename,
                             'error': 'File type not allowed'
                         })
                         continue
                     
+                    # Create the full upload directory path including subdirectories
+                    if file_dir:
+                        upload_dir = os.path.join(str(GLYCOSHAPE_UPLOAD_DIR), file_dir)
+                    else:
+                        upload_dir = str(GLYCOSHAPE_UPLOAD_DIR)
+                    
+                    ensure_directory_exists(upload_dir)
+                    
                     # Handle duplicate filenames by adding a suffix
-                    file_path = os.path.join(upload_dir, filename)
+                    file_path = os.path.join(upload_dir, secure_filename_result)
                     counter = 1
-                    name, ext = os.path.splitext(filename)
+                    name, ext = os.path.splitext(secure_filename_result)
+                    original_file_path = file_path
                     
                     while os.path.exists(file_path):
                         new_filename = f"{name}_{counter}{ext}"
@@ -1572,19 +1605,26 @@ def upload_files():
                     # Get file info
                     file_size = os.path.getsize(file_path)
                     
+                    # Calculate the relative path from upload directory
+                    upload_relative_path = os.path.relpath(file_path, str(GLYCOSHAPE_UPLOAD_DIR))
+                    
                     successful_uploads.append({
                         'filename': os.path.basename(file_path),
                         'original_filename': file.filename,
+                        'original_path': relative_path,
+                        'saved_path': upload_relative_path,
                         'size': file_size,
-                        'path': os.path.join(clean_target_path, os.path.basename(file_path)) if clean_target_path else os.path.basename(file_path)
+                        'directory_created': file_dir if file_dir else 'root',
+                        'renamed': file_path != original_file_path
                     })
                     
-                    logger.info(f"File uploaded successfully: {file_path} by user role: {user_role}")
+                    logger.info(f"File uploaded successfully: {file_path} (from {relative_path}) by user role: {user_role}")
                     
                 except Exception as e:
-                    logger.error(f"Error uploading file {file.filename}: {str(e)}")
+                    logger.error(f"Error uploading file {file.filename} with path {relative_path}: {str(e)}")
                     failed_uploads.append({
                         'filename': file.filename,
+                        'original_path': relative_path,
                         'error': str(e)
                     })
         
@@ -1598,6 +1638,7 @@ def upload_files():
                 'successful': len(successful_uploads),
                 'failed': len(failed_uploads),
                 'target_directory': clean_target_path or 'root',
+                'directory_structure_preserved': True,
                 'uploaded_by': user_role,
                 'timestamp': datetime.now().isoformat()
             }

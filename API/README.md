@@ -5,7 +5,8 @@
 export GLYCOSHAPE_DATABASE_DIR="/mnt/database/DB_static/"
 export GLYCOSHAPE_UPLOAD_DIR="/mnt/database/MD_files/"
 export GLYCOSHAPE_INVENTORY_CSV="/mnt/database/test_data/GlycoShape_Inventory.csv"
-export GLYCOSHAPE_RAWDATA_DIR="/mnt/database/test_data/"
+export GLYCOSHAPE_RAWDATA_DIR="/mnt/database/glycoshape_data/"
+export GLYCOSHAPE_NEWDATA_DIR="/mnt/database/test_data/"
 
 export GLYCOSHAPE_UPLOAD_KEY=""
 
