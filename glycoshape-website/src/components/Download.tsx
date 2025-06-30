@@ -66,6 +66,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
+  const [isSelectingFolder, setIsSelectingFolder] = useState(false);
   const toast = useToast();
   const apiUrl = process.env.REACT_APP_API_URL;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,7 +146,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
     setUploading(true);
     setUploadProgress(0);
 
-    try {
+    return new Promise<void>((resolve, reject) => {
       const formData = new FormData();
       formData.append('upload_key', uploadKey);
       formData.append('target_path', currentPath);
@@ -158,55 +159,105 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
         formData.append('file_paths', relativePath);
       });
 
-      const response = await fetch(`${apiUrl}/api/upload`, {
-        method: 'POST',
-        body: formData,
+      const xhr = new XMLHttpRequest();
+
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setUploadProgress(Math.round(percentComplete));
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Upload failed: ${response.status}`);
-      }
+      // Handle successful completion
+      xhr.addEventListener('load', () => {
+        try {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            setUploadProgress(100);
+            
+            // Check if any files had folder structure
+            const hasSubfolders = Array.from(selectedFiles).some(file => 
+              file.webkitRelativePath && file.webkitRelativePath.includes('/')
+            );
+            
+            toast({
+              title: "Upload Successful",
+              description: hasSubfolders 
+                ? `Successfully uploaded ${selectedFiles.length} file(s) with folder structure preserved`
+                : `Successfully uploaded ${selectedFiles.length} file(s)`,
+              status: "success",
+              duration: 5000,
+              isClosable: true,
+            });
 
-      const result = await response.json();
-      
-      // Check if any files had folder structure
-      const hasSubfolders = Array.from(selectedFiles).some(file => 
-        file.webkitRelativePath && file.webkitRelativePath.includes('/')
-      );
-      
-      toast({
-        title: "Upload Successful",
-        description: hasSubfolders 
-          ? `Successfully uploaded ${selectedFiles.length} file(s) with folder structure preserved`
-          : `Successfully uploaded ${selectedFiles.length} file(s)`,
-        status: "success",
-        duration: 5000,
-        isClosable: true,
+            // Reset form
+            setUploadKey('');
+            setSelectedFiles(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+            
+            onUploadSuccess();
+            onClose();
+            resolve();
+          } else {
+            // Handle HTTP error status
+            let errorMessage = `Upload failed: ${xhr.status}`;
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+              // If response is not JSON, use the status message
+            }
+            throw new Error(errorMessage);
+          }
+        } catch (error) {
+          toast({
+            title: "Upload Failed",
+            description: error instanceof Error ? error.message : 'Unknown error occurred',
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+          reject(error);
+        } finally {
+          setUploading(false);
+          setTimeout(() => setUploadProgress(0), 1000); // Reset progress after a delay
+        }
       });
 
-      // Reset form
-      setUploadKey('');
-      setSelectedFiles(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-      onUploadSuccess();
-      onClose();
-      
-    } catch (error) {
-      toast({
-        title: "Upload Failed",
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        status: "error",
-        duration: 5000,
-        isClosable: true,
+      // Handle network errors
+      xhr.addEventListener('error', () => {
+        toast({
+          title: "Upload Failed",
+          description: 'Network error occurred during upload',
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+        setUploading(false);
+        setUploadProgress(0);
+        reject(new Error('Network error occurred during upload'));
       });
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-    }
+
+      // Handle upload abortion
+      xhr.addEventListener('abort', () => {
+        toast({
+          title: "Upload Cancelled",
+          description: 'Upload was cancelled',
+          status: "warning",
+          duration: 3000,
+          isClosable: true,
+        });
+        setUploading(false);
+        setUploadProgress(0);
+        reject(new Error('Upload was cancelled'));
+      });
+
+      // Start the upload
+      xhr.open('POST', `${apiUrl}/api/upload`);
+      xhr.send(formData);
+    });
   };
 
   return (
@@ -239,49 +290,87 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
             </FormControl>
 
             <FormControl>
-              <FormLabel>Select Folder</FormLabel>
-              <Box
-                border="2px dashed"
-                borderColor={dragActive ? "blue.300" : borderColor}
-                borderRadius="md"
-                p={6}
-                textAlign="center"
-                bg={dragActive ? "blue.50" : bgColor}
-                cursor="pointer"
-                transition="all 0.2s"
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onClick={() => {
-                  if (fileInputRef.current) {
-                    // Set to allow both files and directories
-                    fileInputRef.current.setAttribute('webkitdirectory', '');
-                    fileInputRef.current.click();
-                  }
-                }}
-                width="100%"
-              >
-                <VStack spacing={2}>
-                  <AddIcon color="gray.400" />
-                  <Text>
-                    {selectedFiles && selectedFiles.length > 0
-                      ? `${selectedFiles.length} file(s) selected`
-                      : 'Drag & drop files or folders here, or click to select'}
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    You can deselect files once selected.
-                  </Text>
-                </VStack>
-              </Box>
-              
-              <Input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                onChange={handleFileSelect}
-                display="none"
-              />
+              <FormLabel>Select Files or Folders</FormLabel>
+              <VStack spacing={3}>
+                <HStack spacing={3} width="100%">
+                  <Button
+                    size="sm"
+                    variant={!isSelectingFolder ? "solid" : "outline"}
+                    colorScheme={!isSelectingFolder ? "blue" : "gray"}
+                    onClick={() => {
+                      setIsSelectingFolder(false);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.removeAttribute('webkitdirectory');
+                        fileInputRef.current.click();
+                      }
+                    }}
+                    disabled={uploading}
+                  >
+                    Select Files
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={isSelectingFolder ? "solid" : "outline"}
+                    colorScheme={isSelectingFolder ? "blue" : "gray"}
+                    onClick={() => {
+                      setIsSelectingFolder(true);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.setAttribute('webkitdirectory', '');
+                        fileInputRef.current.click();
+                      }
+                    }}
+                    disabled={uploading}
+                  >
+                    Select Folder
+                  </Button>
+                </HStack>
+                
+                <Box
+                  border="2px dashed"
+                  borderColor={dragActive ? "blue.300" : borderColor}
+                  borderRadius="md"
+                  p={6}
+                  textAlign="center"
+                  bg={dragActive ? "blue.50" : bgColor}
+                  cursor="pointer"
+                  transition="all 0.2s"
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      if (isSelectingFolder) {
+                        fileInputRef.current.setAttribute('webkitdirectory', '');
+                      } else {
+                        fileInputRef.current.removeAttribute('webkitdirectory');
+                      }
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  width="100%"
+                >
+                  <VStack spacing={2}>
+                    <AddIcon color="gray.400" />
+                    <Text>
+                      {selectedFiles && selectedFiles.length > 0
+                        ? `${selectedFiles.length} file(s) selected`
+                        : `Drag & drop ${isSelectingFolder ? 'folders' : 'files'} here, or click to select`}
+                    </Text>
+                    <Text fontSize="sm" color="gray.500">
+                      {isSelectingFolder ? 'Folder mode - structure will be preserved' : 'File mode - supports multiple files'}
+                    </Text>
+                  </VStack>
+                </Box>
+                
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleFileSelect}
+                  display="none"
+                />
+              </VStack>
             </FormControl>
 
             {selectedFiles && selectedFiles.length > 0 && (
@@ -419,10 +508,24 @@ const FileBrowser: React.FC<FileBrowserProps> = ({ initialFolder }) => {
       const name = href.endsWith('/') ? href.slice(0, -1) : href;
       const type = href.endsWith('/') ? 'directory' : 'file';
       
-      // Try to extract file size and date from the parent element's text
-      const parentText = link.parentElement?.textContent || '';
-      const sizeMatch = parentText.match(/(\d+(?:\.\d+)?[KMGT]?B?)/);
-      const dateMatch = parentText.match(/(\d{2}-\w{3}-\d{4} \d{2}:\d{2})/);
+      // Get the text content of the entire row (parent element)
+      const parentElement = link.parentElement;
+      const rowText = parentElement?.textContent || '';
+      
+      // Extract the portion of text that comes after the link text
+      // This should contain the file metadata (date and size)
+      const linkText = link.textContent || '';
+      const afterLinkIndex = rowText.indexOf(linkText) + linkText.length;
+      const metadataText = rowText.substring(afterLinkIndex);
+      
+      // Look for file size in the metadata portion
+      // Pattern for nginx format: whitespace + date + whitespace + size
+      // Example: "                                     30-Jun-2025 18:02            74739429"
+      const sizeMatch = metadataText.match(/\d{2}-\w{3}-\d{4} \d{2}:\d{2}\s+(\d+)/) || // Size after date
+                       metadataText.match(/\s+(\d+(?:\.\d+)?[KMGT]?B?)\s*$/i) || // Size with units at end
+                       metadataText.match(/\s+(\d+)\s*$/); // Pure number at end
+      
+      const dateMatch = metadataText.match(/(\d{2}-\w{3}-\d{4} \d{2}:\d{2})/);
       
       items.push({
         name,
@@ -441,15 +544,32 @@ const FileBrowser: React.FC<FileBrowserProps> = ({ initialFolder }) => {
       'KB': 1024,
       'MB': 1024 * 1024,
       'GB': 1024 * 1024 * 1024,
-      'TB': 1024 * 1024 * 1024 * 1024
+      'TB': 1024 * 1024 * 1024 * 1024,
+      'K': 1024,
+      'M': 1024 * 1024,
+      'G': 1024 * 1024 * 1024,
+      'T': 1024 * 1024 * 1024 * 1024
     };
     
-    const match = sizeStr.match(/^(\d+(?:\.\d+)?)([KMGT]?B?)$/);
+    // Clean the string and handle different formats
+    const cleanSizeStr = sizeStr.trim();
+    
+    // If it's just a number (pure bytes), return it directly
+    if (/^\d+$/.test(cleanSizeStr)) {
+      return parseInt(cleanSizeStr, 10);
+    }
+    
+    // Handle formats like "123K", "123.4M", "123KB", "123.4MB"
+    const match = cleanSizeStr.match(/^(\d+(?:\.\d+)?)([KMGTB]*)?$/i);
     if (!match) return 0;
     
-    const [, numStr, unit] = match;
+    const [, numStr, unit = ''] = match;
     const num = parseFloat(numStr);
-    return num * (units[unit] || 1);
+    const upperUnit = unit.toUpperCase();
+    
+    // Try exact match first, then try without 'B'
+    const multiplier = units[upperUnit] || units[upperUnit.replace('B', '')] || 1;
+    return Math.round(num * multiplier);
   };
 
   const navigateToFolder = (folderName: string) => {
