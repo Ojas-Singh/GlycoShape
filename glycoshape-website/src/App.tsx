@@ -100,7 +100,7 @@ const App: React.FC = () => {
                   <Route path="/tutorial" element={<div><Search /><Tutorials /></div>} />
                   <Route path="/api-docs" element={<div><Search /><API /></div>} />
                   <Route path="/sparql-query" element={<div><Sparql /></div>} />
-                  <Route path="/downloads" element={<div><Search /> <Download /></div>} />
+                  <Route path="/downloads/*" element={<div><Search /> <Download /></div>} />
                   <Route path="/reglyco" element={<div><ReGlyco /></div>} />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/glycan" element={<div><Search /><GlycanPage /></div>} />

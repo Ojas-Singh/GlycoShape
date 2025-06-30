@@ -4,17 +4,15 @@ import os
 variable_name = "GLYCOSHAPE_DATABASE_DIR" 
 variable_value = os.environ.get(variable_name)
 
-variable_name2 = "GLYCOSHAP_UPLOAD_DIR" 
+variable_name2 = "GLYCOSHAPE_UPLOAD_DIR" 
 variable_value2 = os.environ.get(variable_name2)
 
-variable_name3 = "GLYCOSHAPE__INVENTORY_CSV"
+variable_name3 = "GLYCOSHAPE_INVENTORY_CSV"
 variable_value3 = os.environ.get(variable_name3)
 
 variable_name4 = "GLYCOSHAPE_RAWDATA_DIR"
 variable_value4 = os.environ.get(variable_name4)
 
-variable_name5 = "GlYCOSHAPE_DOMAIN_NAME"
-variable_value5 = os.environ.get(variable_name5)
 
 
 if variable_value is not None:
@@ -34,14 +32,21 @@ if variable_value4 is not None:
 else:
     print(f"{variable_name4} is not set in the environment.")
 
-if variable_value5 is not None:
-    print(f"The value of {variable_name5} is {variable_value5}")
 
 
 glycoshape_database_dir = variable_value
 glycoshape_upload_dir = variable_value2
 glycoshape_inventory_csv = variable_value3
 glycoshape_rawdata_dir = variable_value4
-domain_name = variable_name5
 
 pin = "glycotime"
+
+# Upload functionality configuration
+UPLOAD_FOLDER = variable_value2  # Use the same as glycoshape_upload_dir
+MAX_CONTENT_LENGTH = 10024 * 1024 * 1024  # 10GB max file size
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'pdb', 'zip', 'tar', 'gz', 'json', 'csv', 'mol2', 'mol', 'sdf', 'xyz', 'prm7', 'prm', 'nc', 'rst', 'tsv', 'xlsx', 'xls', 'md', 'html', 'htm', 'xml', 'yaml', 'yml', 'cif', 'map'}
+
+# Upload keys - In production, store these securely (e.g., in environment variables)
+VALID_UPLOAD_KEYS = {
+    'admin_key_123': 'admin', 
+}

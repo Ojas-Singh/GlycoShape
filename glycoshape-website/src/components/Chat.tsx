@@ -31,7 +31,6 @@ import {
   AlertDescription,
 } from '@chakra-ui/react';
 import { ChevronUpIcon, ChevronDownIcon, AttachmentIcon, CloseIcon, CopyIcon, CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons';
-import MolstarApp from './MolstarApp'; 
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
 import ReactMarkdown, { Components } from 'react-markdown';
@@ -39,10 +38,6 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { v4 as uuidv4 } from 'uuid';
-
-const SYSTEM_PROMPT = 
-`You are GlycoShape Copilot, an expert assistant specializing in protein structures, glycosylation, and bioinformatics.
-`;
 
 // --- Constants ---
 const API_BASE_URL = 'http://localhost:5001';
@@ -58,6 +53,11 @@ interface CodeOutput {
 interface PlotInfo {
   url: string;
   alt: string;
+}
+
+interface MolViewSpecInfo {
+  molviewspec: any;
+  filename: string;
 }
 
 interface PdbInfo {
@@ -87,8 +87,19 @@ interface ChatMessage {
   codeOutput?: CodeOutput | null;
   plotInfo?: PlotInfo | null;
   pdbInfo?: PdbInfo | null;
+  molViewSpecInfo?: MolViewSpecInfo | null;
   toolStatus?: ToolStatus | null;
   isError?: boolean;
+  startTime?: number; // Track when the message started
+  // New field to track chronological order of events
+  events?: Array<{
+    id: string;
+    type: 'text' | 'code_output' | 'plot' | 'pdb' | 'molviewspec' | 'tool_start' | 'tool_end';
+    content: any;
+    timestamp: number;
+    duration?: number; // For tracking how long something took
+    status?: 'in_progress' | 'completed' | 'error';
+  }>;
 }
 
 interface FileAttachment {
@@ -111,8 +122,8 @@ const PaperPlane = (props: any) => (
 
 // --- Main Chat Component ---
 const BackendChat: React.FC<{
-  onLoadStructureUrl?: (url: string) => void;
-}> = ({ onLoadStructureUrl }) => {
+  onMolViewSpecUpdate?: (molviewspec: any, filename: string) => void;
+}> = ({ onMolViewSpecUpdate }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -125,6 +136,8 @@ const BackendChat: React.FC<{
   const chatInputRef = useRef<HTMLInputElement>(null);
   const { isOpen: isModalOpen, onOpen: openModal, onClose: closeModal } = useDisclosure();
   const [modalContent, setModalContent] = useState<ChatMessage['attachment']>(null);
+  const [pdbPreviewContent, setPdbPreviewContent] = useState<string | null>(null);
+  const [isPdbPreviewOpen, setIsPdbPreviewOpen] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -223,14 +236,298 @@ const BackendChat: React.FC<{
     code: CodeBlock,
   };
 
+  // Component to render chronological events with timeline
+  const EventRenderer: React.FC<{ 
+    event: any; 
+    messageKey: string; 
+    onMolViewSpecUpdate?: (molviewspec: any, filename: string) => void;
+    isLast?: boolean;
+  }> = ({ event, messageKey, onMolViewSpecUpdate, isLast = false }) => {
+    const getEventIcon = (type: string, status?: string) => {
+      switch (type) {
+        case 'text':
+          return <Box w="8px" h="8px" bg="blue.400" borderRadius="full" />;
+        case 'code_output':
+          return <Box w="8px" h="8px" bg="purple.400" borderRadius="full" />;
+        case 'plot':
+          return <Box w="8px" h="8px" bg="green.400" borderRadius="full" />;
+        case 'pdb':
+          return <Box w="8px" h="8px" bg="orange.400" borderRadius="full" />;
+        case 'molviewspec':
+          return <Box w="8px" h="8px" bg="teal.400" borderRadius="full" />;
+        case 'tool_start':
+          return status === 'in_progress' ? 
+            <Spinner size="xs" color="yellow.500" /> : 
+            <Box w="8px" h="8px" bg="yellow.400" borderRadius="full" />;
+        case 'tool_end':
+          return <CheckIcon w="8px" h="8px" color="green.500" />;
+        default:
+          return <Box w="8px" h="8px" bg="gray.400" borderRadius="full" />;
+      }
+    };
+
+    const formatDuration = (duration?: number) => {
+      if (!duration) return '';
+      const seconds = Math.round(duration / 1000);
+      return ` • Worked for ${seconds}s`;
+    };
+
+    return (
+      <HStack align="flex-start" spacing={3} mb={2}>
+        {/* Timeline dot and line */}
+        <VStack spacing={0} align="center" pt="6px">
+          {getEventIcon(event.type, event.status)}
+          {!isLast && (
+            <Box w="2px" h="20px" bg="gray.200" mt={1} />
+          )}
+        </VStack>
+
+        {/* Event content */}
+        <Box flex="1" minW="0">
+          {event.type === 'text' && (
+            <Box className="markdown-container">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {event.content}
+              </ReactMarkdown>
+            </Box>
+          )}
+
+          {event.type === 'code_output' && (
+            <Box>
+              <HStack 
+                spacing={2} 
+                mb={2} 
+                align="center" 
+                cursor="pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleCodeOutput(`${messageKey}-${event.id}`);
+                }}
+                _hover={{ bg: "gray.100" }}
+                borderRadius="sm"
+                p={1}
+                mx={-1}
+              >
+                <Text fontSize="xs" fontWeight="bold" color="purple.600">
+                  Code Execution
+                </Text>
+                {event.duration && (
+                  <Text fontSize="xs" color="gray.500">
+                    {formatDuration(event.duration)}
+                  </Text>
+                )}
+                <Box 
+                  as="span"
+                  display="flex"
+                  alignItems="center"
+                  ml="auto"
+                >
+                  {codeOutputVisible[`${messageKey}-${event.id}`] ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                </Box>
+              </HStack>
+
+              {/* Always show a preview of the code */}
+              {event.content.code && (
+                <Box mb={2} bg={codeOutputBg} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
+                  <HStack px={3} py={1} bg={codeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
+                    <Text fontSize="xs" color="gray.500" textTransform="uppercase">python</Text>
+                    <Text fontSize="xs" color="gray.500">
+                      {codeOutputVisible[`${messageKey}-${event.id}`] ? 'Full Code' : 'Preview'}
+                    </Text>
+                  </HStack>
+                  <Box p={3}>
+                    <Code as="pre" fontSize="sm" fontFamily="monospace" whiteSpace="pre-wrap" bg="transparent">
+                      {codeOutputVisible[`${messageKey}-${event.id}`] 
+                        ? event.content.code 
+                        : event.content.code.split('\n').slice(0, 3).join('\n') + 
+                          (event.content.code.split('\n').length > 3 ? '\n...' : '')
+                      }
+                    </Code>
+                  </Box>
+                </Box>
+              )}
+
+              <Collapse in={codeOutputVisible[`${messageKey}-${event.id}`]} animateOpacity unmountOnExit>
+                <Box>
+                  {(event.content.stdout || event.content.stderr) && (
+                    <Text fontSize="sm" fontWeight="bold" mb={2}>Output:</Text>
+                  )}
+                  {event.content.stdout && (
+                    <Box mb={event.content.stderr ? 2 : 0}>
+                      <Text fontSize="xs" color="gray.500" mb={1}>STDOUT:</Text>
+                      <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" 
+                            wordBreak="break-all" fontSize="sm" w="full" borderWidth="1px" borderColor={borderColor}>
+                        {event.content.stdout}
+                      </Code>
+                    </Box>
+                  )}
+                  {event.content.stderr && (
+                    <Box>
+                      <Text fontSize="xs" color={stderrColor} mb={1}>STDERR:</Text>
+                      <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" 
+                            wordBreak="break-all" fontSize="sm" w="full" color={stderrCodeColor} 
+                            borderWidth="1px" borderColor={borderColor}>
+                        {event.content.stderr}
+                      </Code>
+                    </Box>
+                  )}
+                  {!event.content.stdout && !event.content.stderr && (
+                    <Text fontSize="sm" fontStyle="italic" color="gray.500">(No output)</Text>
+                  )}
+                </Box>
+              </Collapse>
+            </Box>
+          )}
+
+          {event.type === 'plot' && (
+            <Box>
+              <HStack spacing={2} mb={2} align="center">
+                <Text fontSize="sm" fontWeight="bold" color="green.600">Generated Plot</Text>
+                {event.duration && (
+                  <Text fontSize="xs" color="gray.500">
+                    {formatDuration(event.duration)}
+                  </Text>
+                )}
+              </HStack>
+              <Box textAlign="center">
+                <Image 
+                  src={event.content.url} 
+                  alt={event.content.alt || 'Generated Plot'} 
+                  maxW="80%" 
+                  mx="auto" 
+                  borderRadius="md"
+                  boxShadow="sm" 
+                  borderWidth="1px" 
+                  borderColor={borderColor} 
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
+                />
+                <Button 
+                  as="a" 
+                  href={event.content.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  size="xs" 
+                  variant="outline" 
+                  mt={2} 
+                  leftIcon={<ExternalLinkIcon />}
+                >
+                  Open Plot
+                </Button>
+              </Box>
+            </Box>
+          )}
+
+          {event.type === 'pdb' && (
+            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={borderColor} bg="blue.50">
+              <HStack justifyContent="space-between" mb={2} wrap="wrap">
+                <HStack>
+                  <Text fontSize="sm" fontWeight="bold">Generated Structure</Text>
+                  {event.duration && (
+                    <Text fontSize="xs" color="gray.500">
+                      {formatDuration(event.duration)}
+                    </Text>
+                  )}
+                </HStack>
+                <Button 
+                  as="a" 
+                  href={event.content.url} 
+                  download={event.content.filename} 
+                  size="sm" 
+                  colorScheme="blue" 
+                  leftIcon={<ExternalLinkIcon />} 
+                  flexShrink={0}
+                >
+                  Download File
+                </Button>
+              </HStack>
+              <Text fontSize="sm" mb={1} wordBreak="break-all">File: {event.content.filename}</Text>
+              <HStack spacing={2} mt={2}>
+                <Button 
+                  size="xs" 
+                  variant="outline"
+                  onClick={() => openPdbPreview(event.content.url, event.content.filename)}
+                >
+                  Preview File
+                </Button>
+              </HStack>
+            </Box>
+          )}
+
+          {event.type === 'molviewspec' && (
+            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={borderColor} bg="green.50">
+              <HStack justifyContent="space-between" mb={2} wrap="wrap">
+                <HStack>
+                  <Text fontSize="sm" fontWeight="bold">Interactive Molecular View</Text>
+                  {event.duration && (
+                    <Text fontSize="xs" color="gray.500">
+                      {formatDuration(event.duration)}
+                    </Text>
+                  )}
+                </HStack>
+              </HStack>
+              <Text fontSize="sm" mb={1} wordBreak="break-all">Structure: {event.content.filename}</Text>
+              <HStack spacing={2} mt={2}>
+                {onMolViewSpecUpdate && (
+                  <Button 
+                    size="xs" 
+                    colorScheme="teal" 
+                    onClick={() => { 
+                      if (onMolViewSpecUpdate && event.content?.molviewspec) {
+                        onMolViewSpecUpdate(event.content.molviewspec, event.content.filename);
+                      }
+                    }}
+                  >
+                    View in 3D
+                  </Button>
+                )}
+              </HStack>
+            </Box>
+          )}
+
+          {event.type === 'tool_start' && (
+            <HStack spacing={2} align="center">
+              <Text fontSize="sm" color="yellow.600">
+                🔧 Running: {event.content.name}...
+              </Text>
+              {event.status === 'in_progress' && <Spinner size="xs" color="yellow.500" />}
+            </HStack>
+          )}
+
+          {event.type === 'tool_end' && (
+            <HStack spacing={2} align="center">
+              <Text fontSize="sm" color="green.600">
+                ✅ Completed: {event.content.name}
+              </Text>
+              {event.duration && (
+                <Text fontSize="xs" color="gray.500">
+                  {formatDuration(event.duration)}
+                </Text>
+              )}
+            </HStack>
+          )}
+        </Box>
+      </HStack>
+    );
+  };
+
   useEffect(() => {
-    const latestPdbMessage = [...messages].reverse()
-      .find(msg => msg.pdbInfo?.url && msg.role === 'assistant' && !msg.id);
-    if (latestPdbMessage?.pdbInfo?.url && onLoadStructureUrl) {
-      console.log("Autoloading PDB from finalized message:", latestPdbMessage.pdbInfo.url);
-      onLoadStructureUrl(latestPdbMessage.pdbInfo.url);
+    // Simple fallback: only load molviewspec from the very latest finalized message
+    // if no streaming is active and it hasn't been loaded during streaming
+    if (isLoading) {
+      return; // Don't run while streaming is active
     }
-  }, [messages, onLoadStructureUrl]);
+    
+    const latestMessage = messages[messages.length - 1];
+    if (latestMessage && 
+        latestMessage.molViewSpecInfo?.molviewspec && 
+        latestMessage.role === 'assistant' && 
+        !latestMessage.id && // finalized message
+        onMolViewSpecUpdate) {
+      console.log("Fallback: Loading MolViewSpec from latest finalized message:", latestMessage.molViewSpecInfo.filename);
+      onMolViewSpecUpdate(latestMessage.molViewSpecInfo.molviewspec, latestMessage.molViewSpecInfo.filename);
+    }
+  }, [messages, onMolViewSpecUpdate, isLoading]);
 
   useEffect(() => {
     const chatContainer = chatContainerRef.current;
@@ -280,6 +577,31 @@ const BackendChat: React.FC<{
     if (attachmentData) { setModalContent(attachmentData); openModal(); }
   };
 
+  const openPdbPreview = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
+      const content = await response.text();
+      setPdbPreviewContent(content);
+      setIsPdbPreviewOpen(true);
+    } catch (error) {
+      console.error('Error fetching PDB file:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load file content for preview.',
+        status: 'error',
+        duration: 3000,
+      });
+    }
+  };
+
+  const closePdbPreview = () => {
+    setIsPdbPreviewOpen(false);
+    setPdbPreviewContent(null);
+  };
+
   const handleSendMessage = async () => {
     if (!input.trim() && !fileAttachment) return;
     if (!sessionId) {
@@ -305,11 +627,14 @@ const BackendChat: React.FC<{
     abortControllerRef.current = new AbortController();
 
     const assistantMessageId = `assistant-${Date.now()}`;
+    const messageStartTime = Date.now();
     setMessages((prev) => [
       ...prev,
       {
         role: 'assistant', content: '', timestamp: new Date().toISOString(), id: assistantMessageId,
-        codeOutput: null, plotInfo: null, pdbInfo: null,
+        codeOutput: null, plotInfo: null, pdbInfo: null, molViewSpecInfo: null,
+        events: [], // Initialize empty events array
+        startTime: messageStartTime, // Track when this message started
       } as ChatMessage,
     ]);
 
@@ -318,8 +643,8 @@ const BackendChat: React.FC<{
         .map(({ role, content }) => ({ role, content }));
 
     const apiPayload = {
-      messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...historyMessages],
-      temperature: 0.7, max_tokens: 2048, stream: true, sessionId: sessionId,
+      messages: historyMessages,
+      stream: true, sessionId: sessionId,
     };
 
     const formData = new FormData();
@@ -353,6 +678,7 @@ const BackendChat: React.FC<{
         let mainContentDeltaAccumulator = '';
         let processedChars = 0;
         let currentPos = 0;
+        const currentTime = Date.now();
 
         while (currentPos < buffer.length) {
             const newlineIndex = buffer.indexOf('\n', currentPos);
@@ -370,42 +696,185 @@ const BackendChat: React.FC<{
                         const parsedEvent = JSON.parse(jsonStr);
                         if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
                           mainContentDeltaAccumulator += parsedEvent.content;
+                          // Add text content to events chronologically
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              const lastEvent = newEvents[newEvents.length - 1];
+                              if (lastEvent && lastEvent.type === 'text') {
+                                // Replace the last event with a new one containing the appended text
+                                const updatedEvent = { ...lastEvent, content: lastEvent.content + parsedEvent.content };
+                                newEvents[newEvents.length - 1] = updatedEvent;
+                              } else {
+                                // Create a new text event if the last event wasn't text
+                                newEvents.push({
+                                  id: `text-${Date.now()}-${Math.random()}`,
+                                  type: 'text',
+                                  content: parsedEvent.content,
+                                  timestamp: currentTime
+                                });
+                              }
+                              return { ...m, events: newEvents };
+                            }
+                            return m;
+                          }));
                       } else if (parsedEvent.type === 'code_output') {
-                          setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, codeOutput: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code } } : m));
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
+                              newEvents.push({
+                                id: `code-${Date.now()}-${Math.random()}`,
+                                type: 'code_output',
+                                content: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code },
+                                timestamp: currentTime,
+                                duration: eventDuration
+                              });
+                              return { ...m, codeOutput: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code }, events: newEvents };
+                            }
+                            return m;
+                          }));
                       } else if (parsedEvent.type === 'display_plot') {
-                          setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, plotInfo: { url: `${API_BASE_URL}${parsedEvent.url}`, alt: parsedEvent.alt || 'Generated Plot' } } : m));
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              const plotData = { url: `${API_BASE_URL}${parsedEvent.url}`, alt: parsedEvent.alt || 'Generated Plot' };
+                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
+                              newEvents.push({
+                                id: `plot-${Date.now()}-${Math.random()}`,
+                                type: 'plot',
+                                content: plotData,
+                                timestamp: currentTime,
+                                duration: eventDuration
+                              });
+                              return { ...m, plotInfo: plotData, events: newEvents };
+                            }
+                            return m;
+                          }));
                       } else if (parsedEvent.type === 'load_pdb') {
-                          setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, pdbInfo: { url: `${API_BASE_URL}${parsedEvent.url}`, filename: parsedEvent.filename } } : m));
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              const pdbData = { url: `${API_BASE_URL}${parsedEvent.url}`, filename: parsedEvent.filename };
+                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
+                              newEvents.push({
+                                id: `pdb-${Date.now()}-${Math.random()}`,
+                                type: 'pdb',
+                                content: pdbData,
+                                timestamp: currentTime,
+                                duration: eventDuration
+                              });
+                              return { ...m, pdbInfo: pdbData, events: newEvents };
+                            }
+                            return m;
+                          }));
+                      } else if (parsedEvent.type === 'molviewspec_update') {
+                          try {
+                            // Validate that molviewspec is properly serializable
+                            if (parsedEvent.molviewspec && typeof parsedEvent.molviewspec === 'object') {
+                              setMessages(prev => prev.map(m => {
+                                if (m.id === assistantMessageId) {
+                                  const newEvents = [...(m.events || [])];
+                                  const molviewspecData = { molviewspec: parsedEvent.molviewspec, filename: parsedEvent.filename };
+                                  const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
+                                  newEvents.push({
+                                    id: `molviewspec-${Date.now()}-${Math.random()}`,
+                                    type: 'molviewspec',
+                                    content: molviewspecData,
+                                    timestamp: currentTime,
+                                    duration: eventDuration
+                                  });
+                                  return { ...m, molViewSpecInfo: molviewspecData, events: newEvents };
+                                }
+                                return m;
+                              }));
+                              
+                              // Immediately trigger the viewer update during streaming
+                              if (onMolViewSpecUpdate && parsedEvent.molviewspec && parsedEvent.filename) {
+                                console.log("Immediately loading MolViewSpec during streaming:", parsedEvent.filename);
+                                try {
+                                  onMolViewSpecUpdate(parsedEvent.molviewspec, parsedEvent.filename);
+                                  console.log("Successfully loaded MolViewSpec during streaming");
+                                } catch (error) {
+                                  console.error("Error loading MolViewSpec during streaming:", error);
+                                }
+                              }
+                            } else {
+                              console.error('Invalid molviewspec data received:', parsedEvent);
+                              toast({ title: 'MolViewSpec Error', description: 'Received invalid molecular visualization data', status: 'warning', duration: 3000 });
+                            }
+                          } catch (error) {
+                            console.error('Error processing molviewspec update:', error);
+                            toast({ title: 'MolViewSpec Error', description: 'Failed to process molecular visualization data', status: 'error', duration: 5000 });
+                          }
                       } else if (parsedEvent.type === 'tool_start') {
-                          const toolStartMessage: ChatMessage = {
-                            id: `tool-${parsedEvent.name}-${Date.now()}`,
-                            role: 'tool_info',
-                            content: `Running tool: ${parsedEvent.name}...`,
-                            timestamp: new Date().toISOString(),
-                            toolStatus: { name: parsedEvent.name, status: 'running' as const }, // Applied 'as const'
-                            // Optional fields like attachment, codeOutput, etc., will be undefined, which is fine.
-                          };
-                          setMessages(prev => [...prev, toolStartMessage]);
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              newEvents.push({
+                                id: `tool-start-${Date.now()}-${Math.random()}`,
+                                type: 'tool_start',
+                                content: { name: parsedEvent.name },
+                                timestamp: currentTime,
+                                status: 'in_progress' as const
+                              });
+                              return { ...m, events: newEvents };
+                            }
+                            return m;
+                          }));
                       } else if (parsedEvent.type === 'tool_end') {
-                          setMessages(prev =>
-                              prev.map((msg: ChatMessage): ChatMessage => { // Explicitly typed map callback
-                                  if (msg.role === 'tool_info' && msg.toolStatus?.name === parsedEvent.name && msg.toolStatus?.status === 'running') {
-                                      return {
-                                          ...msg,
-                                          content: `Tool finished: ${parsedEvent.name}`,
-                                          toolStatus: { name: parsedEvent.name, status: 'finished' as const } // Applied 'as const'
-                                      };
-                                  }
-                                  return msg;
-                              }).filter((msg: ChatMessage) => // Explicitly typed filter callback parameter
-                                  !(msg.role === 'tool_info' &&
-                                    msg.toolStatus?.name === parsedEvent.name &&
-                                    msg.toolStatus?.status === 'finished')
-                              )
-                          );
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              // Find the corresponding tool_start event to calculate duration
+                              const toolStartEvent = newEvents.find(e => 
+                                e.type === 'tool_start' && e.content.name === parsedEvent.name
+                              );
+                              const toolDuration = toolStartEvent ? currentTime - toolStartEvent.timestamp : undefined;
+                              
+                              // Update the tool_start event status
+                              const updatedEvents = newEvents.map(e => 
+                                e.type === 'tool_start' && e.content.name === parsedEvent.name
+                                  ? { ...e, status: 'completed' as const, duration: toolDuration }
+                                  : e
+                              );
+                              
+                              // Add tool_end event
+                              updatedEvents.push({
+                                id: `tool-end-${Date.now()}-${Math.random()}`,
+                                type: 'tool_end',
+                                content: { name: parsedEvent.name },
+                                timestamp: currentTime,
+                                duration: toolDuration,
+                                status: 'completed' as const
+                              });
+                              
+                              return { ...m, events: updatedEvents };
+                            }
+                            return m;
+                          }));
                       } else if (parsedEvent.type === 'error') {
                           console.error("Backend Stream Error:", parsedEvent.message);
-                          toast({ title: 'Backend Error', description: parsedEvent.message || 'An unknown error occurred.', status: 'error', duration: 5000, isClosable: true });
+                          
+                          // Check if it's a molviewspec serialization error
+                          if (parsedEvent.message && parsedEvent.message.includes('Object of type State is not JSON serializable')) {
+                            toast({ 
+                              title: 'MolViewSpec Generation Error', 
+                              description: 'The molecular visualization could not be generated due to a serialization issue. Please try again.', 
+                              status: 'warning', 
+                              duration: 5000, 
+                              isClosable: true 
+                            });
+                          } else {
+                            toast({ 
+                              title: 'Backend Error', 
+                              description: parsedEvent.message || 'An unknown error occurred.', 
+                              status: 'error', 
+                              duration: 5000, 
+                              isClosable: true 
+                            });
+                          }
+                          
                           const errorSystemMessage: ChatMessage = { // Ensure this also conforms
                               id: `error-${Date.now()}`, 
                               role: 'system', 
@@ -436,7 +905,8 @@ const BackendChat: React.FC<{
           buffer += decoder.decode(); // Flush any remaining bytes from decoder
           const { mainContentDelta: finalMainDelta } = processSSEBuffer(); // Process final buffer content
           if (finalMainDelta) {
-            setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: (m.content || '') + finalMainDelta } : m));
+            // Don't update the main content field since we're using events for chronological display
+            // setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: (m.content || '') + finalMainDelta } : m));
           }
           console.log("Stream finished");
           break;
@@ -446,15 +916,23 @@ const BackendChat: React.FC<{
         const { mainContentDelta } = processSSEBuffer();
 
         if (mainContentDelta) {
-          setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: (m.content || '') + mainContentDelta } : m));
+          // Don't update the main content field since we're using events for chronological display
+          // setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: (m.content || '') + mainContentDelta } : m));
         }
       }
 
       setMessages(prevMessages =>
         prevMessages.map(msg => {
           if (msg.id === assistantMessageId) {
-            const { id, ...finalizedMsg } = msg; // Remove id
-            return finalizedMsg;
+            const { id, ...finalizedMsg } = msg; // Remove id but keep events
+            return {
+              ...finalizedMsg,
+              // Ensure content is properly set from events for consistency
+              content: finalizedMsg.events
+                ?.filter(e => e.type === 'text')
+                .map(e => e.content)
+                .join('') || ''
+            };
           }
           return msg;
         })
@@ -532,8 +1010,7 @@ const BackendChat: React.FC<{
               if (msg.role === 'system' && !msg.isError) return null;
 
               const isEmptyPlaceholder = msg.role === 'assistant' && msg.id &&
-                                        !msg.content?.trim() &&
-                                        !msg.codeOutput && !msg.plotInfo && !msg.pdbInfo && isLoading;
+                                        (!msg.events || msg.events.length === 0) && isLoading;
               if (isEmptyPlaceholder) return null;
 
               let msgBg = assistantMessageBg, justify = 'flex-start';
@@ -556,13 +1033,32 @@ const BackendChat: React.FC<{
                       </Button>
                     )}
 
-                    {/* Render Main Content  */}
-                    {msg.content && msg.content.trim() && (
+                    {/* Render Content Chronologically */}
+                    {msg.role === 'assistant' && msg.events && msg.events.length > 0 ? (
+                      // For assistant messages with events, render chronologically with timeline
+                      <Box>
+                        {msg.events.map((event, idx) => (
+                          <EventRenderer 
+                            key={event.id || `event-${idx}`} 
+                            event={event} 
+                            messageKey={messageKey}
+                            onMolViewSpecUpdate={onMolViewSpecUpdate}
+                            isLast={idx === msg.events!.length - 1}
+                          />
+                        ))}
+                      </Box>
+                    ) : msg.role === 'assistant' && msg.id ? (
+                      // For streaming assistant messages without events yet, show nothing (events will populate)
+                      null
+                    ) : (
+                      // For non-assistant messages or finalized messages, render content normally
+                      msg.content && msg.content.trim() && (
                         <Box className="markdown-container">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                             {msg.content}
-                            </ReactMarkdown>
+                          </ReactMarkdown>
                         </Box>
+                      )
                     )}
 
                     {msg.role === 'tool_info' && msg.toolStatus && (
@@ -577,65 +1073,6 @@ const BackendChat: React.FC<{
                          <Alert status="error" variant="subtle" mt={2} borderRadius="md">
                             <AlertIcon /><AlertDescription fontSize="sm">{msg.content}</AlertDescription>
                          </Alert>
-                    )}
-
-                    {msg.codeOutput && (
-                      <Box mt={3}>
-                        <HStack spacing={2} width="100%" justifyContent="space-between" minH="16px" mb={1} cursor="pointer" onClick={() => toggleCodeOutput(messageKey)}>
-                          <Text fontSize="xs" fontWeight="bold" color="gray.600">Code Execution:</Text>
-                          <Button size="xs" variant="ghost" height="16px" minWidth="20px" p={0}
-                                  aria-label={codeOutputVisible[messageKey] ? "Collapse Code Output" : "Expand Code Output"}>
-                            {codeOutputVisible[messageKey] ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                          </Button>
-                        </HStack>
-                        <Collapse in={codeOutputVisible[messageKey]} animateOpacity style={{width: '100%'}}>
-                          <Box pt={2}>
-                            {msg.codeOutput.code && (
-                              <Box mb={3}>
-                                <Text fontSize="sm" fontWeight="bold" mb={1}>Executed Code:</Text>
-                                <CodeBlock className="language-python">{msg.codeOutput.code}</CodeBlock>
-                              </Box>
-                            )}
-                            {(msg.codeOutput.stdout || msg.codeOutput.stderr) && (<Text fontSize="sm" fontWeight="bold" mb={1}>Code Output:</Text>)}
-                            {msg.codeOutput.stdout && (
-                              <Box mb={msg.codeOutput.stderr ? 2 : 0}>
-                                <Text fontSize="xs" color="gray.500" mb={1}>STDOUT:</Text>
-                                <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" wordBreak="break-all" fontSize="sm" w="full" borderWidth="1px" borderColor={borderColor}>{msg.codeOutput.stdout}</Code>
-                              </Box>
-                            )}
-                            {msg.codeOutput.stderr && (
-                              <Box>
-                                  <Text fontSize="xs" color={stderrColor} mb={1}>STDERR:</Text>
-                                  <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" wordBreak="break-all" fontSize="sm" w="full" color={stderrCodeColor} borderWidth="1px" borderColor={borderColor}>{msg.codeOutput.stderr}</Code>
-                              </Box>
-                            )}
-                            {!msg.codeOutput.code && !msg.codeOutput.stdout && !msg.codeOutput.stderr && (<Text fontSize="sm" fontStyle="italic" color="gray.500">(No output)</Text>)}
-                          </Box>
-                        </Collapse>
-                      </Box>
-                    )}
-
-                    {msg.plotInfo && msg.plotInfo.url && (
-                      <Box mt={3} textAlign="center">
-                        <Text fontSize="sm" fontWeight="bold" mb={2}>Generated Plot:</Text>
-                        <Image src={msg.plotInfo.url} alt={msg.plotInfo.alt || 'Generated Plot'} maxW="80%" mx="auto" borderRadius="md"
-                               boxShadow="sm" borderWidth="1px" borderColor={borderColor} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                         <Button as="a" href={msg.plotInfo.url} target="_blank" rel="noopener noreferrer" size="xs" variant="outline" mt={2} leftIcon={<ExternalLinkIcon />}>Open Plot</Button>
-                      </Box>
-                    )}
-
-                    {msg.pdbInfo && msg.pdbInfo.url && msg.pdbInfo.filename && (
-                       <Box mt={3} p={3} borderWidth="1px" borderRadius="md" borderColor={borderColor} bg="blue.50">
-                        <HStack justifyContent="space-between" mb={2} wrap="wrap">
-                          <Text fontSize="sm" fontWeight="bold">Generated Structure</Text>
-                          <Button as="a" href={msg.pdbInfo.url} download={msg.pdbInfo.filename} size="sm" colorScheme="blue" leftIcon={<ExternalLinkIcon />} flexShrink={0}>Download File</Button>
-                        </HStack>
-                        <Text fontSize="sm" mb={1} wordBreak="break-all">File: {msg.pdbInfo.filename}</Text>
-                        <HStack spacing={2} mt={2}>
-                          {onLoadStructureUrl && (<Button size="xs" colorScheme="teal" onClick={() => { if (onLoadStructureUrl && msg.pdbInfo?.url) onLoadStructureUrl(msg.pdbInfo.url); }}>View in 3D</Button>)}
-                          <Button as="a" href={msg.pdbInfo.url} target="_blank" rel="noopener noreferrer" size="xs" variant="outline">Preview File</Button>
-                        </HStack>
-                       </Box>
                     )}
 
                     {msg.role !== 'tool_info' && !(msg.role === 'system' && msg.isError) && (
@@ -716,13 +1153,48 @@ const BackendChat: React.FC<{
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* PDB File Preview Modal */}
+      <Modal isOpen={isPdbPreviewOpen} onClose={closePdbPreview} size="xl" isCentered scrollBehavior="inside">
+        <ModalOverlay />
+        <ModalContent maxH="80vh">
+          <ModalHeader>Structure File Preview</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            {pdbPreviewContent ? (
+              <Code 
+                as="pre" 
+                whiteSpace="pre-wrap" 
+                wordBreak="break-all" 
+                p={3} 
+                bg={codeOutputBg} 
+                borderRadius="md" 
+                maxH="60vh" 
+                overflowY="auto" 
+                borderWidth="1px" 
+                borderColor={borderColor}
+                fontSize="xs"
+                fontFamily="monospace"
+                lineHeight="1.2"
+              >
+                {pdbPreviewContent}
+              </Code>
+            ) : (
+              <Box textAlign="center" py={8}>
+                <Spinner size="lg" />
+                <Text mt={2} color="gray.500">Loading file content...</Text>
+              </Box>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 };
 
 
 const App: React.FC = () => {
-  const [structureUrl, setStructureUrl] = useState<string | null>(null);
+  const [molViewerRef, setMolViewerRef] = useState<any>(null);
 
   const theme = extendTheme({
     styles: {
@@ -739,57 +1211,130 @@ const App: React.FC = () => {
     }
   });
 
-  const handleLoadStructureUrl = useCallback((url: string) => {
-    console.log(`[App] handleLoadStructureUrl called with URL: ${url}`);
-    setStructureUrl(url);
+  const handleMolViewSpecUpdate = useCallback((molviewspec: any, filename: string) => {
+    console.log(`[App] handleMolViewSpecUpdate called with filename: ${filename}`);
+    if (molViewerRef && molViewerRef.plugin) {
+      try {
+        // Validate the molviewspec data before processing
+        if (!molviewspec || typeof molviewspec !== 'object') {
+          console.error('Invalid molviewspec data:', molviewspec);
+          return;
+        }
+
+        // Ensure the data is properly formatted for MolViewSpec
+        let mvsData;
+        if (typeof molviewspec === 'string') {
+          // If it's a string, try to parse it
+          mvsData = (window as any).molstar.PluginExtensions.mvs.MVSData.fromMVSJ(molviewspec);
+        } else {
+          // If it's an object, stringify it first
+          mvsData = (window as any).molstar.PluginExtensions.mvs.MVSData.fromMVSJ(JSON.stringify(molviewspec));
+        }
+        
+        (window as any).molstar.PluginExtensions.mvs.loadMVS(molViewerRef.plugin, mvsData, { 
+          sourceUrl: `data:${filename}`, 
+          sanityChecks: true, 
+          replaceExisting: true 
+        });
+      } catch (error) {
+        console.error('Error loading MolViewSpec:', error);
+        // You could add a toast notification here if you want to show the error to the user
+      }
+    } else {
+      console.warn('MolViewer not initialized yet, cannot load MolViewSpec');
+    }
+  }, [molViewerRef]);
+
+  useEffect(() => {
+    // Load Molstar scripts dynamically
+    const loadMolstar = async () => {
+      // Check if Molstar is already loaded
+      if ((window as any).molstar) {
+        initializeViewer();
+        return;
+      }
+
+      // Load CSS
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      // link.href = 'https://cdn.jsdelivr.net/npm/molstar@latest/build/viewer/molstar.css';
+      link.href = '/viewer3/molstar.css';
+      document.head.appendChild(link);
+
+      // Load JS
+      const script = document.createElement('script');
+      // script.src = 'https://cdn.jsdelivr.net/npm/molstar@latest/build/viewer/molstar.js';
+      script.src = '/viewer3/molstar.js';
+      script.onload = () => {
+        initializeViewer();
+      };
+      document.head.appendChild(script);
+    };
+
+    const initializeViewer = () => {
+      if ((window as any).molstar) {
+        (window as any).molstar.Viewer
+          .create('molstar-viewer', { 
+            layoutIsExpanded: false, 
+            layoutShowControls: false,
+            layoutShowLeftPanel: true,
+          })
+          .then((viewer: any) => {
+            console.log('Molstar viewer initialized');
+            setMolViewerRef(viewer);
+          })
+          .catch((error: any) => {
+            console.error('Error initializing Molstar viewer:', error);
+          });
+      }
+    };
+
+    loadMolstar();
   }, []);
   
-  useEffect(() => {
-    console.log(`[App] structureUrl state updated to: ${structureUrl}`);
-  }, [structureUrl]);
-
-  // Dummy MolstarApp component for placeholder if not available
-  const MolstarAppPlaceholder: React.FC<{ urls: any[], backgroundColor: string }> = ({ urls, backgroundColor }) => (
-    <Flex align="center" justify="center" h="100%" bg={backgroundColor} borderWidth="1px" borderColor="gray.300" borderRadius="md">
-      <Text color="gray.500">
-        Molstar Viewer Placeholder
-        {urls.length > 0 && <Text fontSize="sm">Loading: {urls[0].url}</Text>}
-      </Text>
-    </Flex>
-  );
-
-
-  const molstarUrls = React.useMemo(() => {
-    if (structureUrl) {
-      const format = structureUrl.toLowerCase().includes('.cif') ? 'cif' : 'pdb';
-      return [{ url: structureUrl, format: format as 'cif' | 'pdb', isBinary: false }];
-    }
-    return [];
-  }, [structureUrl]);
-
   return (
     <ChakraProvider theme={theme}>
       <Flex direction="column" minH="100%" maxH="100%" bg='gray.50'>
-        <Flex flex="1" direction={{ base: 'column', lg: 'row' }} overflow="hidden" height="calc(100vh - 0px)"> {/* Assuming no header, adjust if header exists */}
-          <Box flex={{ base: '1', lg: 3 }} p={{ base: 2, md: 4 }}
+        <Flex flex="1" direction={{ base: 'column', lg: 'row' }} overflow="hidden" height="calc(100vh - 0px)">
+          <Box flex={{ base: '1', lg: 3 }} p={{ base: 0.1, md: 0 }}
                borderRightWidth={{ base: '0', lg: '1px' }} borderBottomWidth={{ base: '1px', lg: '0' }}
                borderColor='gray.200' minH={{ base: '40vh', md: '50vh', lg: 'auto' }}
                position="relative" overflow="hidden">
-             {(structureUrl || molstarUrls.length > 0) ? ( // Adjusted condition slightly
-                 <MolstarApp
-                    key={structureUrl /* || proteinPdbId */}
-                    urls={molstarUrls}
-                    backgroundColor='#FFFFFF' 
-                 />
-             ) : (
-                <Flex h="100%" align="center" justify="center" color="gray.500">
-                    <Text>Load or generate a protein structure using the chat.</Text>
-                </Flex>
+             <Box 
+               id="molstar-viewer" 
+               h="100%" 
+               w="100%" 
+               bg="white" 
+               borderRadius="md" 
+               borderWidth="1px" 
+               borderColor="gray.300"
+               position="relative"
+               zIndex={10}
+             />
+             {!molViewerRef && (
+               <Flex 
+                 position="absolute" 
+                 top="0" 
+                 left="0" 
+                 right="0" 
+                 bottom="0" 
+                 align="center" 
+                 justify="center" 
+                 bg="white" 
+                 color="gray.500"
+                 borderRadius="md"
+               >
+                 <VStack spacing={2}>
+                   <Spinner size="lg" />
+                   <Text>Loading Molstar Viewer...</Text>
+                 </VStack>
+               </Flex>
              )}
           </Box>
           <Box flex={{ base: '1', lg: 2 }} display="flex" flexDirection="column"
                h={{ base: 'auto', lg: 'calc(100vh - 68px)' }} overflow="hidden">
-            <BackendChat onLoadStructureUrl={handleLoadStructureUrl} />
+            <BackendChat onMolViewSpecUpdate={handleMolViewSpecUpdate} />
           </Box>
         </Flex>
       </Flex>

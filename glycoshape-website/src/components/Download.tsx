@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -6,11 +7,582 @@ import {
   HStack,
   Text,
   Divider,
+  Spinner,
+  Alert,
+  AlertIcon,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  Icon,
+  Grid,
+  GridItem,
+  Badge,
+  useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Input,
+  FormControl,
+  FormLabel,
+  Progress,
+  useColorModeValue,
 } from "@chakra-ui/react";
+import { ChevronRightIcon, DownloadIcon, ExternalLinkIcon, AttachmentIcon, AddIcon } from "@chakra-ui/icons";
+
+interface FileItem {
+  name: string;
+  type: 'file' | 'directory';
+  size?: number;
+  lastModified?: string;
+}
+
+interface FileBrowserProps {
+  initialFolder?: string;
+}
+
+interface UploadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentPath: string;
+  onUploadSuccess: () => void;
+}
+
+const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath, onUploadSuccess }) => {
+  const [uploadKey, setUploadKey] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [dragActive, setDragActive] = useState(false);
+  const toast = useToast();
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const borderColor = useColorModeValue('gray.300', 'gray.600');
+  const bgColor = useColorModeValue('gray.50', 'gray.700');
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(e.target.files);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!uploadKey.trim()) {
+      toast({
+        title: "Upload Key Required",
+        description: "Please enter a valid upload key",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (!selectedFiles || selectedFiles.length === 0) {
+      toast({
+        title: "No Files Selected",
+        description: "Please select files to upload",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append('upload_key', uploadKey);
+      formData.append('target_path', currentPath);
+
+      // Add all selected files
+      Array.from(selectedFiles).forEach((file, index) => {
+        formData.append('files', file);
+      });
+
+      const response = await fetch(`${apiUrl}/api/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Upload failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Upload Successful",
+        description: `Successfully uploaded ${selectedFiles.length} file(s)`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // Reset form
+      setUploadKey('');
+      setSelectedFiles(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      onUploadSuccess();
+      onClose();
+      
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Upload Files</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <VStack spacing={4}>
+            <FormControl isRequired>
+              <FormLabel>Upload Key</FormLabel>
+              <Input
+                type="password"
+                placeholder="Enter your upload key"
+                value={uploadKey}
+                onChange={(e) => setUploadKey(e.target.value)}
+                disabled={uploading}
+              />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>Target Directory</FormLabel>
+              <Text fontSize="sm" color="gray.600">
+                {currentPath ? `/files/${currentPath}` : '/files/'}
+              </Text>
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>Select Files</FormLabel>
+              <Box
+                border="2px dashed"
+                borderColor={dragActive ? "blue.300" : borderColor}
+                borderRadius="md"
+                p={6}
+                textAlign="center"
+                bg={dragActive ? "blue.50" : bgColor}
+                cursor="pointer"
+                transition="all 0.2s"
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <VStack spacing={2}>
+                  <AddIcon color="gray.400" />
+                  <Text>
+                    {selectedFiles && selectedFiles.length > 0
+                      ? `${selectedFiles.length} file(s) selected`
+                      : 'Drag & drop files here, or click to select'}
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    Supports multiple files
+                  </Text>
+                </VStack>
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleFileSelect}
+                  display="none"
+                  {...({ webkitdirectory: "" } as any)}
+                />
+              </Box>
+            </FormControl>
+
+            {selectedFiles && selectedFiles.length > 0 && (
+              <Box w="100%">
+                <Text fontSize="sm" fontWeight="medium" mb={2}>Selected Files:</Text>
+                <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={2}>
+                  {Array.from(selectedFiles).slice(0, 10).map((file, index) => (
+                    <Text key={index} fontSize="xs" color="gray.600">
+                      {file.webkitRelativePath || file.name}
+                    </Text>
+                  ))}
+                  {selectedFiles.length > 10 && (
+                    <Text fontSize="xs" color="gray.500">
+                      ... and {selectedFiles.length - 10} more files
+                    </Text>
+                  )}
+                </Box>
+              </Box>
+            )}
+
+            {uploading && (
+              <Box w="100%">
+                <Text fontSize="sm" mb={2}>Uploading...</Text>
+                <Progress value={uploadProgress} colorScheme="blue" />
+              </Box>
+            )}
+          </VStack>
+        </ModalBody>
+
+        <ModalFooter>
+          <Button variant="ghost" mr={3} onClick={onClose} disabled={uploading}>
+            Cancel
+          </Button>
+          <Button 
+            colorScheme="blue" 
+            onClick={handleUpload}
+            disabled={!uploadKey.trim() || !selectedFiles || uploading}
+            isLoading={uploading}
+            loadingText="Uploading..."
+          >
+            Upload
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+};
+
+const FileBrowser: React.FC<FileBrowserProps> = ({ initialFolder }) => {
+  const [currentPath, setCurrentPath] = useState<string>(initialFolder || '');
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const toast = useToast();
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const { isOpen: isUploadOpen, onOpen: onUploadOpen, onClose: onUploadClose } = useDisclosure();
+
+  const fetchFiles = async (path: string = '') => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Since we're using nginx directory listing, we'll fetch the HTML and parse it
+      const response = await fetch(`${apiUrl}/files/${path}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch directory listing: ${response.status}`);
+      }
+      
+      const html = await response.text();
+      const files = parseNginxDirectoryListing(html);
+      setFiles(files);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      setFiles([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const parseNginxDirectoryListing = (html: string): FileItem[] => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const links = doc.querySelectorAll('a');
+    const items: FileItem[] = [];
+    
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href || href === '../' || href === './') return;
+      
+      const name = href.endsWith('/') ? href.slice(0, -1) : href;
+      const type = href.endsWith('/') ? 'directory' : 'file';
+      
+      // Try to extract file size and date from the parent element's text
+      const parentText = link.parentElement?.textContent || '';
+      const sizeMatch = parentText.match(/(\d+(?:\.\d+)?[KMGT]?B?)/);
+      const dateMatch = parentText.match(/(\d{2}-\w{3}-\d{4} \d{2}:\d{2})/);
+      
+      items.push({
+        name,
+        type,
+        size: sizeMatch ? parseFileSize(sizeMatch[1]) : undefined,
+        lastModified: dateMatch ? dateMatch[1] : undefined
+      });
+    });
+    
+    return items.filter(item => item.name && item.name !== 'Parent Directory');
+  };
+
+  const parseFileSize = (sizeStr: string): number => {
+    const units: { [key: string]: number } = {
+      'B': 1,
+      'KB': 1024,
+      'MB': 1024 * 1024,
+      'GB': 1024 * 1024 * 1024,
+      'TB': 1024 * 1024 * 1024 * 1024
+    };
+    
+    const match = sizeStr.match(/^(\d+(?:\.\d+)?)([KMGT]?B?)$/);
+    if (!match) return 0;
+    
+    const [, numStr, unit] = match;
+    const num = parseFloat(numStr);
+    return num * (units[unit] || 1);
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const navigateToFolder = (folderName: string) => {
+    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+    setCurrentPath(newPath);
+    navigate(`/downloads/${newPath}`, { replace: true });
+  };
+
+  const navigateToParent = () => {
+    const pathParts = currentPath.split('/').filter(Boolean);
+    pathParts.pop();
+    const newPath = pathParts.join('/');
+    setCurrentPath(newPath);
+    navigate(newPath ? `/downloads/${newPath}` : '/downloads', { replace: true });
+  };
+
+  const downloadFile = (fileName: string) => {
+    const filePath = currentPath ? `${currentPath}/${fileName}` : fileName;
+    const link = document.createElement('a');
+    link.href = `${apiUrl}/files/${filePath}`;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download started",
+      description: `Downloading ${fileName}`,
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  const getBreadcrumbs = () => {
+    if (!currentPath) return [];
+    return currentPath.split('/').filter(Boolean);
+  };
+
+  const handleUploadSuccess = () => {
+    // Refresh the file list after successful upload
+    fetchFiles(currentPath);
+  };
+
+  useEffect(() => {
+    fetchFiles(currentPath);
+  }, [currentPath]);
+
+  return (
+    <Box>
+      {/* Header with Upload Button */}
+      <HStack justify="space-between" mb={4}>
+        <Box>
+          {/* Breadcrumb Navigation */}
+          {currentPath && (
+            <Breadcrumb spacing="8px" separator={<ChevronRightIcon color="gray.500" />}>
+              <BreadcrumbItem>
+                <BreadcrumbLink onClick={() => { setCurrentPath(''); navigate('/downloads'); }}>
+                  Files
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {getBreadcrumbs().map((folder, index) => {
+                const isLast = index === getBreadcrumbs().length - 1;
+                const path = getBreadcrumbs().slice(0, index + 1).join('/');
+                
+                return (
+                  <BreadcrumbItem key={index} isCurrentPage={isLast}>
+                    {isLast ? (
+                      <Text fontWeight="bold">{folder}</Text>
+                    ) : (
+                      <BreadcrumbLink onClick={() => {
+                        setCurrentPath(path);
+                        navigate(`/downloads/${path}`);
+                      }}>
+                        {folder}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                );
+              })}
+            </Breadcrumb>
+          )}
+        </Box>
+        
+        <Button
+          leftIcon={<AddIcon />}
+          colorScheme="green"
+          size="sm"
+          onClick={onUploadOpen}
+        >
+          Upload
+        </Button>
+      </HStack>
+
+      {/* Back button */}
+      {currentPath && (
+        <Button 
+          leftIcon={<ChevronRightIcon transform="rotate(180deg)" />}
+          size="sm" 
+          variant="outline" 
+          mb={4}
+          onClick={navigateToParent}
+        >
+          Back
+        </Button>
+      )}
+
+      {/* Loading state */}
+      {loading && (
+        <Box textAlign="center" py={8}>
+          <Spinner size="lg" />
+          <Text mt={2}>Loading files...</Text>
+        </Box>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <Alert status="error" mb={4}>
+          <AlertIcon />
+          {error}
+        </Alert>
+      )}
+
+      {/* Files list */}
+      {!loading && !error && (
+        <Grid templateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={4}>
+          {files.map((file, index) => (
+            <GridItem key={index}>
+              <Box
+                p={4}
+                border="1px solid"
+                borderColor="gray.200"
+                borderRadius="md"
+                _hover={{ bg: "gray.50", cursor: "pointer" }}
+                onClick={() => {
+                  if (file.type === 'directory') {
+                    navigateToFolder(file.name);
+                  }
+                }}
+              >
+                <HStack justify="space-between">
+                  <HStack>
+                    <Icon 
+                      as={file.type === 'directory' ? ExternalLinkIcon : AttachmentIcon} 
+                      color={file.type === 'directory' ? "blue.500" : "gray.500"}
+                    />
+                    <VStack align="start" spacing={1}>
+                      <Text fontWeight="medium" fontSize="sm">
+                        {file.name}
+                      </Text>
+                      {file.size && (
+                        <Badge colorScheme="gray" size="sm">
+                          {formatFileSize(file.size)}
+                        </Badge>
+                      )}
+                      {file.lastModified && (
+                        <Text fontSize="xs" color="gray.500">
+                          {file.lastModified}
+                        </Text>
+                      )}
+                    </VStack>
+                  </HStack>
+                  
+                  {file.type === 'file' && (
+                    <Button
+                      size="xs"
+                      colorScheme="blue"
+                      leftIcon={<DownloadIcon />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadFile(file.name);
+                      }}
+                    >
+                      Download
+                    </Button>
+                  )}
+                </HStack>
+              </Box>
+            </GridItem>
+          ))}
+        </Grid>
+      )}
+
+      {!loading && !error && files.length === 0 && (
+        <Box textAlign="center" py={8}>
+          <Text color="gray.500">No files found in this directory.</Text>
+        </Box>
+      )}
+
+      {/* Upload Modal */}
+      <UploadModal
+        isOpen={isUploadOpen}
+        onClose={onUploadClose}
+        currentPath={currentPath}
+        onUploadSuccess={handleUploadSuccess}
+      />
+    </Box>
+  );
+};
 
 const Download: React.FC = () => {
+  const { '*': folderPath } = useParams();
+  const filesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Scroll to Files section if a folder is specified in the URL
+    if (folderPath && filesRef.current) {
+      setTimeout(() => {
+        filesRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [folderPath]);
+
   return (
-    <Box p={5} maxWidth="800px" margin="0 auto">
+    <Box p={5} maxWidth="1200px" margin="0 auto">
       <Text 
           bgGradient='linear(to-l, #44666C, #A7C4A3)'
           bgClip='text'
@@ -63,7 +635,16 @@ AMBER4 MD packages). </Text>
 
         <Divider />
 
-        {/* Add more resources as needed */}
+        {/* Files Section */}
+        <Box ref={filesRef} width="100%">
+          <Text fontSize="2xl" fontWeight="bold" mb={4}>
+            Files
+          </Text>
+          <Text mb={4} color="gray.600">
+            Browse and download individual files and folders from our collection.
+          </Text>
+          <FileBrowser initialFolder={folderPath} />
+        </Box>
       </VStack>
     </Box>
   );

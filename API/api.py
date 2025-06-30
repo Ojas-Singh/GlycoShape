@@ -20,11 +20,17 @@ import io
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import re
+from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
+import logging
+import hashlib
+import secrets
 
 
 app = Flask(__name__)
 
-app.config['MAX_CONTENT_LENGTH'] = 5000 * 1024 * 1024
+# Configure app for upload functionality
+app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
 CORS(app)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 CORS(app, supports_credentials=True)
@@ -37,6 +43,31 @@ except ValueError as e:
     print(f"Warning: Natural2SPARQL client could not be initialized: {e}")
     n2s_client = None
 
+# Upload functionality helper functions
+def allowed_file(filename):
+    """Check if the file extension is allowed."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in config.ALLOWED_EXTENSIONS
+
+def validate_upload_key(upload_key):
+    """Validate the upload key and return user role if valid."""
+    return config.VALID_UPLOAD_KEYS.get(upload_key)
+
+def sanitize_path(path):
+    """Sanitize the path to prevent directory traversal attacks."""
+    # Remove any leading/trailing slashes and resolve any relative paths
+    clean_path = os.path.normpath(path).strip('/')
+    
+    # Ensure the path doesn't contain any directory traversal attempts
+    if '..' in clean_path or clean_path.startswith('/'):
+        raise ValueError("Invalid path: directory traversal not allowed")
+    
+    return clean_path
+
+def ensure_directory_exists(directory_path):
+    """Create directory if it doesn't exist."""
+    Path(directory_path).mkdir(parents=True, exist_ok=True)
+
 
 # load directory 
 GLYCOSHAPE_DIR = Path(config.glycoshape_database_dir)
@@ -44,6 +75,12 @@ GLYCOSHAPE_CSV = Path(config.glycoshape_inventory_csv)
 GLYCOSHAPE_RAWDATA_DIR = Path(config.glycoshape_rawdata_dir)
 GLYCOSHAPE_UPLOAD_DIR = Path(config.glycoshape_upload_dir)
 
+# Ensure upload directory exists
+ensure_directory_exists(GLYCOSHAPE_UPLOAD_DIR)
+
+# Setup logging for upload functionality
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Define the path to the CSV file
 CSV_FILE_PATH = 'visitors.csv'
@@ -899,7 +936,6 @@ def is_iupac(identifier):
                        'Abe', 'Leg', 'Lep', 'Ery', 'Rib', 'Lyx', 'Sor', 'Tag', 'Sed']
     
     return ('(' in identifier or 
-            ' ' in identifier or 
             any(monosaccharide in identifier for monosaccharide in monosaccharides) or
             any(linkage in identifier for linkage in ['a1-', 'b1-', 'a2-', 'b2-']))
 
@@ -1466,6 +1502,164 @@ def natural_language_to_sparql():
             'Access-Control-Allow-Headers': 'Content-Type',
         }
     )
+
+@app.route('/api/upload', methods=['POST'])
+def upload_files():
+    """Handle file upload with authentication."""
+    try:
+        # Validate upload key
+        upload_key = request.form.get('upload_key')
+        if not upload_key:
+            return jsonify({'error': 'Upload key is required'}), 400
+        
+        user_role = validate_upload_key(upload_key)
+        if not user_role:
+            logger.warning(f"Invalid upload key attempted: {upload_key[:10]}...")
+            return jsonify({'error': 'Invalid upload key'}), 401
+        
+        # Get target path
+        target_path = request.form.get('target_path', '')
+        try:
+            clean_target_path = sanitize_path(target_path) if target_path else ''
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
+        
+        # Create full upload directory path
+        upload_dir = os.path.join(str(GLYCOSHAPE_UPLOAD_DIR), clean_target_path)
+        ensure_directory_exists(upload_dir)
+        
+        # Get uploaded files
+        uploaded_files = request.files.getlist('files')
+        if not uploaded_files or all(f.filename == '' for f in uploaded_files):
+            return jsonify({'error': 'No files selected'}), 400
+        
+        successful_uploads = []
+        failed_uploads = []
+        
+        for file in uploaded_files:
+            if file and file.filename:
+                try:
+                    # Secure the filename
+                    filename = secure_filename(file.filename)
+                    if not filename:
+                        failed_uploads.append({
+                            'filename': file.filename,
+                            'error': 'Invalid filename'
+                        })
+                        continue
+                    
+                    # Check file extension
+                    if not allowed_file(filename):
+                        failed_uploads.append({
+                            'filename': filename,
+                            'error': 'File type not allowed'
+                        })
+                        continue
+                    
+                    # Handle duplicate filenames by adding a suffix
+                    file_path = os.path.join(upload_dir, filename)
+                    counter = 1
+                    name, ext = os.path.splitext(filename)
+                    
+                    while os.path.exists(file_path):
+                        new_filename = f"{name}_{counter}{ext}"
+                        file_path = os.path.join(upload_dir, new_filename)
+                        counter += 1
+                    
+                    # Save the file
+                    file.save(file_path)
+                    
+                    # Get file info
+                    file_size = os.path.getsize(file_path)
+                    
+                    successful_uploads.append({
+                        'filename': os.path.basename(file_path),
+                        'original_filename': file.filename,
+                        'size': file_size,
+                        'path': os.path.join(clean_target_path, os.path.basename(file_path)) if clean_target_path else os.path.basename(file_path)
+                    })
+                    
+                    logger.info(f"File uploaded successfully: {file_path} by user role: {user_role}")
+                    
+                except Exception as e:
+                    logger.error(f"Error uploading file {file.filename}: {str(e)}")
+                    failed_uploads.append({
+                        'filename': file.filename,
+                        'error': str(e)
+                    })
+        
+        # Prepare response
+        response_data = {
+            'message': f'Upload completed. {len(successful_uploads)} files uploaded successfully.',
+            'successful_uploads': successful_uploads,
+            'failed_uploads': failed_uploads,
+            'upload_summary': {
+                'total_files': len(uploaded_files),
+                'successful': len(successful_uploads),
+                'failed': len(failed_uploads),
+                'target_directory': clean_target_path or 'root',
+                'uploaded_by': user_role,
+                'timestamp': datetime.now().isoformat()
+            }
+        }
+        
+        status_code = 200 if successful_uploads else 400
+        return jsonify(response_data), status_code
+        
+    except RequestEntityTooLarge:
+        return jsonify({'error': 'File too large. Maximum size allowed is 1GB.'}), 413
+    except Exception as e:
+        logger.error(f"Unexpected error in upload endpoint: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/upload/validate-key', methods=['POST'])
+def validate_key():
+    """Validate an upload key without uploading files."""
+    try:
+        data = request.get_json()
+        upload_key = data.get('upload_key') if data else None
+        
+        if not upload_key:
+            return jsonify({'error': 'Upload key is required'}), 400
+        
+        user_role = validate_upload_key(upload_key)
+        if user_role:
+            return jsonify({
+                'valid': True,
+                'user_role': user_role,
+                'message': 'Upload key is valid'
+            }), 200
+        else:
+            return jsonify({
+                'valid': False,
+                'message': 'Invalid upload key'
+            }), 401
+            
+    except Exception as e:
+        logger.error(f"Error validating upload key: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/upload/info', methods=['GET'])
+def upload_info():
+    """Get upload configuration information."""
+    return jsonify({
+        'max_file_size': config.MAX_CONTENT_LENGTH,
+        'max_file_size_mb': config.MAX_CONTENT_LENGTH // (1024 * 1024),
+        'allowed_extensions': list(config.ALLOWED_EXTENSIONS),
+        'upload_directory': str(GLYCOSHAPE_UPLOAD_DIR)
+    }), 200
+
+# Error handlers for upload functionality
+@app.errorhandler(413)
+def too_large(e):
+    """Handle file too large error."""
+    return jsonify({'error': 'File too large. Maximum size allowed is 1GB.'}), 413
+
+@app.errorhandler(500)
+def internal_error(e):
+    """Handle internal server errors."""
+    logger.error(f"Internal server error: {str(e)}")
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
     app.run()
