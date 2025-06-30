@@ -46,7 +46,21 @@ UPLOAD_FOLDER = variable_value2  # Use the same as glycoshape_upload_dir
 MAX_CONTENT_LENGTH = 10024 * 1024 * 1024  # 10GB max file size
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'pdb', 'zip', 'tar', 'gz', 'json', 'csv', 'mol2', 'mol', 'sdf', 'xyz', 'prm7', 'prm', 'nc', 'rst', 'tsv', 'xlsx', 'xls', 'md', 'html', 'htm', 'xml', 'yaml', 'yml', 'cif', 'map'}
 
-# Upload keys - In production, store these securely (e.g., in environment variables)
-VALID_UPLOAD_KEYS = {
-    'admin_key_123': 'admin', 
-}
+# Load upload keys from environment variables
+def load_upload_keys():
+    """Load upload keys from environment variables with fallback defaults."""
+    upload_keys = {}
+    
+    # Load individual keys from environment variables
+    admin_key = os.environ.get('GLYCOSHAPE_UPLOAD_KEY')
+    # Add keys to dictionary if they exist
+    if admin_key:
+        upload_keys[admin_key] = 'admin'
+    
+    return upload_keys
+
+# Initialize upload keys
+VALID_UPLOAD_KEYS = load_upload_keys()
+
+# Print loaded keys (without showing the actual keys for security)
+print(f"Loaded {len(VALID_UPLOAD_KEYS)} upload keys with roles: {list(set(VALID_UPLOAD_KEYS.values()))}")
