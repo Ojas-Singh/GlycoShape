@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 from lib import config, GOTW_script, name , natural2sparql
 from glycowork.motif.draw import GlycoDraw
+from glycowork.motif.processing import canonicalize_iupac
 import tempfile
 import shutil
 import zipfile
@@ -902,6 +903,21 @@ def is_iupac(identifier):
             any(monosaccharide in identifier for monosaccharide in monosaccharides) or
             any(linkage in identifier for linkage in ['a1-', 'b1-', 'a2-', 'b2-']))
 
+def is_glycam(identifier):
+    """
+    Check if the identifier is a valid GLYCAM name.
+    A simple heuristic: GLYCAM names often contain square brackets [] and specific monosaccharide codes,
+    but should NOT contain parentheses () to avoid overlap with IUPAC.
+    """
+    # GLYCAM names typically use square brackets for branching and have patterns like DManp, DGlcpNAc, etc.
+    monosaccharides = [
+        'DManp', 'DGlcp', 'DGalp', 'DGlcpNAc', 'DGalpNAc', 'LFucp', 'DGlcpA', 'DGalpA', 'KDN', 'Neu5Ac', 'Neu5Gc'
+    ]
+    has_brackets = '[' in identifier or ']' in identifier
+    has_monosaccharide = any(m in identifier for m in monosaccharides)
+    has_parentheses = '(' in identifier or ')' in identifier
+    # Heuristic: must have at least one bracket and one monosaccharide code, and no parentheses
+    return has_brackets and has_monosaccharide and not has_parentheses
 
 @app.route('/api/search', methods=['POST'])
 def search():
@@ -1138,8 +1154,9 @@ def search():
     else:
         is_it_glytoucan = is_glytoucan(search_string)
         is_it_iupac = is_iupac(search_string)
+        is_it_glycam = is_glycam(search_string)
         print(f"Search string: {search_string}")
-        print(f"Is GlyTouCan: {is_it_glytoucan}, Is IUPAC: {is_it_iupac}")
+        print(f"Is GlyTouCan: {is_it_glytoucan}, Is IUPAC: {is_it_iupac} , Is GlyCam: {is_it_glycam}")
 
         if is_it_glytoucan:
             glytoucan_id = search_string.lower()
@@ -1166,6 +1183,29 @@ def search():
                     }
                     search_result.append(entry)
             search_result.sort(key=lambda x: x['mass'])
+            return jsonify({'search_string': search_string, 'results': search_result})
+        
+        elif is_it_glycam:
+            # Remove last 5 characters if they match the pattern like 'b1-OH' or 'a1-OH'
+            if re.match(r'[ab]\d-OH$', search_string[-5:]):
+                glycam_core = search_string[:-5]
+            else:
+                glycam_core = search_string
+            iupac = canonicalize_iupac(glycam_core)
+            iupac_id = iupac.lower()
+            print(f"Canonicalized IUPAC: {iupac}")
+            print(f"IUPAC ID: {iupac_id}")
+            for _, glycan_data in GDB_data.items():
+                # Check archetype
+                if glycan_data['archetype'].get('iupac') and glycan_data['archetype']['iupac'].lower() == iupac_id:
+                    entry = {
+                        'glytoucan': glycan_data['archetype']['glytoucan'],
+                        'ID': glycan_data['archetype']['ID'],
+                        'mass': glycan_data['archetype']['mass']
+                    }
+                    search_result.append(entry)
+                
+                search_result.sort(key=lambda x: x['mass'])
             return jsonify({'search_string': search_string, 'results': search_result})
         
         elif is_it_iupac:
@@ -1210,7 +1250,7 @@ def search():
                 #     search_result.append(entry)
             search_result.sort(key=lambda x: x['mass'])
             return jsonify({'search_string': search_string, 'results': search_result})
-            
+        
         else:
             # Fallback to default search if no specific type is provided
             # For text search, use fuzzy matching across multiple glycan fields
