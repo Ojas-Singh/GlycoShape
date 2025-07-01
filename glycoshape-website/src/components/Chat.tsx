@@ -43,7 +43,7 @@ import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { v4 as uuidv4 } from 'uuid';
 
 // --- Constants ---
-const API_BASE_URL = 'http://localhost:5001';
+const API_BASE_URL = 'https://glycoshape.io';
 const CHAT_API_ENDPOINT = `${API_BASE_URL}/api/chat`;
 
 // --- Interfaces ---
