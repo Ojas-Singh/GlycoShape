@@ -67,12 +67,170 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
   const [isSelectingFolder, setIsSelectingFolder] = useState(false);
+  const [keyValidating, setKeyValidating] = useState(false);
+  const [keyValid, setKeyValid] = useState<boolean | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [uploadConfig, setUploadConfig] = useState<{
+    maxFileSize: number;
+    maxFileSizeMb: number;
+    allowedExtensions: string[];
+  } | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [retryCount, setRetryCount] = useState(0);
+  const [uploadAborted, setUploadAborted] = useState(false);
   const toast = useToast();
   const apiUrl = process.env.REACT_APP_API_URL;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
   
   const borderColor = useColorModeValue('gray.300', 'gray.600');
   const bgColor = useColorModeValue('gray.50', 'gray.700');
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setUploadKey('');
+      setSelectedFiles(null);
+      setKeyValid(null);
+      setUserRole(null);
+      setValidationErrors([]);
+      setUploadProgress(0);
+      setKeyValidating(false);
+      setRetryCount(0);
+      setUploadAborted(false);
+      // Cancel any ongoing upload
+      if (xhrRef.current) {
+        xhrRef.current.abort();
+        xhrRef.current = null;
+      }
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isOpen]);
+
+  // Fetch upload configuration when modal opens
+  useEffect(() => {
+    if (isOpen && !uploadConfig) {
+      fetchUploadConfig();
+    }
+  }, [isOpen]);
+
+  const fetchUploadConfig = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/upload/info`);
+      if (response.ok) {
+        const config = await response.json();
+        setUploadConfig({
+          maxFileSize: config.max_file_size,
+          maxFileSizeMb: config.max_file_size_mb,
+          allowedExtensions: config.allowed_extensions
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch upload config:', error);
+    }
+  };
+
+  const validateUploadKey = async (key: string) => {
+    if (!key.trim()) {
+      setKeyValid(null);
+      setUserRole(null);
+      return;
+    }
+
+    setKeyValidating(true);
+    try {
+      const response = await fetch(`${apiUrl}/api/upload/validate-key`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ upload_key: key }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.valid) {
+        setKeyValid(true);
+        setUserRole(data.user_role);
+        // toast({
+        //   title: "Upload Key Valid",
+        //   description: `Welcome, ${data.user_role}`,
+        //   status: "success",
+        //   duration: 3000,
+        //   isClosable: true,
+        // });
+      } else {
+        setKeyValid(false);
+        setUserRole(null);
+        // toast({
+        //   title: "Invalid Upload Key",
+        //   description: data.message || "Please check your upload key",
+        //   status: "error",
+        //   duration: 3000,
+        //   isClosable: true,
+        // });
+      }
+    } catch (error) {
+      setKeyValid(false);
+      setUserRole(null);
+      toast({
+        title: "Validation Error",
+        description: "Failed to validate upload key",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setKeyValidating(false);
+    }
+  };
+
+  const validateFiles = (files: FileList): string[] => {
+    if (!uploadConfig) return [];
+    
+    const errors: string[] = [];
+    const { maxFileSize, allowedExtensions } = uploadConfig;
+
+    Array.from(files).forEach(file => {
+      // Check file size
+      if (file.size > maxFileSize) {
+        errors.push(`${file.name}: File size (${formatFileSize(file.size)}) exceeds maximum allowed size (${formatFileSize(maxFileSize)})`);
+      }
+
+      // Check file extension if extensions are specified
+      if (allowedExtensions.length > 0) {
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+        if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+          errors.push(`${file.name}: File type not allowed. Allowed types: ${allowedExtensions.join(', ')}`);
+        }
+      }
+    });
+
+    return errors;
+  };
+
+  // Debounced key validation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (uploadKey.trim()) {
+        validateUploadKey(uploadKey);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [uploadKey]);
+
+  // Validate files when they change
+  useEffect(() => {
+    if (selectedFiles) {
+      const errors = validateFiles(selectedFiles);
+      setValidationErrors(errors);
+    } else {
+      setValidationErrors([]);
+    }
+  }, [selectedFiles, uploadConfig]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -120,50 +278,25 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
     }
   };
 
-  const handleUpload = async () => {
-    if (!uploadKey.trim()) {
-      toast({
-        title: "Upload Key Required",
-        description: "Please enter a valid upload key",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    if (!selectedFiles || selectedFiles.length === 0) {
-      toast({
-        title: "No Files Selected",
-        description: "Please select files to upload",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    setUploading(true);
-    setUploadProgress(0);
-
+  const performUpload = (formData: FormData, attempt: number = 1): Promise<void> => {
+    const MAX_RETRIES = 3;
+    const TIMEOUT_MS = 50 * 60 * 1000; // 50 minutes timeout
+    
     return new Promise<void>((resolve, reject) => {
-      const formData = new FormData();
-      formData.append('upload_key', uploadKey);
-      formData.append('target_path', currentPath);
-
-      // Add all selected files with their relative paths
-      Array.from(selectedFiles).forEach((file, index) => {
-        formData.append('files', file);
-        // Include the relative path for folder structure preservation
-        const relativePath = file.webkitRelativePath || file.name;
-        formData.append('file_paths', relativePath);
-      });
+      if (uploadAborted) {
+        reject(new Error('Upload was cancelled'));
+        return;
+      }
 
       const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+
+      // Set timeout for large files
+      xhr.timeout = TIMEOUT_MS;
 
       // Track upload progress
       xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
+        if (event.lengthComputable && !uploadAborted) {
           const percentComplete = (event.loaded / event.total) * 100;
           setUploadProgress(Math.round(percentComplete));
         }
@@ -176,15 +309,15 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
             setUploadProgress(100);
             
             // Check if any files had folder structure
-            const hasSubfolders = Array.from(selectedFiles).some(file => 
+            const hasSubfolders = selectedFiles ? Array.from(selectedFiles).some(file => 
               file.webkitRelativePath && file.webkitRelativePath.includes('/')
-            );
+            ) : false;
             
             toast({
               title: "Upload Successful",
               description: hasSubfolders 
-                ? `Successfully uploaded ${selectedFiles.length} file(s) with folder structure preserved`
-                : `Successfully uploaded ${selectedFiles.length} file(s)`,
+                ? `Successfully uploaded ${selectedFiles?.length || 0} file(s) with folder structure preserved`
+                : `Successfully uploaded ${selectedFiles?.length || 0} file(s)`,
               status: "success",
               duration: 5000,
               isClosable: true,
@@ -193,6 +326,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
             // Reset form
             setUploadKey('');
             setSelectedFiles(null);
+            setRetryCount(0);
             if (fileInputRef.current) {
               fileInputRef.current.value = '';
             }
@@ -212,51 +346,221 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
             throw new Error(errorMessage);
           }
         } catch (error) {
+          if (attempt < MAX_RETRIES && !uploadAborted) {
+            // Retry logic for failed uploads
+            toast({
+              title: "Upload Failed - Retrying",
+              description: `Attempt ${attempt} failed. Retrying... (${attempt}/${MAX_RETRIES})`,
+              status: "warning",
+              duration: 3000,
+              isClosable: true,
+            });
+            
+            setRetryCount(attempt);
+            setTimeout(() => {
+              performUpload(formData, attempt + 1).then(resolve).catch(reject);
+            }, 2000 * attempt); // Exponential backoff
+          } else {
+            toast({
+              title: "Upload Failed",
+              description: error instanceof Error ? error.message : 'Unknown error occurred',
+              status: "error",
+              duration: 5000,
+              isClosable: true,
+            });
+            reject(error);
+          }
+        }
+      });
+
+      // Handle network errors with retry logic
+      xhr.addEventListener('error', () => {
+        if (attempt < MAX_RETRIES && !uploadAborted) {
+          toast({
+            title: "Network Error - Retrying",
+            description: `Network error on attempt ${attempt}. Retrying... (${attempt}/${MAX_RETRIES})`,
+            status: "warning",
+            duration: 3000,
+            isClosable: true,
+          });
+          
+          setRetryCount(attempt);
+          setTimeout(() => {
+            performUpload(formData, attempt + 1).then(resolve).catch(reject);
+          }, 2000 * attempt); // Exponential backoff
+        } else {
           toast({
             title: "Upload Failed",
-            description: error instanceof Error ? error.message : 'Unknown error occurred',
+            description: `Network error occurred during upload after ${MAX_RETRIES} attempts`,
             status: "error",
             duration: 5000,
             isClosable: true,
           });
-          reject(error);
-        } finally {
-          setUploading(false);
-          setTimeout(() => setUploadProgress(0), 1000); // Reset progress after a delay
+          reject(new Error('Network error occurred during upload'));
         }
       });
 
-      // Handle network errors
-      xhr.addEventListener('error', () => {
-        toast({
-          title: "Upload Failed",
-          description: 'Network error occurred during upload',
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
-        setUploading(false);
-        setUploadProgress(0);
-        reject(new Error('Network error occurred during upload'));
+      // Handle timeout with retry logic
+      xhr.addEventListener('timeout', () => {
+        if (attempt < MAX_RETRIES && !uploadAborted) {
+          toast({
+            title: "Upload Timeout - Retrying",
+            description: `Upload timed out on attempt ${attempt}. Retrying... (${attempt}/${MAX_RETRIES})`,
+            status: "warning",
+            duration: 3000,
+            isClosable: true,
+          });
+          
+          setRetryCount(attempt);
+          setTimeout(() => {
+            performUpload(formData, attempt + 1).then(resolve).catch(reject);
+          }, 2000 * attempt); // Exponential backoff
+        } else {
+          toast({
+            title: "Upload Failed",
+            description: `Upload timed out after ${MAX_RETRIES} attempts. Please try with smaller files or check your connection.`,
+            status: "error",
+            duration: 7000,
+            isClosable: true,
+          });
+          reject(new Error('Upload timed out'));
+        }
       });
 
       // Handle upload abortion
       xhr.addEventListener('abort', () => {
-        toast({
-          title: "Upload Cancelled",
-          description: 'Upload was cancelled',
-          status: "warning",
-          duration: 3000,
-          isClosable: true,
-        });
-        setUploading(false);
-        setUploadProgress(0);
+        if (!uploadAborted) {
+          // Only show cancellation message if it wasn't intentionally aborted
+          toast({
+            title: "Upload Cancelled",
+            description: 'Upload was cancelled',
+            status: "warning",
+            duration: 3000,
+            isClosable: true,
+          });
+        }
         reject(new Error('Upload was cancelled'));
       });
 
       // Start the upload
       xhr.open('POST', `${apiUrl}/api/upload`);
+      
+      // Set headers for large file uploads
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      
       xhr.send(formData);
+    });
+  };
+
+  const handleUpload = async () => {
+    if (!uploadKey.trim()) {
+      toast({
+        title: "Upload Key Required",
+        description: "Please enter a valid upload key",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Check if key is valid
+    if (keyValid !== true) {
+      toast({
+        title: "Invalid Upload Key",
+        description: "Please enter a valid upload key",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (!selectedFiles || selectedFiles.length === 0) {
+      toast({
+        title: "No Files Selected",
+        description: "Please select files to upload",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Check for validation errors
+    if (validationErrors.length > 0) {
+      toast({
+        title: "File Validation Failed",
+        description: `${validationErrors.length} file(s) have issues. Please check the file list below.`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Calculate total upload size for user info
+    const totalSize = Array.from(selectedFiles).reduce((sum, file) => sum + file.size, 0);
+    const totalSizeMB = totalSize / (1024 * 1024);
+    
+    if (totalSizeMB > 100) { // Show warning for files larger than 100MB
+      toast({
+        title: "Large File Upload",
+        description: `Uploading ${formatFileSize(totalSize)}. This may take several minutes. Please keep this tab open.`,
+        status: "info",
+        duration: 7000,
+        isClosable: true,
+      });
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+    setRetryCount(0);
+    setUploadAborted(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('upload_key', uploadKey);
+      formData.append('target_path', currentPath);
+
+      // Add all selected files with their relative paths
+      Array.from(selectedFiles).forEach((file, index) => {
+        formData.append('files', file);
+        // Include the relative path for folder structure preservation
+        const relativePath = file.webkitRelativePath || file.name;
+        formData.append('file_paths', relativePath);
+      });
+
+      await performUpload(formData);
+    } catch (error) {
+      // Error handling is done in performUpload function
+      console.error('Upload failed:', error);
+    } finally {
+      setUploading(false);
+      setTimeout(() => {
+        setUploadProgress(0);
+        setRetryCount(0);
+      }, 1000);
+      xhrRef.current = null;
+    }
+  };
+
+  const handleCancelUpload = () => {
+    setUploadAborted(true);
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+      xhrRef.current = null;
+    }
+    setUploading(false);
+    setUploadProgress(0);
+    setRetryCount(0);
+    
+    toast({
+      title: "Upload Cancelled",
+      description: 'Upload has been cancelled by user',
+      status: "info",
+      duration: 3000,
+      isClosable: true,
     });
   };
 
@@ -270,13 +574,40 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
           <VStack spacing={4}>
             <FormControl isRequired>
               <FormLabel>Upload Key</FormLabel>
-              <Input
-                type="password"
-                placeholder="Enter your upload key"
-                value={uploadKey}
-                onChange={(e) => setUploadKey(e.target.value)}
-                disabled={uploading}
-              />
+              <HStack>
+                <Input
+                  type="password"
+                  placeholder="Enter your upload key"
+                  value={uploadKey}
+                  onChange={(e) => setUploadKey(e.target.value)}
+                  disabled={uploading}
+                  borderColor={
+                    keyValidating ? "blue.300" :
+                    keyValid === true ? "green.300" :
+                    keyValid !== null && !keyValid ? "red.300" : undefined
+                  }
+                />
+                {keyValidating && <Spinner size="sm" />}
+                {keyValid === true && (
+                  <Box color="green.500">
+                    <Icon viewBox="0 0 24 24" boxSize={5}>
+                      <path fill="currentColor" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z" />
+                    </Icon>
+                  </Box>
+                )}
+                {keyValid !== null && !keyValid && (
+                  <Box color="red.500">
+                    <Icon viewBox="0 0 24 24" boxSize={5}>
+                      <path fill="currentColor" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M14.5,9L12,11.5L9.5,9L8,10.5L10.5,13L8,15.5L9.5,17L12,14.5L14.5,17L16,15.5L13.5,13L16,10.5L14.5,9Z" />
+                    </Icon>
+                  </Box>
+                )}
+              </HStack>
+              {userRole && keyValid === true && (
+                <Text fontSize="xs" color="green.600" mt={1}>
+                  Authenticated as: {userRole}
+                </Text>
+              )}
             </FormControl>
 
             <FormControl>
@@ -434,10 +765,74 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
               </Box>
             )}
 
+            {validationErrors.length > 0 && (
+              <Alert status="error" size="sm">
+                <AlertIcon />
+                <Box>
+                  <Text fontWeight="bold" fontSize="sm">File Validation Errors:</Text>
+                  <VStack align="start" spacing={1} mt={2}>
+                    {validationErrors.slice(0, 5).map((error, index) => (
+                      <Text key={index} fontSize="xs">{error}</Text>
+                    ))}
+                    {validationErrors.length > 5 && (
+                      <Text fontSize="xs" fontStyle="italic">
+                        ... and {validationErrors.length - 5} more errors
+                      </Text>
+                    )}
+                  </VStack>
+                </Box>
+              </Alert>
+            )}
+
+            {uploadConfig && (
+              <Box w="100%" p={3} bg="gray.50" borderRadius="md">
+                <Text fontSize="xs" color="gray.600" fontWeight="medium" mb={1}>
+                  Upload Limits:
+                </Text>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" color="gray.500">
+                    • Max file size: {formatFileSize(uploadConfig.maxFileSize)}
+                  </Text>
+                  {uploadConfig.allowedExtensions.length > 0 && (
+                    <Text fontSize="xs" color="gray.500">
+                      • Allowed types: {uploadConfig.allowedExtensions.join(', ')}
+                    </Text>
+                  )}
+                </VStack>
+              </Box>
+            )}
+
             {uploading && (
               <Box w="100%">
-                <Text fontSize="sm" mb={2}>Uploading...</Text>
+                <HStack justify="space-between" align="center" mb={2}>
+                  <VStack align="start" spacing={1}>
+                    <Text fontSize="sm">
+                      {retryCount > 0 ? `Uploading... (Retry ${retryCount}/3)` : 'Uploading...'}
+                    </Text>
+                    {retryCount > 0 && (
+                      <Text fontSize="xs" color="orange.600">
+                        Retrying due to network issues...
+                      </Text>
+                    )}
+                  </VStack>
+                  <Button
+                    size="xs"
+                    colorScheme="red"
+                    variant="outline"
+                    onClick={handleCancelUpload}
+                  >
+                    Cancel
+                  </Button>
+                </HStack>
                 <Progress value={uploadProgress} colorScheme="blue" />
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  {uploadProgress}% complete
+                  {selectedFiles && (
+                    ` • ${formatFileSize(
+                      Array.from(selectedFiles).reduce((sum, file) => sum + file.size, 0)
+                    )} total`
+                  )}
+                </Text>
               </Box>
             )}
           </VStack>
@@ -450,7 +845,15 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, currentPath,
           <Button 
             colorScheme="blue" 
             onClick={handleUpload}
-            disabled={!uploadKey.trim() || !selectedFiles || uploading}
+            disabled={
+              !uploadKey.trim() || 
+              keyValid !== true || 
+              !selectedFiles || 
+              selectedFiles.length === 0 ||
+              validationErrors.length > 0 ||
+              uploading ||
+              keyValidating
+            }
             isLoading={uploading}
             loadingText="Uploading..."
           >
@@ -858,6 +1261,6 @@ AMBER4 MD packages). </Text>
       </VStack>
     </Box>
   );
-}
+};
 
 export default Download;

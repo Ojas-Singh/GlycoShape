@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, isValidElement, Fragment } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   Flex,
@@ -29,12 +29,15 @@ import {
   Alert,
   AlertIcon,
   AlertDescription,
+  Kbd,
 } from '@chakra-ui/react';
-import { ChevronUpIcon, ChevronDownIcon, AttachmentIcon, CloseIcon, CopyIcon, CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons';
-import Latex from 'react-latex-next';
+import { ChevronUpIcon, ChevronDownIcon, AttachmentIcon, CloseIcon, CopyIcon, CheckIcon, ExternalLinkIcon, RepeatIcon, DeleteIcon} from '@chakra-ui/icons';
+import { VscSymbolProperty, VscTerminal, VscCheck, VscSymbolFile,   } from "react-icons/vsc";
 import 'katex/dist/katex.min.css';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { v4 as uuidv4 } from 'uuid';
@@ -138,6 +141,8 @@ const BackendChat: React.FC<{
   const [modalContent, setModalContent] = useState<ChatMessage['attachment']>(null);
   const [pdbPreviewContent, setPdbPreviewContent] = useState<string | null>(null);
   const [isPdbPreviewOpen, setIsPdbPreviewOpen] = useState(false);
+  const { isOpen: isPlotModalOpen, onOpen: openPlotModal, onClose: closePlotModal } = useDisclosure();
+  const [plotModalContent, setPlotModalContent] = useState<{ url: string; alt?: string } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -146,12 +151,12 @@ const BackendChat: React.FC<{
     setSessionId(newSessionId);
   }, []);
 
-  const userMessageBg = 'blue.100';
-  const assistantMessageBg = 'gray.100';
+  const userMessageBg = '#F7F9E5';
+  const assistantMessageBg = '#f9fffd';
   const toolInfoMessageBg = 'purple.50';
   const errorMessageBg = 'red.100';
-  const chatBg = 'gray.50';
-  const borderColor = 'gray.200';
+  const chatBg = 'white';
+  const borderColor = 'gray.100';
   const inputBg = 'white';
   const attachmentBg = 'blackAlpha.100';
   const attachmentTextColor = 'gray.600';
@@ -164,36 +169,6 @@ const BackendChat: React.FC<{
   const codeBlockHeaderBg = 'gray.100';
   const stderrColor = "red.600";
   const stderrCodeColor = "red.600";
-
-  const MarkdownParagraph: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
-    const latexDelimiters = [
-      { left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false },
-      { left: '\\(', right: '\\)', display: false }, { left: '\\[', right: '\\]', display: true }
-    ];
-    if (children == null) return null;
-    return (
-      <Box as="p" mb={2}>
-        {(() => {
-          if (typeof children === 'string') {
-            return <Latex delimiters={latexDelimiters}>{children}</Latex>;
-          }
-          if (Array.isArray(children)) {
-            return children.map((child, index) => {
-              if (typeof child === 'string') {
-                return <Latex key={index} delimiters={latexDelimiters}>{child}</Latex>;
-              } else if (isValidElement(child)) {
-                return <Fragment key={index}>{child}</Fragment>;
-              }
-              return null;
-            });
-          }
-          if (isValidElement(children)) { return children; }
-          console.warn("MarkdownParagraph received unexpected children type:", children);
-          return children as React.ReactNode;
-        })()}
-      </Box>
-    );
-  };
 
   const CodeBlock: React.FC<any> = ({ node, inline, className, children, ...props }) => {
     const content = String(children).replace(/\n$/, '');
@@ -232,7 +207,6 @@ const BackendChat: React.FC<{
   };
   
   const markdownComponents: Components = {
-    p: MarkdownParagraph,
     code: CodeBlock,
   };
 
@@ -246,21 +220,82 @@ const BackendChat: React.FC<{
     const getEventIcon = (type: string, status?: string) => {
       switch (type) {
         case 'text':
-          return <Box w="8px" h="8px" bg="blue.400" borderRadius="full" />;
+            return (
+            <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
+              <svg
+              width="16px"
+              height="16px"
+              viewBox="0 0 16 16"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              stroke="#4CAF50"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.5"
+              style={{ display: 'block' }}
+              >
+              <rect height="7.5" width="12.5" y="5.75" x="1.75" />
+              <path d="m10.75 8.75v1.5m-5.5-1.5v1.5m-.5-7.5 3.25 3 3.25-3" />
+              </svg>
+            </Box>
+            );
         case 'code_output':
-          return <Box w="8px" h="8px" bg="purple.400" borderRadius="full" />;
+          return <Icon as={VscTerminal} w="16px" h="16px" color="green.500" />;
         case 'plot':
-          return <Box w="8px" h="8px" bg="green.400" borderRadius="full" />;
+            return (
+            <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
+              <svg
+              viewBox="0 0 32 32"
+              width="16px"
+              height="16px"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ display: 'block' }}
+              >
+              <path
+                d="M1091,264h-22a1,1,0,0,1-1-1V241a1,1,0,0,1,2,0v21h21A1,1,0,0,1,1091,264Zm-5-4a1,1,0,0,1-1-1V248a1,1,0,0,1,2,0v11A1,1,0,0,1,1086,260Zm-4,0h0a1,1,0,0,1-1-1v-7a1,1,0,0,1,1-1h0a1,1,0,0,1,1,1v7A1,1,0,0,1,1082,260Zm-4,0a1,1,0,0,1-1-1V243a1,1,0,0,1,2,0v16A1,1,0,0,1,1078,260Zm-4,0a1,1,0,0,1-1-1V249a1,1,0,0,1,2,0v10A1,1,0,0,1,1074,260Z"
+                fill="#4CAF50"
+                transform="translate(-1068 -240)"
+              />
+              </svg>
+            </Box>
+            );
         case 'pdb':
-          return <Box w="8px" h="8px" bg="orange.400" borderRadius="full" />;
+          return <Icon as={VscSymbolFile} w="16px" h="16px" color="green.500" />;
         case 'molviewspec':
-          return <Box w="8px" h="8px" bg="teal.400" borderRadius="full" />;
+            return (
+            <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
+              <svg
+              width="16px"
+              height="16px"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ display: 'block' }}
+              >
+              <defs>
+                <style>
+                {`.cls-1{fill:none;stroke:#4CAF50;stroke-miterlimit:10;stroke-width:1.5px;}`}
+                </style>
+              </defs>
+              <polygon className="cls-1" points="12 18.63 18.84 15.21 18.84 7.68 12 4.32 5.16 7.68 5.16 15.21 12 18.63"/>
+              <polyline className="cls-1" points="5.16 8.09 5.19 8.09 12 11.46 12 18.84"/>
+              <polyline className="cls-1" points="12 18.84 12 11.46 18.81 8.09 18.84 8.09"/>
+              <polyline className="cls-1" points="18.84 8.09 18.81 8.09 12 11.46 5.19 8.09 5.16 8.09"/>
+              <polyline className="cls-1" points="1.25 6.14 1.25 1.25 6.14 1.25"/>
+              <polyline className="cls-1" points="6.14 22.75 1.25 22.75 1.25 17.86"/>
+              <polyline className="cls-1" points="22.75 17.86 22.75 22.75 17.86 22.75"/>
+              <polyline className="cls-1" points="17.86 1.25 22.75 1.25 22.75 6.14"/>
+              </svg>
+            </Box>
+            );
         case 'tool_start':
           return status === 'in_progress' ? 
             <Spinner size="xs" color="yellow.500" /> : 
-            <Box w="8px" h="8px" bg="yellow.400" borderRadius="full" />;
+            // <SettingsIcon w="8px" h="8px" color="green.500" />;
+            <Icon as={VscSymbolProperty} w="16px" h="16px" color="green.500" />;
+            // <Box w="8px" h="8px" bg="yellow.400" borderRadius="full" />;
         case 'tool_end':
-          return <CheckIcon w="8px" h="8px" color="green.500" />;
+          return <Icon as={VscCheck} w="16px" h="16px" color="green.500" />;
         default:
           return <Box w="8px" h="8px" bg="gray.400" borderRadius="full" />;
       }
@@ -278,7 +313,7 @@ const BackendChat: React.FC<{
         <VStack spacing={0} align="center" pt="6px">
           {getEventIcon(event.type, event.status)}
           {!isLast && (
-            <Box w="2px" h="20px" bg="gray.200" mt={1} />
+            <Box ml="4px" w="2px" h="20px" bg="gray.200" mt={1} />
           )}
         </VStack>
 
@@ -286,7 +321,11 @@ const BackendChat: React.FC<{
         <Box flex="1" minW="0">
           {event.type === 'text' && (
             <Box className="markdown-container">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+                components={markdownComponents}
+              >
                 {event.content}
               </ReactMarkdown>
             </Box>
@@ -336,14 +375,27 @@ const BackendChat: React.FC<{
                       {codeOutputVisible[`${messageKey}-${event.id}`] ? 'Full Code' : 'Preview'}
                     </Text>
                   </HStack>
-                  <Box p={3}>
-                    <Code as="pre" fontSize="sm" fontFamily="monospace" whiteSpace="pre-wrap" bg="transparent">
+                  <Box>
+                    <SyntaxHighlighter 
+                      style={codeStyle} 
+                      language="python" 
+                      PreTag="div"
+                      customStyle={{ 
+                        margin: 0, 
+                        padding: '1rem', 
+                        fontSize: '0.875rem', 
+                        backgroundColor: 'transparent',
+                        borderRadius: 0
+                      }}
+                      wrapLongLines={false} 
+                      codeTagProps={{ style: { fontFamily: 'monospace' } }}
+                    >
                       {codeOutputVisible[`${messageKey}-${event.id}`] 
                         ? event.content.code 
                         : event.content.code.split('\n').slice(0, 3).join('\n') + 
                           (event.content.code.split('\n').length > 3 ? '\n...' : '')
                       }
-                    </Code>
+                    </SyntaxHighlighter>
                   </Box>
                 </Box>
               )}
@@ -400,20 +452,17 @@ const BackendChat: React.FC<{
                   boxShadow="sm" 
                   borderWidth="1px" 
                   borderColor={borderColor} 
+                  cursor="pointer"
+                  _hover={{ transform: "scale(1.02)", transition: "transform 0.2s" }}
+                  onClick={() => {
+                    setPlotModalContent({ url: event.content.url, alt: event.content.alt || 'Generated Plot' });
+                    openPlotModal();
+                  }}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
                 />
-                <Button 
-                  as="a" 
-                  href={event.content.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  size="xs" 
-                  variant="outline" 
-                  mt={2} 
-                  leftIcon={<ExternalLinkIcon />}
-                >
-                  Open Plot
-                </Button>
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Click to view full size
+                </Text>
               </Box>
             </Box>
           )}
@@ -488,17 +537,19 @@ const BackendChat: React.FC<{
           {event.type === 'tool_start' && (
             <HStack spacing={2} align="center">
               <Text fontSize="sm" color="yellow.600">
-                🔧 Running: {event.content.name}...
+                Running: {event.content.name}...
               </Text>
               {event.status === 'in_progress' && <Spinner size="xs" color="yellow.500" />}
             </HStack>
           )}
+          
 
           {event.type === 'tool_end' && (
             <HStack spacing={2} align="center">
-              <Text fontSize="sm" color="green.600">
-                ✅ Completed: {event.content.name}
-              </Text>
+                <Text fontSize="sm" color="green.400">
+                {/* <CheckIcon color="green.300" boxSize={4} mr={1} verticalAlign="middle" /> */}
+                Completed: {event.content.name}
+                </Text>
               {event.duration && (
                 <Text fontSize="xs" color="gray.500">
                   {formatDuration(event.duration)}
@@ -539,6 +590,34 @@ const BackendChat: React.FC<{
     }
   }, [messages, messages[messages.length - 1]?.content, isLoading]); // Removed thinkingContent dependency
 
+  // Keyboard shortcut to focus chat input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Focus on input with Ctrl+/ or Cmd+/ (like Discord/Slack)
+      if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+        event.preventDefault();
+        chatInputRef.current?.focus();
+      }
+      // Also support just "/" when not focused on an input
+      else if (event.key === '/' && !isLoading) {
+        const activeElement = document.activeElement;
+        const isInputFocused = activeElement && (
+          activeElement.tagName === 'INPUT' || 
+          activeElement.tagName === 'TEXTAREA' || 
+          activeElement.hasAttribute('contenteditable')
+        );
+        
+        if (!isInputFocused) {
+          event.preventDefault();
+          chatInputRef.current?.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isLoading]);
+
   const handlePaste = useCallback(
     (event: ClipboardEvent) => {
       if (isLoading || fileAttachment) return;
@@ -575,6 +654,11 @@ const BackendChat: React.FC<{
 
   const openAttachmentModal = (attachmentData: ChatMessage['attachment']) => {
     if (attachmentData) { setModalContent(attachmentData); openModal(); }
+  };
+
+  const openPlotInModal = (url: string, alt?: string) => {
+    setPlotModalContent({ url, alt });
+    openPlotModal();
   };
 
   const openPdbPreview = async (url: string, filename: string) => {
@@ -994,14 +1078,390 @@ const BackendChat: React.FC<{
     }
   };
 
+  // Remove messages from a specific point onwards
+  const removeMessagesFromPoint = (messageIndex: number) => {
+    const newMessages = messages.slice(0, messageIndex);
+    setMessages(newMessages);
+    toast({
+      title: "Messages Removed",
+      description: `Removed ${messages.length - messageIndex} message(s) from conversation`,
+      status: "info",
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  // Retry conversation from a specific point
+  const retryFromPoint = async (messageIndex: number) => {
+    if (isLoading) return;
+    
+    // Find the user message that triggered this assistant response
+    const userMessageIndex = messageIndex - 1;
+    if (userMessageIndex < 0 || messages[userMessageIndex].role !== 'user') {
+      toast({
+        title: "Retry Error",
+        description: "Cannot find the user message to retry from",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Remove all messages from the assistant response onwards
+    const messagesUpToUser = messages.slice(0, messageIndex);
+    setMessages(messagesUpToUser);
+
+    // Get the user message content and attachment
+    const userMessage = messages[userMessageIndex];
+    
+    // Simulate sending the message again
+    setIsLoading(true);
+    abortControllerRef.current = new AbortController();
+
+    const assistantMessageId = `assistant-${Date.now()}`;
+    const messageStartTime = Date.now();
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'assistant', content: '', timestamp: new Date().toISOString(), id: assistantMessageId,
+        codeOutput: null, plotInfo: null, pdbInfo: null, molViewSpecInfo: null,
+        events: [], // Initialize empty events array
+        startTime: messageStartTime, // Track when this message started
+      } as ChatMessage,
+    ]);
+
+    const historyMessages = messagesUpToUser
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .map(({ role, content }) => ({ role, content }));
+
+    const apiPayload = {
+      messages: historyMessages,
+      stream: true, sessionId: sessionId,
+    };
+
+    const formData = new FormData();
+    formData.append('jsonData', JSON.stringify(apiPayload));
+    
+    // Re-attach the file if there was one
+    if (userMessage.attachment) {
+      // Create a new file from the attachment data if possible
+      // Note: This is a limitation - we can't recreate the original file object
+      // We'll just send the request without the file attachment for retry
+      toast({
+        title: "Note",
+        description: "File attachments cannot be retried. The retry will proceed without the original file.",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+
+    try {
+      const response = await fetch(CHAT_API_ENDPOINT, {
+        method: 'POST', body: formData, signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        let errorMsg = `API request failed with status ${response.status} ${response.statusText}`;
+        try { const errorData = await response.json(); errorMsg = `${errorMsg}: ${errorData.error || JSON.stringify(errorData)}`; }
+        catch (parseError) { try { const textError = await response.text(); errorMsg = `${errorMsg}: ${textError}`; } catch (textErr) {} }
+        setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
+        throw new Error(errorMsg);
+      }
+      if (!response.body) {
+        setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
+        throw new Error('Response body is null');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      // Use the same processSSEBuffer logic as in handleSendMessage
+      const processSSEBuffer = () => {
+        let mainContentDeltaAccumulator = '';
+        let processedChars = 0;
+        let currentPos = 0;
+        const currentTime = Date.now();
+
+        while (currentPos < buffer.length) {
+            const newlineIndex = buffer.indexOf('\n', currentPos);
+            if (newlineIndex === -1) break; // Incomplete line, wait for more data
+
+            const line = buffer.substring(currentPos, newlineIndex).trim();
+            const consumedLength = newlineIndex - currentPos + 1; // +1 for the newline itself
+
+            if (line.startsWith('data: ')) {
+                const jsonStr = line.substring(5).trim();
+                if (jsonStr === '[DONE]') {
+                    console.log("Received [DONE] signal.");
+                } else {
+                    try {
+                        const parsedEvent = JSON.parse(jsonStr);
+                        if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
+                          mainContentDeltaAccumulator += parsedEvent.content;
+                          // Add text content to events chronologically
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              const lastEvent = newEvents[newEvents.length - 1];
+                              if (lastEvent && lastEvent.type === 'text') {
+                                // Replace the last event with a new one containing the appended text
+                                const updatedEvent = { ...lastEvent, content: lastEvent.content + parsedEvent.content };
+                                newEvents[newEvents.length - 1] = updatedEvent;
+                              } else {
+                                // Create a new text event if the last event wasn't text
+                                newEvents.push({
+                                  id: `text-${Date.now()}-${Math.random()}`,
+                                  type: 'text',
+                                  content: parsedEvent.content,
+                                  timestamp: currentTime
+                                });
+                              }
+                              return { ...m, events: newEvents };
+                            }
+                            return m;
+                          }));
+                      } else if (parsedEvent.type === 'code_output') {
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
+                              newEvents.push({
+                                id: `code-${Date.now()}-${Math.random()}`,
+                                type: 'code_output',
+                                content: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code },
+                                timestamp: currentTime,
+                                duration: eventDuration
+                              });
+                              return { ...m, codeOutput: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code }, events: newEvents };
+                            }
+                            return m;
+                          }));
+                      } else if (parsedEvent.type === 'display_plot') {
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              const plotData = { url: `${API_BASE_URL}${parsedEvent.url}`, alt: parsedEvent.alt || 'Generated Plot' };
+                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
+                              newEvents.push({
+                                id: `plot-${Date.now()}-${Math.random()}`,
+                                type: 'plot',
+                                content: plotData,
+                                timestamp: currentTime,
+                                duration: eventDuration
+                              });
+                              return { ...m, plotInfo: plotData, events: newEvents };
+                            }
+                            return m;
+                          }));
+                      } else if (parsedEvent.type === 'load_pdb') {
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              const pdbData = { url: `${API_BASE_URL}${parsedEvent.url}`, filename: parsedEvent.filename };
+                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
+                              newEvents.push({
+                                id: `pdb-${Date.now()}-${Math.random()}`,
+                                type: 'pdb',
+                                content: pdbData,
+                                timestamp: currentTime,
+                                duration: eventDuration
+                              });
+                              return { ...m, pdbInfo: pdbData, events: newEvents };
+                            }
+                            return m;
+                          }));
+                      } else if (parsedEvent.type === 'molviewspec_update') {
+                          try {
+                            // Validate that molviewspec is properly serializable
+                            if (parsedEvent.molviewspec && typeof parsedEvent.molviewspec === 'object') {
+                              setMessages(prev => prev.map(m => {
+                                if (m.id === assistantMessageId) {
+                                  const newEvents = [...(m.events || [])];
+                                  const molviewspecData = { molviewspec: parsedEvent.molviewspec, filename: parsedEvent.filename };
+                                  const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
+                                  newEvents.push({
+                                    id: `molviewspec-${Date.now()}-${Math.random()}`,
+                                    type: 'molviewspec',
+                                    content: molviewspecData,
+                                    timestamp: currentTime,
+                                    duration: eventDuration
+                                  });
+                                  return { ...m, molViewSpecInfo: molviewspecData, events: newEvents };
+                                }
+                                return m;
+                              }));
+                              
+                              // Immediately trigger the viewer update during streaming
+                              if (onMolViewSpecUpdate && parsedEvent.molviewspec && parsedEvent.filename) {
+                                console.log("Immediately loading MolViewSpec during streaming:", parsedEvent.filename);
+                                try {
+                                  onMolViewSpecUpdate(parsedEvent.molviewspec, parsedEvent.filename);
+                                  console.log("Successfully loaded MolViewSpec during streaming");
+                                } catch (error) {
+                                  console.error("Error loading MolViewSpec during streaming:", error);
+                                }
+                              }
+                            } else {
+                              console.error('Invalid molviewspec data received:', parsedEvent);
+                              toast({ title: 'MolViewSpec Error', description: 'Received invalid molecular visualization data', status: 'warning', duration: 3000 });
+                            }
+                          } catch (error) {
+                            console.error('Error processing molviewspec update:', error);
+                            toast({ title: 'MolViewSpec Error', description: 'Failed to process molecular visualization data', status: 'error', duration: 5000 });
+                          }
+                      } else if (parsedEvent.type === 'tool_start') {
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              newEvents.push({
+                                id: `tool-start-${Date.now()}-${Math.random()}`,
+                                type: 'tool_start',
+                                content: { name: parsedEvent.name },
+                                timestamp: currentTime,
+                                status: 'in_progress' as const
+                              });
+                              return { ...m, events: newEvents };
+                            }
+                            return m;
+                          }));
+                      } else if (parsedEvent.type === 'tool_end') {
+                          setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                              const newEvents = [...(m.events || [])];
+                              // Find the corresponding tool_start event to calculate duration
+                              const toolStartEvent = newEvents.find(e => 
+                                e.type === 'tool_start' && e.content.name === parsedEvent.name
+                              );
+                              const toolDuration = toolStartEvent ? currentTime - toolStartEvent.timestamp : undefined;
+                              
+                              // Update the tool_start event status
+                              const updatedEvents = newEvents.map(e => 
+                                e.type === 'tool_start' && e.content.name === parsedEvent.name
+                                  ? { ...e, status: 'completed' as const, duration: toolDuration }
+                                  : e
+                              );
+                              
+                              // Add tool_end event
+                              updatedEvents.push({
+                                id: `tool-end-${Date.now()}-${Math.random()}`,
+                                type: 'tool_end',
+                                content: { name: parsedEvent.name },
+                                timestamp: currentTime,
+                                duration: toolDuration,
+                                status: 'completed' as const
+                              });
+                              
+                              return { ...m, events: updatedEvents };
+                            }
+                            return m;
+                          }));
+                      } else if (parsedEvent.type === 'error') {
+                          console.error("Backend Stream Error:", parsedEvent.message);
+                          
+                          // Check if it's a molviewspec serialization error
+                          if (parsedEvent.message && parsedEvent.message.includes('Object of type State is not JSON serializable')) {
+                            toast({ 
+                              title: 'MolViewSpec Generation Error', 
+                              description: 'The molecular visualization could not be generated due to a serialization issue. Please try again.', 
+                              status: 'warning', 
+                              duration: 5000, 
+                              isClosable: true 
+                            });
+                          } else {
+                            toast({ 
+                              title: 'Backend Error', 
+                              description: parsedEvent.message || 'An unknown error occurred.', 
+                              status: 'error', 
+                              duration: 5000, 
+                              isClosable: true 
+                            });
+                          }
+                          
+                          const errorSystemMessage: ChatMessage = { // Ensure this also conforms
+                              id: `error-${Date.now()}`, 
+                              role: 'system', 
+                              content: `Error: ${parsedEvent.message}`, 
+                              timestamp: new Date().toISOString(), 
+                              isError: true 
+                          };
+                          setMessages(prev => [...prev, errorSystemMessage]);
+                      }
+                    } catch (e) { console.error('Failed to parse SSE data line:', jsonStr, e); }
+                }
+            } else if (line !== '') { // Non-empty, non-data line
+                 console.warn("Received non-data SSE line:", line);
+            }
+            // else: empty line, often used as SSE message separator, just consume.
+
+            processedChars += consumedLength;
+            currentPos += consumedLength;
+        }
+
+        buffer = buffer.substring(processedChars); // Keep unprocessed part of the buffer
+        return { mainContentDelta: mainContentDeltaAccumulator };
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          buffer += decoder.decode(); // Flush any remaining bytes from decoder
+          const { mainContentDelta: finalMainDelta } = processSSEBuffer(); // Process final buffer content
+          if (finalMainDelta) {
+            // Don't update the main content field since we're using events for chronological display
+          }
+          console.log("Retry stream finished");
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const { mainContentDelta } = processSSEBuffer();
+      }
+
+      setMessages(prevMessages =>
+        prevMessages.map(msg => {
+          if (msg.id === assistantMessageId) {
+            const { id, ...finalizedMsg } = msg; // Remove id but keep events
+            return {
+              ...finalizedMsg,
+              // Ensure content is properly set from events for consistency
+              content: finalizedMsg.events
+                ?.filter(e => e.type === 'text')
+                .map(e => e.content)
+                .join('') || ''
+            };
+          }
+          return msg;
+        })
+      );
+
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Retry fetch aborted');
+        toast({ title: 'Retry Cancelled', status: 'info', duration: 2000 });
+        setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
+      } else {
+        console.error('Error during retry:', error);
+        toast({ title: 'Retry Error', description: error.message || 'Failed to retry the request.', status: 'error', duration: 5000, isClosable: true });
+        setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
+        setMessages((prev) => [...prev, { role: 'system', content: `Retry Error: ${error.message || 'Failed to get response.'}`, timestamp: new Date().toISOString(), isError: true }]);
+      }
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
   return (
     <Flex direction="column" h="100%" bg={chatBg}>
       <Box ref={chatContainerRef} flex="1" overflowY="auto" p={4} position="relative">
         {messages.length === 0 && !isLoading ? (
           <Flex position="absolute" top="0" left="0" right="0" bottom="0" align="center" justify="center" direction="column" textAlign="center" p={4} pointerEvents="none">
-            <Heading size="lg" mb={2} color={welcomeHeadingColor}>GlycoShape Copilot</Heading>
+            <Heading size="lg" mb={2} color={welcomeHeadingColor}>GlyCopilot</Heading>
             <Text fontSize="xl" color={welcomeTextColor}>What can I help with?</Text>
-            <Text fontSize="sm" color="gray.500" mt={4}>(Ask about proteins, use tools, upload files, or paste images)</Text>
+            <Text fontSize="sm" color="gray.500" mt={4}>(Ask about proteins, glycans, use tools, upload files.)</Text>
           </Flex>
         ) : (
           <VStack spacing={4} align="stretch">
@@ -1054,7 +1514,11 @@ const BackendChat: React.FC<{
                       // For non-assistant messages or finalized messages, render content normally
                       msg.content && msg.content.trim() && (
                         <Box className="markdown-container">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm, remarkMath]}
+                            rehypePlugins={[rehypeKatex]}
+                            components={markdownComponents}
+                          >
                             {msg.content}
                           </ReactMarkdown>
                         </Box>
@@ -1076,9 +1540,44 @@ const BackendChat: React.FC<{
                     )}
 
                     {msg.role !== 'tool_info' && !(msg.role === 'system' && msg.isError) && (
-                        <Text fontSize="xs" color={attachmentTextColor} mt={1} textAlign="right">
-                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
+                        <HStack justify="space-between" align="center" mt={1}>
+                          <Text fontSize="xs" color={attachmentTextColor}>
+                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </Text>
+                          
+                          {/* Action buttons */}
+                          <HStack spacing={1}>
+                            {/* Remove messages from this point for user messages */}
+                            {msg.role === 'user' && idx < messages.length - 1 && (
+                              <Tooltip label="Remove from this point" placement="top">
+                                <IconButton
+                                  aria-label="Remove from this point"
+                                  icon={<DeleteIcon />}
+                                  size="xs"
+                                  variant="ghost"
+                                  colorScheme="blue"
+                                  onClick={() => removeMessagesFromPoint(idx)}
+                                  isDisabled={isLoading}
+                                />
+                              </Tooltip>
+                            )}
+                            
+                            {/* Retry button for assistant messages */}
+                            {msg.role === 'assistant' && !msg.id && idx > 0 && (
+                              <Tooltip label="Retry this response" placement="top">
+                                <IconButton
+                                  aria-label="Retry response"
+                                  icon={<RepeatIcon />}
+                                  size="xs"
+                                  variant="ghost"
+                                  colorScheme="blue"
+                                  onClick={() => retryFromPoint(idx)}
+                                  isDisabled={isLoading}
+                                />
+                              </Tooltip>
+                            )}
+                          </HStack>
+                        </HStack>
                     )}
                   </Box>
                 </Flex>
@@ -1119,20 +1618,47 @@ const BackendChat: React.FC<{
           <Tooltip label="Attach file" placement="top">
             <IconButton aria-label="Attach file" icon={<AttachmentIcon />} onClick={handleFileAttach} mr={2} variant="ghost" isDisabled={isLoading || !!fileAttachment} />
           </Tooltip>
-          <Input ref={chatInputRef} placeholder="Ask about proteins, analyze data, or generate structures..." value={input}
-                 onChange={(e) => setInput(e.target.value)}
-                 onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!isLoading) handleSendMessage(); }}}
-                 flex="1" bg={inputBg} isDisabled={isLoading} mr={2} borderRadius="full" size="md" />
+          <Box flex="1" position="relative">
+            <Input 
+              ref={chatInputRef} 
+              placeholder="Ask about proteins, analyze data, or generate structures..." 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!isLoading) handleSendMessage(); }}}
+              bg={inputBg} 
+              isDisabled={isLoading} 
+              borderRadius="full" 
+              size="md"
+              pr="60px" // Add padding to make room for the shortcut hint
+            />
+            {/* Keyboard shortcut hint */}
+            <HStack 
+              position="absolute" 
+              right="12px" 
+              top="50%" 
+              transform="translateY(-50%)" 
+              spacing={1}
+              pointerEvents="none"
+              opacity={input ? 0 : 0.5}
+              transition="opacity 0.2s"
+            >
+              {/* <Kbd fontSize="xs">Ctrl</Kbd>
+              <Text fontSize="xs" color="gray.400">+</Text> */}
+              <Kbd fontSize="xs">/</Kbd>
+            </HStack>
+          </Box>
           <Tooltip label={isLoading ? "Cancel Request" : "Send message"} placement="top">
              {isLoading ? (
                   <IconButton aria-label="Cancel request" icon={<CloseIcon />} colorScheme="red" onClick={cancelRequest}
-                              isLoading={false} isDisabled={!abortControllerRef.current} borderRadius="full" size="md" />
+                              isLoading={false} isDisabled={!abortControllerRef.current} borderRadius="full" size="md" ml={2} />
              ) : (
                  <IconButton aria-label="Send message" icon={<Icon as={PaperPlane} />} colorScheme="blue" onClick={handleSendMessage}
-                              isLoading={false} isDisabled={isLoading || (!input.trim() && !fileAttachment)} borderRadius="full" size="md" />
+                              isLoading={false} isDisabled={isLoading || (!input.trim() && !fileAttachment)} borderRadius="full" size="md" ml={2} />
              )}
           </Tooltip>
         </Flex>
+        
+      
       </Box>
 
       <Modal isOpen={isModalOpen} onClose={closeModal} size="xl" isCentered scrollBehavior="inside">
@@ -1184,6 +1710,29 @@ const BackendChat: React.FC<{
                 <Spinner size="lg" />
                 <Text mt={2} color="gray.500">Loading file content...</Text>
               </Box>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      {/* Plot Image Modal */}
+      <Modal isOpen={isPlotModalOpen} onClose={closePlotModal} size="6xl" isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{plotModalContent?.alt || 'Generated Plot'}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6} textAlign="center">
+            {plotModalContent && (
+              <Image 
+                src={plotModalContent.url} 
+                alt={plotModalContent.alt || 'Generated Plot'} 
+                maxW="100%" 
+                maxH="80vh"
+                mx="auto" 
+                display="block"
+                borderRadius="md"
+                boxShadow="lg"
+              />
             )}
           </ModalBody>
         </ModalContent>
