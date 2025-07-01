@@ -1648,7 +1648,7 @@ def upload_files():
         return jsonify(response_data), status_code
         
     except RequestEntityTooLarge:
-        return jsonify({'error': 'File too large. Maximum size allowed is 1GB.'}), 413
+        return jsonify({'error': 'File too large.'}), 413
     except Exception as e:
         logger.error(f"Unexpected error in upload endpoint: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500

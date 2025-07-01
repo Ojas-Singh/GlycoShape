@@ -50,7 +50,7 @@ pin = "glycotime"
 
 # Upload functionality configuration
 UPLOAD_FOLDER = variable_value2  # Use the same as glycoshape_upload_dir
-MAX_CONTENT_LENGTH = 10024 * 1024 * 1024  # 10GB max file size
+MAX_CONTENT_LENGTH = 15 * 1024 * 1024 * 1024  # 12GB max file size
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'pdb', 'zip', 'tar', 'gz', 'json', 'csv', 'mol2', 'mol', 'sdf', 'xyz', 'prm7', 'prm', 'nc', 'rst', 'tsv', 'xlsx', 'xls', 'md', 'html', 'htm', 'xml', 'yaml', 'yml', 'cif', 'map', 'parm7' }
 
 # Load upload keys from environment variables
