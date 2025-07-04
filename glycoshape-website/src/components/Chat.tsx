@@ -145,11 +145,242 @@ const BackendChat: React.FC<{
   const [plotModalContent, setPlotModalContent] = useState<{ url: string; alt?: string } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Helper function to detect if content is a tool result JSON
+  const isToolResultJson = (content: string): boolean => {
+    if (!content || typeof content !== 'string') return false;
+    
+    // Check if it starts and ends with curly braces
+    const trimmed = content.trim();
+    if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return false;
+    
+    try {
+      const parsed = JSON.parse(trimmed);
+      // Check if it has typical tool result fields
+      return (
+        parsed && 
+        typeof parsed === 'object' && 
+        (parsed.success !== undefined || 
+         parsed.error !== undefined || 
+         parsed.file_path !== undefined ||
+         parsed.completion_message !== undefined ||
+         parsed.pdb_url !== undefined ||
+         parsed.visualization_url !== undefined)
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  // Prevent double session load in React StrictMode
+  const didLoadSession = useRef(false);
+  // Prevent double molviewspec replay
+  const didReplayMolViewSpecs = useRef(false);
+
   useEffect(() => {
-    const newSessionId = uuidv4();
-    console.log("Generated Session ID:", newSessionId);
-    setSessionId(newSessionId);
-  }, []);
+    if (didLoadSession.current) return;
+    didLoadSession.current = true;
+
+    const loadSessionHistory = async (sid: string) => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/session/${sid}`);
+        if (!response.ok) {
+          let errorMsg = `Failed to load session: ${response.status} ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+          } catch (e) {
+            errorMsg = await response.text();
+          }
+          throw new Error(errorMsg);
+        }
+        const data = await response.json();
+        
+        // Handle different response formats - check if it has 'conversation' or 'messages'
+        const messagesArray = data.messages || data.conversation || [];
+        
+        if (!Array.isArray(messagesArray)) {
+          throw new Error('Invalid session data: no valid messages array found');
+        }
+        
+        // Filter out tool result messages and assistant messages with null content (tool calls)
+        const filteredMessages = messagesArray.filter((msg: any) => {
+          // Skip tool result messages
+          if (msg.role === 'tool') return false;
+          
+          // Skip assistant messages that are just tool calls (null content with tool_calls)
+          if (msg.role === 'assistant' && msg.content === null && msg.tool_calls) return false;
+          
+          // Skip assistant messages that contain only tool result JSON
+          if (msg.role === 'assistant' && msg.content && isToolResultJson(msg.content) && !msg.artifacts) return false;
+          
+          return true;
+        });
+        
+        const adaptedMessages = filteredMessages.map((msg: any) => {
+          const events: ChatMessage['events'] = [];
+          
+          if (msg.role === 'assistant') {
+            // Skip tool calls and results reconstruction for historical messages
+            // Only reconstruct visual artifacts from the artifacts array
+            
+            // Reconstruct visual events from artifacts
+            if (msg.artifacts && Array.isArray(msg.artifacts)) {
+              msg.artifacts.forEach((artifact: any) => {
+                const artifactId = artifact.id || `hist-artifact-${uuidv4()}`;
+                const artifactData = artifact.data || {};
+                
+                switch (artifact.type) {
+                  case 'code_execution':
+                    events.push({
+                      id: `hist-code-${artifactId}`,
+                      type: 'code_output',
+                      content: { 
+                        code: artifactData.code || '',
+                        stdout: artifactData.stdout || '',
+                        stderr: artifactData.stderr || ''
+                      },
+                      timestamp: Date.now()
+                    });
+                    if (artifactData.plot_url) {
+                      events.push({
+                        id: `hist-plot-${artifactId}`,
+                        type: 'plot',
+                        content: { url: `${API_BASE_URL}${artifactData.plot_url}`, alt: 'Generated Plot' },
+                        timestamp: Date.now()
+                      });
+                    }
+                    break;
+                  case 'molviewspec':
+                    events.push({
+                      id: `hist-mvs-${artifactId}`,
+                      type: 'molviewspec',
+                      content: { 
+                        molviewspec: artifactData.molviewspec, 
+                        filename: artifactData.filename 
+                      },
+                      timestamp: Date.now()
+                    });
+                    break;
+                  case 'pdb_file':
+                    // Handle both full URLs and relative paths
+                    const pdbUrl = artifactData.pdb_url || artifactData.visualization_url;
+                    const fullPdbUrl = pdbUrl?.startsWith('http') ? pdbUrl : `${API_BASE_URL}${pdbUrl}`;
+                    
+                    events.push({
+                      id: `hist-pdb-${artifactId}`,
+                      type: 'pdb',
+                      content: { 
+                        url: fullPdbUrl, 
+                        filename: artifactData.filename 
+                      },
+                      timestamp: Date.now()
+                    });
+                    break;
+                }
+              });
+            }
+
+            // Add the final text content as a text event (only if it's not a tool result JSON)
+            if (msg.content && !isToolResultJson(msg.content)) {
+              events.push({
+                id: `hist-text-${uuidv4()}`,
+                type: 'text',
+                content: msg.content,
+                timestamp: Date.now()
+              });
+            }
+          } else {
+            // For user messages, just add the content
+            if (msg.content) {
+              events.push({
+                id: `hist-text-${uuidv4()}`,
+                type: 'text',
+                content: msg.content,
+                timestamp: Date.now()
+              });
+            }
+          }
+
+          // Sort events roughly to ensure text is last
+          events.sort((a, b) => {
+              if (a.type === 'text' && b.type !== 'text') return 1;
+              if (a.type !== 'text' && b.type === 'text') return -1;
+              return 0;
+          });
+
+          return {
+            ...msg,
+            timestamp: new Date().toISOString(),
+            events: events,
+          };
+        });
+
+        setMessages(adaptedMessages);
+        didReplayMolViewSpecs.current = false; // Reset molviewspec replay guard on session load
+        toast({
+          title: 'Session Loaded',
+          description: `Successfully loaded session ${sid}.`,
+          status: 'success',
+          duration: 3000,
+        });
+      } catch (error: any) {
+        console.error("Failed to fetch session:", error);
+        toast({
+          title: 'Error Loading Session',
+          description: error.message || 'The session could not be found or an error occurred.',
+          status: 'error',
+          duration: 5000,
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setSessionId(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const sidFromUrl = urlParams.get('sessionId');
+
+    if (sidFromUrl) {
+      setSessionId(sidFromUrl);
+      loadSessionHistory(sidFromUrl);
+    } else {
+      setSessionId(null);
+    }
+  }, [toast]);
+
+  // Reset molviewspec replay guard when sessionId or messages change (for Chrome reliability)
+  useEffect(() => {
+    didReplayMolViewSpecs.current = false;
+  }, [sessionId, messages]);
+
+  // Only load the latest molviewspec event after session load
+  useEffect(() => {
+    if (!messages.length || isLoading) return;
+    if (!onMolViewSpecUpdate) return;
+    // Find the latest molviewspec event
+    let latestMolViewSpec = null;
+    for (let i = messages.length - 1; i >= 0; --i) {
+      const msg = messages[i];
+      if (msg.events && Array.isArray(msg.events)) {
+        for (let j = msg.events.length - 1; j >= 0; --j) {
+          const event = msg.events[j];
+          if (event.type === 'molviewspec' && event.content?.molviewspec) {
+            latestMolViewSpec = {
+              molviewspec: event.content.molviewspec,
+              filename: event.content.filename
+            };
+            break;
+          }
+        }
+      }
+      if (latestMolViewSpec) break;
+    }
+    if (latestMolViewSpec) {
+      onMolViewSpecUpdate(latestMolViewSpec.molviewspec, latestMolViewSpec.filename);
+    }
+  }, [messages, isLoading, onMolViewSpecUpdate]);
 
   const userMessageBg = '#F7F9E5';
   const assistantMessageBg = '#f9fffd';
@@ -291,9 +522,7 @@ const BackendChat: React.FC<{
         case 'tool_start':
           return status === 'in_progress' ? 
             <Spinner size="xs" color="yellow.500" /> : 
-            // <SettingsIcon w="8px" h="8px" color="green.500" />;
             <Icon as={VscSymbolProperty} w="16px" h="16px" color="green.500" />;
-            // <Box w="8px" h="8px" bg="yellow.400" borderRadius="full" />;
         case 'tool_end':
           return <Icon as={VscCheck} w="16px" h="16px" color="green.500" />;
         default:
@@ -366,7 +595,6 @@ const BackendChat: React.FC<{
                 </Box>
               </HStack>
 
-              {/* Always show a preview of the code */}
               {event.content.code && (
                 <Box mb={2} bg={codeOutputBg} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
                   <HStack px={3} py={1} bg={codeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
@@ -547,7 +775,6 @@ const BackendChat: React.FC<{
           {event.type === 'tool_end' && (
             <HStack spacing={2} align="center">
                 <Text fontSize="sm" color="green.400">
-                {/* <CheckIcon color="green.300" boxSize={4} mr={1} verticalAlign="middle" /> */}
                 Completed: {event.content.name}
                 </Text>
               {event.duration && (
@@ -563,17 +790,15 @@ const BackendChat: React.FC<{
   };
 
   useEffect(() => {
-    // Simple fallback: only load molviewspec from the very latest finalized message
-    // if no streaming is active and it hasn't been loaded during streaming
     if (isLoading) {
-      return; // Don't run while streaming is active
+      return;
     }
     
     const latestMessage = messages[messages.length - 1];
     if (latestMessage && 
         latestMessage.molViewSpecInfo?.molviewspec && 
         latestMessage.role === 'assistant' && 
-        !latestMessage.id && // finalized message
+        !latestMessage.id &&
         onMolViewSpecUpdate) {
       console.log("Fallback: Loading MolViewSpec from latest finalized message:", latestMessage.molViewSpecInfo.filename);
       onMolViewSpecUpdate(latestMessage.molViewSpecInfo.molviewspec, latestMessage.molViewSpecInfo.filename);
@@ -588,17 +813,14 @@ const BackendChat: React.FC<{
         chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
       }
     }
-  }, [messages, messages[messages.length - 1]?.content, isLoading]); // Removed thinkingContent dependency
+  }, [messages, messages[messages.length - 1]?.content, isLoading]);
 
-  // Keyboard shortcut to focus chat input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Focus on input with Ctrl+/ or Cmd+/ (like Discord/Slack)
       if ((event.ctrlKey || event.metaKey) && event.key === '/') {
         event.preventDefault();
         chatInputRef.current?.focus();
       }
-      // Also support just "/" when not focused on an input
       else if (event.key === '/' && !isLoading) {
         const activeElement = document.activeElement;
         const isInputFocused = activeElement && (
@@ -688,10 +910,6 @@ const BackendChat: React.FC<{
 
   const handleSendMessage = async () => {
     if (!input.trim() && !fileAttachment) return;
-    if (!sessionId) {
-      toast({ title: 'Session Error', description: 'Session ID is not available.', status: 'error', duration: 5000, isClosable: true });
-      return;
-    }
 
     const userMessageContent = input;
     const currentAttachment = fileAttachment;
@@ -717,18 +935,21 @@ const BackendChat: React.FC<{
       {
         role: 'assistant', content: '', timestamp: new Date().toISOString(), id: assistantMessageId,
         codeOutput: null, plotInfo: null, pdbInfo: null, molViewSpecInfo: null,
-        events: [], // Initialize empty events array
-        startTime: messageStartTime, // Track when this message started
+        events: [],
+        startTime: messageStartTime,
       } as ChatMessage,
     ]);
 
-    const historyMessages = messagesWithUser
-        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
-        .map(({ role, content }) => ({ role, content }));
+    // Send only the new user message to the backend
+    const userMessageForApi = {
+      role: 'user',
+      content: userMessageContent,
+    };
 
     const apiPayload = {
-      messages: historyMessages,
-      stream: true, sessionId: sessionId,
+      messages: [userMessageForApi],
+      stream: true,
+      sessionId: sessionId,
     };
 
     const formData = new FormData();
@@ -759,17 +980,16 @@ const BackendChat: React.FC<{
       let buffer = '';
 
       const processSSEBuffer = () => {
-        let mainContentDeltaAccumulator = '';
         let processedChars = 0;
         let currentPos = 0;
         const currentTime = Date.now();
 
         while (currentPos < buffer.length) {
             const newlineIndex = buffer.indexOf('\n', currentPos);
-            if (newlineIndex === -1) break; // Incomplete line, wait for more data
+            if (newlineIndex === -1) break;
 
             const line = buffer.substring(currentPos, newlineIndex).trim();
-            const consumedLength = newlineIndex - currentPos + 1; // +1 for the newline itself
+            const consumedLength = newlineIndex - currentPos + 1;
 
             if (line.startsWith('data: ')) {
                 const jsonStr = line.substring(5).trim();
@@ -778,21 +998,22 @@ const BackendChat: React.FC<{
                 } else {
                     try {
                         const parsedEvent = JSON.parse(jsonStr);
-                        if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
-                          mainContentDeltaAccumulator += parsedEvent.content;
-                          // Add text content to events chronologically
+                        if (parsedEvent.type === 'session_created' && parsedEvent.sessionId) {
+                          setSessionId(parsedEvent.sessionId);
+                          const newUrl = `${window.location.pathname}?sessionId=${parsedEvent.sessionId}`;
+                          window.history.replaceState({ path: newUrl }, '', newUrl);
+                          console.log("New session created by backend:", parsedEvent.sessionId);
+                        } else if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
                           setMessages(prev => prev.map(m => {
                             if (m.id === assistantMessageId) {
                               const newEvents = [...(m.events || [])];
                               const lastEvent = newEvents[newEvents.length - 1];
                               if (lastEvent && lastEvent.type === 'text') {
-                                // Replace the last event with a new one containing the appended text
                                 const updatedEvent = { ...lastEvent, content: lastEvent.content + parsedEvent.content };
                                 newEvents[newEvents.length - 1] = updatedEvent;
                               } else {
-                                // Create a new text event if the last event wasn't text
                                 newEvents.push({
-                                  id: `text-${Date.now()}-${Math.random()}`,
+                                  id: `text-${uuidv4()}`,
                                   type: 'text',
                                   content: parsedEvent.content,
                                   timestamp: currentTime
@@ -802,103 +1023,80 @@ const BackendChat: React.FC<{
                             }
                             return m;
                           }));
-                      } else if (parsedEvent.type === 'code_output') {
+                      } else if (parsedEvent.type === 'artifact') {
                           setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
-                              newEvents.push({
-                                id: `code-${Date.now()}-${Math.random()}`,
-                                type: 'code_output',
-                                content: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code },
-                                timestamp: currentTime,
-                                duration: eventDuration
-                              });
-                              return { ...m, codeOutput: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code }, events: newEvents };
-                            }
-                            return m;
-                          }));
-                      } else if (parsedEvent.type === 'display_plot') {
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              const plotData = { url: `${API_BASE_URL}${parsedEvent.url}`, alt: parsedEvent.alt || 'Generated Plot' };
-                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
-                              newEvents.push({
-                                id: `plot-${Date.now()}-${Math.random()}`,
-                                type: 'plot',
-                                content: plotData,
-                                timestamp: currentTime,
-                                duration: eventDuration
-                              });
-                              return { ...m, plotInfo: plotData, events: newEvents };
-                            }
-                            return m;
-                          }));
-                      } else if (parsedEvent.type === 'load_pdb') {
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              const pdbData = { url: `${API_BASE_URL}${parsedEvent.url}`, filename: parsedEvent.filename };
-                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
-                              newEvents.push({
-                                id: `pdb-${Date.now()}-${Math.random()}`,
-                                type: 'pdb',
-                                content: pdbData,
-                                timestamp: currentTime,
-                                duration: eventDuration
-                              });
-                              return { ...m, pdbInfo: pdbData, events: newEvents };
-                            }
-                            return m;
-                          }));
-                      } else if (parsedEvent.type === 'molviewspec_update') {
-                          try {
-                            // Validate that molviewspec is properly serializable
-                            if (parsedEvent.molviewspec && typeof parsedEvent.molviewspec === 'object') {
-                              setMessages(prev => prev.map(m => {
-                                if (m.id === assistantMessageId) {
+                              if (m.id === assistantMessageId) {
                                   const newEvents = [...(m.events || [])];
-                                  const molviewspecData = { molviewspec: parsedEvent.molviewspec, filename: parsedEvent.filename };
-                                  const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
-                                  newEvents.push({
-                                    id: `molviewspec-${Date.now()}-${Math.random()}`,
-                                    type: 'molviewspec',
-                                    content: molviewspecData,
-                                    timestamp: currentTime,
-                                    duration: eventDuration
-                                  });
-                                  return { ...m, molViewSpecInfo: molviewspecData, events: newEvents };
-                                }
-                                return m;
-                              }));
-                              
-                              // Immediately trigger the viewer update during streaming
-                              if (onMolViewSpecUpdate && parsedEvent.molviewspec && parsedEvent.filename) {
-                                console.log("Immediately loading MolViewSpec during streaming:", parsedEvent.filename);
-                                try {
-                                  onMolViewSpecUpdate(parsedEvent.molviewspec, parsedEvent.filename);
-                                  console.log("Successfully loaded MolViewSpec during streaming");
-                                } catch (error) {
-                                  console.error("Error loading MolViewSpec during streaming:", error);
-                                }
+                                  let newCodeOutput = m.codeOutput;
+                                  let newPlotInfo = m.plotInfo;
+                                  let newPdbInfo = m.pdbInfo;
+                                  let newMolViewSpecInfo = m.molViewSpecInfo;
+
+                                  const artifactData = parsedEvent.data || {};
+                                  const artifactId = parsedEvent.artifact_id || uuidv4();
+                                  
+                                  switch (parsedEvent.artifact_type) {
+                                      case 'code_execution':
+                                          newCodeOutput = {
+                                              code: artifactData.code || '',
+                                              stdout: artifactData.stdout || '',
+                                              stderr: artifactData.stderr || ''
+                                          };
+                                          newEvents.push({ id: `code-${artifactId}`, type: 'code_output', content: newCodeOutput, timestamp: currentTime });
+                                          
+                                          if (artifactData.plot_url) {
+                                              newPlotInfo = { url: `${API_BASE_URL}${artifactData.plot_url}`, alt: 'Generated Plot' };
+                                              newEvents.push({ id: `plot-${artifactId}`, type: 'plot', content: newPlotInfo, timestamp: currentTime });
+                                          }
+                                          break;
+                                      case 'molviewspec':
+                                          newMolViewSpecInfo = {
+                                              molviewspec: artifactData.molviewspec,
+                                              filename: artifactData.filename
+                                          };
+                                          newEvents.push({ id: `mvs-${artifactId}`, type: 'molviewspec', content: newMolViewSpecInfo, timestamp: currentTime });
+                                          
+                                          if (onMolViewSpecUpdate && newMolViewSpecInfo.molviewspec) {
+                                              try {
+                                                  onMolViewSpecUpdate(newMolViewSpecInfo.molviewspec, newMolViewSpecInfo.filename);
+                                              } catch (e) { console.error("Error updating MolViewSpec from artifact", e); }
+                                          }
+                                          break;
+                                      case 'pdb_file':
+                                          newPdbInfo = {
+                                              url: `${API_BASE_URL}${artifactData.pdb_url}`,
+                                              filename: artifactData.filename
+                                          };
+                                          newEvents.push({ id: `pdb-${artifactId}`, type: 'pdb', content: newPdbInfo, timestamp: currentTime });
+                                          break;
+                                      default:
+                                          console.warn("Unknown artifact type:", parsedEvent.artifact_type);
+                                          break;
+                                  }
+                                  
+                                  return {
+                                      ...m,
+                                      events: newEvents,
+                                      codeOutput: newCodeOutput,
+                                      plotInfo: newPlotInfo,
+                                      pdbInfo: newPdbInfo,
+                                      molViewSpecInfo: newMolViewSpecInfo,
+                                  };
                               }
-                            } else {
-                              console.error('Invalid molviewspec data received:', parsedEvent);
-                              toast({ title: 'MolViewSpec Error', description: 'Received invalid molecular visualization data', status: 'warning', duration: 3000 });
-                            }
-                          } catch (error) {
-                            console.error('Error processing molviewspec update:', error);
-                            toast({ title: 'MolViewSpec Error', description: 'Failed to process molecular visualization data', status: 'error', duration: 5000 });
-                          }
+                              return m;
+                          }));
                       } else if (parsedEvent.type === 'tool_start') {
                           setMessages(prev => prev.map(m => {
                             if (m.id === assistantMessageId) {
                               const newEvents = [...(m.events || [])];
                               newEvents.push({
-                                id: `tool-start-${Date.now()}-${Math.random()}`,
+                                id: `tool-start-${parsedEvent.content.id || uuidv4()}`,
                                 type: 'tool_start',
-                                content: { name: parsedEvent.name },
+                                content: { 
+                                  id: parsedEvent.content.id,
+                                  name: parsedEvent.content.name,
+                                  arguments: parsedEvent.content.arguments
+                                },
                                 timestamp: currentTime,
                                 status: 'in_progress' as const
                               });
@@ -909,25 +1107,24 @@ const BackendChat: React.FC<{
                       } else if (parsedEvent.type === 'tool_end') {
                           setMessages(prev => prev.map(m => {
                             if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              // Find the corresponding tool_start event to calculate duration
-                              const toolStartEvent = newEvents.find(e => 
-                                e.type === 'tool_start' && e.content.name === parsedEvent.name
-                              );
+                              const toolId = parsedEvent.content.id;
+                              const toolStartEvent = m.events?.find(e => e.type === 'tool_start' && e.content.id === toolId);
                               const toolDuration = toolStartEvent ? currentTime - toolStartEvent.timestamp : undefined;
                               
-                              // Update the tool_start event status
-                              const updatedEvents = newEvents.map(e => 
-                                e.type === 'tool_start' && e.content.name === parsedEvent.name
+                              const updatedEvents = (m.events || []).map(e => 
+                                (e.type === 'tool_start' && e.content.id === toolId)
                                   ? { ...e, status: 'completed' as const, duration: toolDuration }
                                   : e
                               );
                               
-                              // Add tool_end event
                               updatedEvents.push({
-                                id: `tool-end-${Date.now()}-${Math.random()}`,
+                                id: `tool-end-${toolId || uuidv4()}`,
                                 type: 'tool_end',
-                                content: { name: parsedEvent.name },
+                                content: { 
+                                  id: toolId,
+                                  name: parsedEvent.content.name,
+                                  result: parsedEvent.content.result
+                                },
                                 timestamp: currentTime,
                                 duration: toolDuration,
                                 status: 'completed' as const
@@ -939,28 +1136,16 @@ const BackendChat: React.FC<{
                           }));
                       } else if (parsedEvent.type === 'error') {
                           console.error("Backend Stream Error:", parsedEvent.message);
+                          toast({ 
+                            title: 'Backend Error', 
+                            description: parsedEvent.message || 'An unknown error occurred.', 
+                            status: 'error', 
+                            duration: 5000, 
+                            isClosable: true 
+                          });
                           
-                          // Check if it's a molviewspec serialization error
-                          if (parsedEvent.message && parsedEvent.message.includes('Object of type State is not JSON serializable')) {
-                            toast({ 
-                              title: 'MolViewSpec Generation Error', 
-                              description: 'The molecular visualization could not be generated due to a serialization issue. Please try again.', 
-                              status: 'warning', 
-                              duration: 5000, 
-                              isClosable: true 
-                            });
-                          } else {
-                            toast({ 
-                              title: 'Backend Error', 
-                              description: parsedEvent.message || 'An unknown error occurred.', 
-                              status: 'error', 
-                              duration: 5000, 
-                              isClosable: true 
-                            });
-                          }
-                          
-                          const errorSystemMessage: ChatMessage = { // Ensure this also conforms
-                              id: `error-${Date.now()}`, 
+                          const errorSystemMessage: ChatMessage = {
+                              id: `error-${uuidv4()}`, 
                               role: 'system', 
                               content: `Error: ${parsedEvent.message}`, 
                               timestamp: new Date().toISOString(), 
@@ -970,48 +1155,36 @@ const BackendChat: React.FC<{
                       }
                     } catch (e) { console.error('Failed to parse SSE data line:', jsonStr, e); }
                 }
-            } else if (line !== '') { // Non-empty, non-data line
+            } else if (line !== '') {
                  console.warn("Received non-data SSE line:", line);
             }
-            // else: empty line, often used as SSE message separator, just consume.
 
             processedChars += consumedLength;
             currentPos += consumedLength;
         }
 
-        buffer = buffer.substring(processedChars); // Keep unprocessed part of the buffer
-        return { mainContentDelta: mainContentDeltaAccumulator };
+        buffer = buffer.substring(processedChars);
       };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          buffer += decoder.decode(); // Flush any remaining bytes from decoder
-          const { mainContentDelta: finalMainDelta } = processSSEBuffer(); // Process final buffer content
-          if (finalMainDelta) {
-            // Don't update the main content field since we're using events for chronological display
-            // setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: (m.content || '') + finalMainDelta } : m));
-          }
+          buffer += decoder.decode();
+          processSSEBuffer();
           console.log("Stream finished");
           break;
         }
 
         buffer += decoder.decode(value, { stream: true });
-        const { mainContentDelta } = processSSEBuffer();
-
-        if (mainContentDelta) {
-          // Don't update the main content field since we're using events for chronological display
-          // setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...m, content: (m.content || '') + mainContentDelta } : m));
-        }
+        processSSEBuffer();
       }
 
       setMessages(prevMessages =>
         prevMessages.map(msg => {
           if (msg.id === assistantMessageId) {
-            const { id, ...finalizedMsg } = msg; // Remove id but keep events
+            const { id, ...finalizedMsg } = msg;
             return {
               ...finalizedMsg,
-              // Ensure content is properly set from events for consistency
               content: finalizedMsg.events
                 ?.filter(e => e.type === 'text')
                 .map(e => e.content)
@@ -1078,7 +1251,6 @@ const BackendChat: React.FC<{
     }
   };
 
-  // Remove messages from a specific point onwards
   const removeMessagesFromPoint = (messageIndex: number) => {
     const newMessages = messages.slice(0, messageIndex);
     setMessages(newMessages);
@@ -1091,11 +1263,9 @@ const BackendChat: React.FC<{
     });
   };
 
-  // Retry conversation from a specific point
   const retryFromPoint = async (messageIndex: number) => {
     if (isLoading) return;
     
-    // Find the user message that triggered this assistant response
     const userMessageIndex = messageIndex - 1;
     if (userMessageIndex < 0 || messages[userMessageIndex].role !== 'user') {
       toast({
@@ -1108,14 +1278,11 @@ const BackendChat: React.FC<{
       return;
     }
 
-    // Remove all messages from the assistant response onwards
     const messagesUpToUser = messages.slice(0, messageIndex);
     setMessages(messagesUpToUser);
 
-    // Get the user message content and attachment
     const userMessage = messages[userMessageIndex];
     
-    // Simulate sending the message again
     setIsLoading(true);
     abortControllerRef.current = new AbortController();
 
@@ -1126,28 +1293,27 @@ const BackendChat: React.FC<{
       {
         role: 'assistant', content: '', timestamp: new Date().toISOString(), id: assistantMessageId,
         codeOutput: null, plotInfo: null, pdbInfo: null, molViewSpecInfo: null,
-        events: [], // Initialize empty events array
-        startTime: messageStartTime, // Track when this message started
+        events: [],
+        startTime: messageStartTime,
       } as ChatMessage,
     ]);
 
-    const historyMessages = messagesUpToUser
-        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
-        .map(({ role, content }) => ({ role, content }));
+    // Send only the user message that triggered this retry
+    const userMessageForApi = {
+      role: 'user',
+      content: userMessage.content,
+    };
 
     const apiPayload = {
-      messages: historyMessages,
-      stream: true, sessionId: sessionId,
+      messages: [userMessageForApi],
+      stream: true,
+      sessionId: sessionId,
     };
 
     const formData = new FormData();
     formData.append('jsonData', JSON.stringify(apiPayload));
     
-    // Re-attach the file if there was one
     if (userMessage.attachment) {
-      // Create a new file from the attachment data if possible
-      // Note: This is a limitation - we can't recreate the original file object
-      // We'll just send the request without the file attachment for retry
       toast({
         title: "Note",
         description: "File attachments cannot be retried. The retry will proceed without the original file.",
@@ -1178,19 +1344,17 @@ const BackendChat: React.FC<{
       const decoder = new TextDecoder();
       let buffer = '';
 
-      // Use the same processSSEBuffer logic as in handleSendMessage
       const processSSEBuffer = () => {
-        let mainContentDeltaAccumulator = '';
         let processedChars = 0;
         let currentPos = 0;
         const currentTime = Date.now();
 
         while (currentPos < buffer.length) {
             const newlineIndex = buffer.indexOf('\n', currentPos);
-            if (newlineIndex === -1) break; // Incomplete line, wait for more data
+            if (newlineIndex === -1) break;
 
             const line = buffer.substring(currentPos, newlineIndex).trim();
-            const consumedLength = newlineIndex - currentPos + 1; // +1 for the newline itself
+            const consumedLength = newlineIndex - currentPos + 1;
 
             if (line.startsWith('data: ')) {
                 const jsonStr = line.substring(5).trim();
@@ -1199,21 +1363,21 @@ const BackendChat: React.FC<{
                 } else {
                     try {
                         const parsedEvent = JSON.parse(jsonStr);
-                        if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
-                          mainContentDeltaAccumulator += parsedEvent.content;
-                          // Add text content to events chronologically
+                        if (parsedEvent.type === 'session_created' && parsedEvent.sessionId) {
+                          setSessionId(parsedEvent.sessionId);
+                          const newUrl = `${window.location.pathname}?sessionId=${parsedEvent.sessionId}`;
+                          window.history.replaceState({ path: newUrl }, '', newUrl);
+                        } else if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
                           setMessages(prev => prev.map(m => {
                             if (m.id === assistantMessageId) {
                               const newEvents = [...(m.events || [])];
                               const lastEvent = newEvents[newEvents.length - 1];
                               if (lastEvent && lastEvent.type === 'text') {
-                                // Replace the last event with a new one containing the appended text
                                 const updatedEvent = { ...lastEvent, content: lastEvent.content + parsedEvent.content };
                                 newEvents[newEvents.length - 1] = updatedEvent;
                               } else {
-                                // Create a new text event if the last event wasn't text
                                 newEvents.push({
-                                  id: `text-${Date.now()}-${Math.random()}`,
+                                  id: `text-${uuidv4()}`,
                                   type: 'text',
                                   content: parsedEvent.content,
                                   timestamp: currentTime
@@ -1223,103 +1387,77 @@ const BackendChat: React.FC<{
                             }
                             return m;
                           }));
-                      } else if (parsedEvent.type === 'code_output') {
+                      } else if (parsedEvent.type === 'artifact') {
                           setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
-                              newEvents.push({
-                                id: `code-${Date.now()}-${Math.random()}`,
-                                type: 'code_output',
-                                content: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code },
-                                timestamp: currentTime,
-                                duration: eventDuration
-                              });
-                              return { ...m, codeOutput: { stdout: parsedEvent.stdout || '', stderr: parsedEvent.stderr || '', code: parsedEvent.code }, events: newEvents };
-                            }
-                            return m;
-                          }));
-                      } else if (parsedEvent.type === 'display_plot') {
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              const plotData = { url: `${API_BASE_URL}${parsedEvent.url}`, alt: parsedEvent.alt || 'Generated Plot' };
-                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
-                              newEvents.push({
-                                id: `plot-${Date.now()}-${Math.random()}`,
-                                type: 'plot',
-                                content: plotData,
-                                timestamp: currentTime,
-                                duration: eventDuration
-                              });
-                              return { ...m, plotInfo: plotData, events: newEvents };
-                            }
-                            return m;
-                          }));
-                      } else if (parsedEvent.type === 'load_pdb') {
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              const pdbData = { url: `${API_BASE_URL}${parsedEvent.url}`, filename: parsedEvent.filename };
-                              const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
-                              newEvents.push({
-                                id: `pdb-${Date.now()}-${Math.random()}`,
-                                type: 'pdb',
-                                content: pdbData,
-                                timestamp: currentTime,
-                                duration: eventDuration
-                              });
-                              return { ...m, pdbInfo: pdbData, events: newEvents };
-                            }
-                            return m;
-                          }));
-                      } else if (parsedEvent.type === 'molviewspec_update') {
-                          try {
-                            // Validate that molviewspec is properly serializable
-                            if (parsedEvent.molviewspec && typeof parsedEvent.molviewspec === 'object') {
-                              setMessages(prev => prev.map(m => {
-                                if (m.id === assistantMessageId) {
+                              if (m.id === assistantMessageId) {
                                   const newEvents = [...(m.events || [])];
-                                  const molviewspecData = { molviewspec: parsedEvent.molviewspec, filename: parsedEvent.filename };
-                                  const eventDuration = m.startTime ? currentTime - m.startTime : undefined;
-                                  newEvents.push({
-                                    id: `molviewspec-${Date.now()}-${Math.random()}`,
-                                    type: 'molviewspec',
-                                    content: molviewspecData,
-                                    timestamp: currentTime,
-                                    duration: eventDuration
-                                  });
-                                  return { ...m, molViewSpecInfo: molviewspecData, events: newEvents };
-                                }
-                                return m;
-                              }));
-                              
-                              // Immediately trigger the viewer update during streaming
-                              if (onMolViewSpecUpdate && parsedEvent.molviewspec && parsedEvent.filename) {
-                                console.log("Immediately loading MolViewSpec during streaming:", parsedEvent.filename);
-                                try {
-                                  onMolViewSpecUpdate(parsedEvent.molviewspec, parsedEvent.filename);
-                                  console.log("Successfully loaded MolViewSpec during streaming");
-                                } catch (error) {
-                                  console.error("Error loading MolViewSpec during streaming:", error);
-                                }
+                                  let newCodeOutput = m.codeOutput;
+                                  let newPlotInfo = m.plotInfo;
+                                  let newPdbInfo = m.pdbInfo;
+                                  let newMolViewSpecInfo = m.molViewSpecInfo;
+                                  const artifactData = parsedEvent.data || {};
+                                  const artifactId = parsedEvent.artifact_id || uuidv4();
+                                  
+                                  switch (parsedEvent.artifact_type) {
+                                      case 'code_execution':
+                                          newCodeOutput = {
+                                              code: artifactData.code || '',
+                                              stdout: artifactData.stdout || '',
+                                              stderr: artifactData.stderr || ''
+                                          };
+                                          newEvents.push({ id: `code-${artifactId}`, type: 'code_output', content: newCodeOutput, timestamp: currentTime });
+                                          if (artifactData.plot_url) {
+                                              newPlotInfo = { url: `${API_BASE_URL}${artifactData.plot_url}`, alt: 'Generated Plot' };
+                                              newEvents.push({ id: `plot-${artifactId}`, type: 'plot', content: newPlotInfo, timestamp: currentTime });
+                                          }
+                                          break;
+                                      case 'molviewspec':
+                                          newMolViewSpecInfo = {
+                                              molviewspec: artifactData.molviewspec,
+                                              filename: artifactData.filename
+                                          };
+                                          newEvents.push({ id: `mvs-${artifactId}`, type: 'molviewspec', content: newMolViewSpecInfo, timestamp: currentTime });
+                                          if (onMolViewSpecUpdate && newMolViewSpecInfo.molviewspec) {
+                                              try {
+                                                  onMolViewSpecUpdate(newMolViewSpecInfo.molviewspec, newMolViewSpecInfo.filename);
+                                              } catch (e) { console.error("Error updating MolViewSpec from artifact", e); }
+                                          }
+                                          break;
+                                      case 'pdb_file':
+                                          newPdbInfo = {
+                                              url: `${API_BASE_URL}${artifactData.pdb_url}`,
+                                              filename: artifactData.filename
+                                          };
+                                          newEvents.push({ id: `pdb-${artifactId}`, type: 'pdb', content: newPdbInfo, timestamp: currentTime });
+                                          break;
+                                      default:
+                                          console.warn("Unknown artifact type:", parsedEvent.artifact_type);
+                                          break;
+                                  }
+                                  
+                                  return {
+                                      ...m,
+                                      events: newEvents,
+                                      codeOutput: newCodeOutput,
+                                      plotInfo: newPlotInfo,
+                                      pdbInfo: newPdbInfo,
+                                      molViewSpecInfo: newMolViewSpecInfo,
+                                  };
                               }
-                            } else {
-                              console.error('Invalid molviewspec data received:', parsedEvent);
-                              toast({ title: 'MolViewSpec Error', description: 'Received invalid molecular visualization data', status: 'warning', duration: 3000 });
-                            }
-                          } catch (error) {
-                            console.error('Error processing molviewspec update:', error);
-                            toast({ title: 'MolViewSpec Error', description: 'Failed to process molecular visualization data', status: 'error', duration: 5000 });
-                          }
+                              return m;
+                          }));
                       } else if (parsedEvent.type === 'tool_start') {
                           setMessages(prev => prev.map(m => {
                             if (m.id === assistantMessageId) {
                               const newEvents = [...(m.events || [])];
                               newEvents.push({
-                                id: `tool-start-${Date.now()}-${Math.random()}`,
+                                id: `tool-start-${parsedEvent.content.id || uuidv4()}`,
                                 type: 'tool_start',
-                                content: { name: parsedEvent.name },
+                                content: { 
+                                  id: parsedEvent.content.id,
+                                  name: parsedEvent.content.name,
+                                  arguments: parsedEvent.content.arguments
+                                },
                                 timestamp: currentTime,
                                 status: 'in_progress' as const
                               });
@@ -1330,25 +1468,24 @@ const BackendChat: React.FC<{
                       } else if (parsedEvent.type === 'tool_end') {
                           setMessages(prev => prev.map(m => {
                             if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              // Find the corresponding tool_start event to calculate duration
-                              const toolStartEvent = newEvents.find(e => 
-                                e.type === 'tool_start' && e.content.name === parsedEvent.name
-                              );
+                              const toolId = parsedEvent.content.id;
+                              const toolStartEvent = m.events?.find(e => e.type === 'tool_start' && e.content.id === toolId);
                               const toolDuration = toolStartEvent ? currentTime - toolStartEvent.timestamp : undefined;
                               
-                              // Update the tool_start event status
-                              const updatedEvents = newEvents.map(e => 
-                                e.type === 'tool_start' && e.content.name === parsedEvent.name
+                              const updatedEvents = (m.events || []).map(e => 
+                                (e.type === 'tool_start' && e.content.id === toolId)
                                   ? { ...e, status: 'completed' as const, duration: toolDuration }
                                   : e
                               );
                               
-                              // Add tool_end event
                               updatedEvents.push({
-                                id: `tool-end-${Date.now()}-${Math.random()}`,
+                                id: `tool-end-${toolId || uuidv4()}`,
                                 type: 'tool_end',
-                                content: { name: parsedEvent.name },
+                                content: { 
+                                  id: toolId,
+                                  name: parsedEvent.content.name,
+                                  result: parsedEvent.content.result
+                                },
                                 timestamp: currentTime,
                                 duration: toolDuration,
                                 status: 'completed' as const
@@ -1360,28 +1497,15 @@ const BackendChat: React.FC<{
                           }));
                       } else if (parsedEvent.type === 'error') {
                           console.error("Backend Stream Error:", parsedEvent.message);
-                          
-                          // Check if it's a molviewspec serialization error
-                          if (parsedEvent.message && parsedEvent.message.includes('Object of type State is not JSON serializable')) {
-                            toast({ 
-                              title: 'MolViewSpec Generation Error', 
-                              description: 'The molecular visualization could not be generated due to a serialization issue. Please try again.', 
-                              status: 'warning', 
-                              duration: 5000, 
-                              isClosable: true 
-                            });
-                          } else {
-                            toast({ 
-                              title: 'Backend Error', 
-                              description: parsedEvent.message || 'An unknown error occurred.', 
-                              status: 'error', 
-                              duration: 5000, 
-                              isClosable: true 
-                            });
-                          }
-                          
-                          const errorSystemMessage: ChatMessage = { // Ensure this also conforms
-                              id: `error-${Date.now()}`, 
+                          toast({ 
+                            title: 'Backend Error', 
+                            description: parsedEvent.message || 'An unknown error occurred.', 
+                            status: 'error', 
+                            duration: 5000, 
+                            isClosable: true 
+                          });
+                          const errorSystemMessage: ChatMessage = {
+                              id: `error-${uuidv4()}`, 
                               role: 'system', 
                               content: `Error: ${parsedEvent.message}`, 
                               timestamp: new Date().toISOString(), 
@@ -1391,42 +1515,36 @@ const BackendChat: React.FC<{
                       }
                     } catch (e) { console.error('Failed to parse SSE data line:', jsonStr, e); }
                 }
-            } else if (line !== '') { // Non-empty, non-data line
+            } else if (line !== '') {
                  console.warn("Received non-data SSE line:", line);
             }
-            // else: empty line, often used as SSE message separator, just consume.
 
             processedChars += consumedLength;
             currentPos += consumedLength;
         }
 
-        buffer = buffer.substring(processedChars); // Keep unprocessed part of the buffer
-        return { mainContentDelta: mainContentDeltaAccumulator };
+        buffer = buffer.substring(processedChars);
       };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          buffer += decoder.decode(); // Flush any remaining bytes from decoder
-          const { mainContentDelta: finalMainDelta } = processSSEBuffer(); // Process final buffer content
-          if (finalMainDelta) {
-            // Don't update the main content field since we're using events for chronological display
-          }
+          buffer += decoder.decode();
+          processSSEBuffer();
           console.log("Retry stream finished");
           break;
         }
 
         buffer += decoder.decode(value, { stream: true });
-        const { mainContentDelta } = processSSEBuffer();
+        processSSEBuffer();
       }
 
       setMessages(prevMessages =>
         prevMessages.map(msg => {
           if (msg.id === assistantMessageId) {
-            const { id, ...finalizedMsg } = msg; // Remove id but keep events
+            const { id, ...finalizedMsg } = msg;
             return {
               ...finalizedMsg,
-              // Ensure content is properly set from events for consistency
               content: finalizedMsg.events
                 ?.filter(e => e.type === 'text')
                 .map(e => e.content)
@@ -1493,25 +1611,21 @@ const BackendChat: React.FC<{
                       </Button>
                     )}
 
-                    {/* Render Content Chronologically */}
                     {msg.role === 'assistant' && msg.events && msg.events.length > 0 ? (
-                      // For assistant messages with events, render chronologically with timeline
                       <Box>
-                        {msg.events.map((event, idx) => (
+                        {msg.events.map((event, eventIdx) => (
                           <EventRenderer 
-                            key={event.id || `event-${idx}`} 
+                            key={event.id || `event-${eventIdx}`} 
                             event={event} 
                             messageKey={messageKey}
                             onMolViewSpecUpdate={onMolViewSpecUpdate}
-                            isLast={idx === msg.events!.length - 1}
+                            isLast={eventIdx === msg.events!.length - 1}
                           />
                         ))}
                       </Box>
                     ) : msg.role === 'assistant' && msg.id ? (
-                      // For streaming assistant messages without events yet, show nothing (events will populate)
                       null
                     ) : (
-                      // For non-assistant messages or finalized messages, render content normally
                       msg.content && msg.content.trim() && (
                         <Box className="markdown-container">
                           <ReactMarkdown
@@ -1545,9 +1659,7 @@ const BackendChat: React.FC<{
                               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Text>
                           
-                          {/* Action buttons */}
                           <HStack spacing={1}>
-                            {/* Remove messages from this point for user messages */}
                             {msg.role === 'user' && idx < messages.length - 1 && (
                               <Tooltip label="Remove from this point" placement="top">
                                 <IconButton
@@ -1562,7 +1674,6 @@ const BackendChat: React.FC<{
                               </Tooltip>
                             )}
                             
-                            {/* Retry button for assistant messages */}
                             {msg.role === 'assistant' && !msg.id && idx > 0 && (
                               <Tooltip label="Retry this response" placement="top">
                                 <IconButton
@@ -1583,7 +1694,6 @@ const BackendChat: React.FC<{
                 </Flex>
               );
             })}
-            {/* Simplified Loading indicator */}
             {isLoading && messages.some(msg => msg.id && msg.role === 'assistant') && (
                  <Flex justify="center" my={4}>
                     <HStack>
@@ -1629,9 +1739,8 @@ const BackendChat: React.FC<{
               isDisabled={isLoading} 
               borderRadius="full" 
               size="md"
-              pr="60px" // Add padding to make room for the shortcut hint
+              pr="60px"
             />
-            {/* Keyboard shortcut hint */}
             <HStack 
               position="absolute" 
               right="12px" 
@@ -1642,8 +1751,6 @@ const BackendChat: React.FC<{
               opacity={input ? 0 : 0.5}
               transition="opacity 0.2s"
             >
-              {/* <Kbd fontSize="xs">Ctrl</Kbd>
-              <Text fontSize="xs" color="gray.400">+</Text> */}
               <Kbd fontSize="xs">/</Kbd>
             </HStack>
           </Box>
@@ -1662,7 +1769,7 @@ const BackendChat: React.FC<{
       </Box>
 
       <Modal isOpen={isModalOpen} onClose={closeModal} size="xl" isCentered scrollBehavior="inside">
-        <ModalOverlay />
+               <ModalOverlay />
         <ModalContent>
           <ModalHeader title={modalContent?.name} isTruncated>{modalContent?.name || 'Attachment'}</ModalHeader>
           <ModalCloseButton />
@@ -1680,7 +1787,6 @@ const BackendChat: React.FC<{
         </ModalContent>
       </Modal>
 
-      {/* PDB File Preview Modal */}
       <Modal isOpen={isPdbPreviewOpen} onClose={closePdbPreview} size="xl" isCentered scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="80vh">
@@ -1715,7 +1821,6 @@ const BackendChat: React.FC<{
         </ModalContent>
       </Modal>
 
-      {/* Plot Image Modal */}
       <Modal isOpen={isPlotModalOpen} onClose={closePlotModal} size="6xl" isCentered>
         <ModalOverlay />
         <ModalContent>
@@ -1764,19 +1869,15 @@ const App: React.FC = () => {
     console.log(`[App] handleMolViewSpecUpdate called with filename: ${filename}`);
     if (molViewerRef && molViewerRef.plugin) {
       try {
-        // Validate the molviewspec data before processing
         if (!molviewspec || typeof molviewspec !== 'object') {
           console.error('Invalid molviewspec data:', molviewspec);
           return;
         }
 
-        // Ensure the data is properly formatted for MolViewSpec
         let mvsData;
         if (typeof molviewspec === 'string') {
-          // If it's a string, try to parse it
           mvsData = (window as any).molstar.PluginExtensions.mvs.MVSData.fromMVSJ(molviewspec);
         } else {
-          // If it's an object, stringify it first
           mvsData = (window as any).molstar.PluginExtensions.mvs.MVSData.fromMVSJ(JSON.stringify(molviewspec));
         }
         
@@ -1787,7 +1888,6 @@ const App: React.FC = () => {
         });
       } catch (error) {
         console.error('Error loading MolViewSpec:', error);
-        // You could add a toast notification here if you want to show the error to the user
       }
     } else {
       console.warn('MolViewer not initialized yet, cannot load MolViewSpec');
@@ -1795,25 +1895,19 @@ const App: React.FC = () => {
   }, [molViewerRef]);
 
   useEffect(() => {
-    // Load Molstar scripts dynamically
     const loadMolstar = async () => {
-      // Check if Molstar is already loaded
       if ((window as any).molstar) {
         initializeViewer();
         return;
       }
 
-      // Load CSS
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.type = 'text/css';
-      // link.href = 'https://cdn.jsdelivr.net/npm/molstar@latest/build/viewer/molstar.css';
       link.href = '/viewer3/molstar.css';
       document.head.appendChild(link);
 
-      // Load JS
       const script = document.createElement('script');
-      // script.src = 'https://cdn.jsdelivr.net/npm/molstar@latest/build/viewer/molstar.js';
       script.src = '/viewer3/molstar.js';
       script.onload = () => {
         initializeViewer();
