@@ -32,7 +32,7 @@ import View from './components/View';
 import JobView from './components/JobView';
 import UnderConstruction from './components/UnderConstruction';
 import Sparql from './components/Sparql';
-import Chat from './components/Chat';
+import Chat from './components/chat';
 import DBHealth from './components/DatabaseHealth';
 import XP from './components/XP';
 
