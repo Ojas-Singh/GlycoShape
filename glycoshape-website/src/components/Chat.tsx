@@ -34,7 +34,7 @@ import {
   Select,
 } from '@chakra-ui/react';
 import { ChatIcon, LinkIcon, ChevronUpIcon, ChevronDownIcon, AttachmentIcon, CloseIcon, CopyIcon, CheckIcon, ExternalLinkIcon, RepeatIcon, DeleteIcon, DownloadIcon} from '@chakra-ui/icons';
-import { VscSymbolProperty, VscTerminal, VscCheck, VscSymbolFile } from "react-icons/vsc";
+import { VscSymbolProperty, VscTerminal, VscCheck, VscSymbolFile, VscCloudDownload } from "react-icons/vsc";
 import { Slide } from '@chakra-ui/react';
 import 'katex/dist/katex.min.css';
 import ReactMarkdown, { Components } from 'react-markdown';
@@ -101,7 +101,7 @@ interface ChatMessage {
   // New field to track chronological order of events
   events?: Array<{
     id: string;
-    type: 'text' | 'code_output' | 'plot' | 'pdb' | 'molviewspec' | 'tool_start' | 'tool_end';
+    type: 'text' | 'code_delta' | 'code_output' | 'plot' | 'pdb' | 'molviewspec' | 'tool_start' | 'tool_end' | 'link';
     content: any;
     timestamp: number;
     duration?: number; // For tracking how long something took
@@ -126,6 +126,21 @@ const PaperPlane = (props: any) => (
     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
   </svg>
 );
+
+// Helper to prepare history for API
+const prepareApiHistory = (messagesToPrepare: ChatMessage[]): { role: string; content: string }[] => {
+  return messagesToPrepare
+    // Only user/assistant, no streaming/temporary/system
+    .filter(msg => (msg.role === 'user' || msg.role === 'assistant') && !msg.id)
+    .map(msg => {
+      let content = msg.content || '';
+      if (msg.role === 'user' && msg.attachment?.name) {
+        const fileContext = `\n\n[User uploaded file: '${msg.attachment.name}'. It is available for tools in the current session's working directory as '${msg.attachment.name}'.]`;
+        content += fileContext;
+      }
+      return { role: msg.role, content };
+    });
+};
 
 // --- Main Chat Component ---
 const BackendChat: React.FC<{
@@ -313,16 +328,19 @@ const BackendChat: React.FC<{
               });
             }
 
-            // **MODIFICATION**: Add final text content, parsing for images.
+            // **MODIFICATION**: Add final text content, parsing for images and links.
             if (msg.content && !isToolResultJson(msg.content)) {
                 const content = msg.content;
                 const imgRegex = /(<img\s+src="[^"]+"[^>]*>)/g;
-                const parts = content.split(imgRegex).filter(Boolean);
+                const linkRegex = /(<a\s+[^>]*href="[^"]*"[^>]*>.*?<\/a>)/g;
+                
+                // First split by img tags
+                const imgParts = content.split(imgRegex).filter(Boolean);
 
-                parts.forEach((part: string) => {
-                    if (part.startsWith('<img')) {
-                        const srcMatch = /src="([^"]+)"/.exec(part);
-                        const altMatch = /alt="([^"]*)"/.exec(part);
+                imgParts.forEach((imgPart: string) => {
+                    if (imgPart.startsWith('<img')) {
+                        const srcMatch = /src="([^"]+)"/.exec(imgPart);
+                        const altMatch = /alt="([^"]*)"/.exec(imgPart);
                         if (srcMatch) {
                             const filename = srcMatch[1];
                             const altText = altMatch ? altMatch[1] : 'Generated Plot';
@@ -335,11 +353,40 @@ const BackendChat: React.FC<{
                             });
                         }
                     } else {
-                        events.push({
-                            id: `hist-text-${uuidv4()}`,
-                            type: 'text',
-                            content: part,
-                            timestamp: Date.now()
+                        // Now split this part by link tags
+                        const linkParts = imgPart.split(linkRegex).filter(Boolean);
+                        
+                        linkParts.forEach((linkPart: string) => {
+                            if (linkPart.startsWith('<a')) {
+                                const hrefMatch = /href="([^"]*)"/.exec(linkPart);
+                                const textMatch = />([^<]*)</i.exec(linkPart);
+                                const downloadMatch = /download="([^"]*)"/.exec(linkPart);
+                                
+                                if (hrefMatch) {
+                                    const url = hrefMatch[1];
+                                    const linkText = textMatch ? textMatch[1] : url;
+                                    const isDownload = downloadMatch || linkPart.includes('download');
+                                    
+                                    events.push({
+                                        id: `hist-link-${uuidv4()}`,
+                                        type: 'link',
+                                        content: { 
+                                            url: url, 
+                                            text: linkText,
+                                            isDownload: !!isDownload,
+                                            downloadName: downloadMatch ? downloadMatch[1] : null
+                                        },
+                                        timestamp: Date.now()
+                                    });
+                                }
+                            } else if (linkPart.trim()) {
+                                events.push({
+                                    id: `hist-text-${uuidv4()}`,
+                                    type: 'text',
+                                    content: linkPart,
+                                    timestamp: Date.now()
+                                });
+                            }
                         });
                     }
                 });
@@ -528,6 +575,8 @@ const BackendChat: React.FC<{
               </svg>
             </Box>
             );
+        case 'code_delta':
+          return <Icon as={VscTerminal} w="16px" h="16px" color="orange.500" />;
         case 'code_output':
           return <Icon as={VscTerminal} w="16px" h="16px" color="green.500" />;
         case 'plot':
@@ -551,6 +600,26 @@ const BackendChat: React.FC<{
             );
         case 'pdb':
           return <Icon as={VscSymbolFile} w="16px" h="16px" color="green.500" />;
+        case 'link':
+          return (
+            <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
+              <svg
+                width="16px"
+                height="16px"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="#4CAF50"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                style={{ display: 'block' }}
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </Box>
+          );
         case 'molviewspec':
             return (
             <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
@@ -617,6 +686,44 @@ const BackendChat: React.FC<{
               </ReactMarkdown>
             </Box>
           )}
+
+          {/* --- PENDING CODE_DELTA RENDERING --- */}
+          {event.type === 'code_delta' && (
+            <Box>
+              <HStack spacing={2} mb={2} align="center">
+                <Text fontSize="sm" fontWeight="bold" color="orange.600">
+                  Pending Execution
+                </Text>
+              </HStack>
+              <Box mb={2} bg={codeOutputBg} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
+                <HStack px={3} py={1} bg={codeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
+                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">python</Text>
+                  <Text fontSize="xs" color="gray.500">
+                    Code to Run
+                  </Text>
+                </HStack>
+                <Box>
+                  <SyntaxHighlighter
+                    style={codeStyle}
+                    language="python"
+                    PreTag="div"
+                    customStyle={{
+                      margin: 0,
+                      padding: '1rem',
+                      fontSize: '0.875rem',
+                      backgroundColor: 'transparent',
+                      borderRadius: 0
+                    }}
+                    wrapLongLines={false}
+                    codeTagProps={{ style: { fontFamily: 'monospace' } }}
+                  >
+                    {event.content.code}
+                  </SyntaxHighlighter>
+                </Box>
+              </Box>
+            </Box>
+          )}
+          {/* --- END PENDING CODE_DELTA RENDERING --- */}
 
           {event.type === 'code_output' && (
             <Box>
@@ -842,6 +949,44 @@ const BackendChat: React.FC<{
               )}
             </HStack>
           )}
+
+          {event.type === 'link' && (
+            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={borderColor} bg="blue.50">
+              <HStack justifyContent="space-between" mb={2} wrap="wrap">
+                <HStack>
+                  <Text fontSize="sm" fontWeight="bold" color="blue.600">
+                    {event.content.isDownload ? 'Download Link' : 'External Link'}
+                  </Text>
+                  {event.duration && (
+                    <Text fontSize="xs" color="gray.500">
+                      {formatDuration(event.duration)}
+                    </Text>
+                  )}
+                </HStack>
+                <Button 
+                  as="a" 
+                  href={event.content.url} 
+                  target={event.content.isDownload ? '_self' : '_blank'}
+                  rel={event.content.isDownload ? undefined : 'noopener noreferrer'}
+                  download={event.content.isDownload ? (event.content.downloadName || true) : undefined}
+                  size="sm" 
+                  colorScheme="blue" 
+                  leftIcon={event.content.isDownload ? <Icon as={VscCloudDownload} /> : <ExternalLinkIcon />}
+                  flexShrink={0}
+                >
+                  {event.content.isDownload ? 'Download' : 'Open Link'}
+                </Button>
+              </HStack>
+              <Text fontSize="sm" wordBreak="break-all" color="gray.700">
+                {event.content.text}
+              </Text>
+              {event.content.url !== event.content.text && (
+                <Text fontSize="xs" color="gray.500" mt={1} wordBreak="break-all">
+                  {event.content.url}
+                </Text>
+              )}
+            </Box>
+          )}
         </Box>
       </HStack>
     );
@@ -1045,8 +1190,9 @@ useEffect(() => {
       content: userMessageContent,
     };
 
+    const fullHistoryForApi = prepareApiHistory(messagesWithUser);
     const apiPayload = {
-      messages: [userMessageForApi],
+      messages: fullHistoryForApi,
       stream: true,
       sessionId: sessionId,
       model: selectedModel,
@@ -1095,162 +1241,174 @@ useEffect(() => {
                 const jsonStr = line.substring(5).trim();
                 if (jsonStr === '[DONE]') {
                     console.log("Received [DONE] signal.");
+                } else if (jsonStr === '[PENDING]') {
+                  // Handle pending signal (no-op for now)
                 } else {
-                    try {
-                        const parsedEvent = JSON.parse(jsonStr);
-                        if (parsedEvent.type === 'session_created' && parsedEvent.sessionId) {
-                          setSessionId(parsedEvent.sessionId);
-                          const newUrl = `${window.location.pathname}?sessionId=${parsedEvent.sessionId}`;
-                          window.history.replaceState({ path: newUrl }, '', newUrl);
-                          console.log("New session created by backend:", parsedEvent.sessionId);
-                        } else if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
-                          // Only append text, do not parse for <img> tags during streaming
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              const lastEvent = newEvents[newEvents.length - 1];
-                              if (lastEvent && lastEvent.type === 'text') {
-                                // Append to the existing text event
-                                const updatedEvent = { ...lastEvent, content: lastEvent.content + parsedEvent.content };
-                                newEvents[newEvents.length - 1] = updatedEvent;
-                              } else {
-                                // Or create a new one if it's the first bit of text
-                                newEvents.push({
-                                  id: `text-${uuidv4()}`,
-                                  type: 'text',
-                                  content: parsedEvent.content,
-                                  timestamp: currentTime
-                                });
-                              }
-                              return { ...m, events: newEvents };
-                            }
-                            return m;
-                          }));
-                        } else if (parsedEvent.type === 'artifact') {
-                          setMessages(prev => prev.map(m => {
-                              if (m.id === assistantMessageId) {
-                                  const newEvents = [...(m.events || [])];
-                                  let newCodeOutput = m.codeOutput;
-                                  let newPdbInfo = m.pdbInfo;
-                                  let newMolViewSpecInfo = m.molViewSpecInfo;
-
-                                  const artifactData = parsedEvent.data || {};
-                                  const artifactId = parsedEvent.artifact_id || uuidv4();
-                                  
-                                  switch (parsedEvent.artifact_type) {
-                                      case 'code_execution':
-                                          newCodeOutput = {
-                                              code: artifactData.code || '',
-                                              stdout: artifactData.stdout || '',
-                                              stderr: artifactData.stderr || ''
-                                          };
-                                          newEvents.push({ id: `code-${artifactId}`, type: 'code_output', content: newCodeOutput, timestamp: currentTime });
-                                          // **MODIFICATION**: Removed plot_url handling.
-                                          break;
-                                      case 'molviewspec':
-                                          newMolViewSpecInfo = {
-                                              molviewspec: artifactData.molviewspec,
-                                              filename: artifactData.filename
-                                          };
-                                          newEvents.push({ id: `mvs-${artifactId}`, type: 'molviewspec', content: newMolViewSpecInfo, timestamp: currentTime });
-                                          
-                                          if (onMolViewSpecUpdate && newMolViewSpecInfo.molviewspec) {
-                                              try {
-                                                  onMolViewSpecUpdate(newMolViewSpecInfo.molviewspec, newMolViewSpecInfo.filename);
-                                              } catch (e) { console.error("Error updating MolViewSpec from artifact", e); }
-                                          }
-                                          break;
-                                      case 'pdb_file':
-                                          newPdbInfo = {
-                                              url: `${API_BASE_URL}${artifactData.pdb_url}`,
-                                              filename: artifactData.filename
-                                          };
-                                          newEvents.push({ id: `pdb-${artifactId}`, type: 'pdb', content: newPdbInfo, timestamp: currentTime });
-                                          break;
-                                      default:
-                                          console.warn("Unknown artifact type:", parsedEvent.artifact_type);
-                                          break;
-                                  }
-                                  
-                                  return {
-                                      ...m,
-                                      events: newEvents,
-                                      codeOutput: newCodeOutput,
-                                      pdbInfo: newPdbInfo,
-                                      molViewSpecInfo: newMolViewSpecInfo,
-                                  };
-                              }
-                              return m;
-                          }));
-                        } else if (parsedEvent.type === 'tool_start') {
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              newEvents.push({
-                                id: `tool-start-${parsedEvent.content.id || uuidv4()}`,
-                                type: 'tool_start',
-                                content: { 
-                                  id: parsedEvent.content.id,
-                                  name: parsedEvent.content.name,
-                                  arguments: parsedEvent.content.arguments
-                                },
-                                timestamp: currentTime,
-                                status: 'in_progress' as const
-                              });
-                              return { ...m, events: newEvents };
-                            }
-                            return m;
-                          }));
-                        } else if (parsedEvent.type === 'tool_end') {
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const toolId = parsedEvent.content.id;
-                              const toolStartEvent = m.events?.find(e => e.type === 'tool_start' && e.content.id === toolId);
-                              const toolDuration = toolStartEvent ? currentTime - toolStartEvent.timestamp : undefined;
-                              
-                              const updatedEvents = (m.events || []).map(e => 
-                                (e.type === 'tool_start' && e.content.id === toolId)
-                                  ? { ...e, status: 'completed' as const, duration: toolDuration }
-                                  : e
-                              );
-                              
-                              updatedEvents.push({
-                                id: `tool-end-${toolId || uuidv4()}`,
-                                type: 'tool_end',
-                                content: { 
-                                  id: toolId,
-                                  name: parsedEvent.content.name,
-                                  result: parsedEvent.content.result
-                                },
-                                timestamp: currentTime,
-                                duration: toolDuration,
-                                status: 'completed' as const
-                              });
-                              
-                              return { ...m, events: updatedEvents };
-                            }
-                            return m;
-                          }));
-                        } else if (parsedEvent.type === 'error') {
-                          console.error("Backend Stream Error:", parsedEvent.message);
-                          toast({ 
-                            title: 'Backend Error', 
-                            description: parsedEvent.message || 'An unknown error occurred.', 
-                            status: 'error', 
-                            duration: 5000, 
-                            isClosable: true 
+                  try {
+                    const parsedEvent = JSON.parse(jsonStr);
+                    if (parsedEvent.type === 'session_created' && parsedEvent.sessionId) {
+                      setSessionId(parsedEvent.sessionId);
+                      const newUrl = `${window.location.pathname}?sessionId=${parsedEvent.sessionId}`;
+                      window.history.replaceState({ path: newUrl }, '', newUrl);
+                    } else if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
+                      // Only append text, do not parse for <img> tags during streaming
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          const lastEvent = newEvents[newEvents.length - 1];
+                          if (lastEvent && lastEvent.type === 'text') {
+                            // Append to the existing text event
+                            const updatedEvent = { ...lastEvent, content: lastEvent.content + parsedEvent.content };
+                            newEvents[newEvents.length - 1] = updatedEvent;
+                          } else {
+                            // Or create a new one if it's the first bit of text
+                            newEvents.push({
+                              id: `text-${uuidv4()}`,
+                              type: 'text',
+                              content: parsedEvent.content,
+                              timestamp: currentTime
+                            });
+                          }
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'code_delta') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          newEvents.push({
+                            id: `code-delta-${uuidv4()}`,
+                            type: 'code_delta',
+                            content: { code: parsedEvent.content },
+                            timestamp: currentTime
+                          });
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'artifact' && parsedEvent.artifact_type === 'code_execution') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          // Remove any code_delta events before adding code_output
+                          const filteredEvents = (m.events || []).filter(e => e.type !== 'code_delta');
+                          filteredEvents.push({
+                            id: `code-output-${uuidv4()}`,
+                            type: 'code_output',
+                            content: {
+                              code: parsedEvent.data?.code || '',
+                              stdout: parsedEvent.data?.stdout || '',
+                              stderr: parsedEvent.data?.stderr || ''
+                            },
+                            timestamp: currentTime
+                          });
+                          return { ...m, events: filteredEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'molviewspec') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          newEvents.push({
+                            id: `mvs-${uuidv4()}`,
+                            type: 'molviewspec',
+                            content: { 
+                              molviewspec: parsedEvent.content.molviewspec, 
+                              filename: parsedEvent.content.filename 
+                            },
+                            timestamp: currentTime
+                          });
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'pdb_file') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          newEvents.push({
+                            id: `pdb-${uuidv4()}`,
+                            type: 'pdb',
+                            content: { 
+                              url: `${API_BASE_URL}${parsedEvent.content.pdb_url}`, 
+                              filename: parsedEvent.content.filename 
+                            },
+                            timestamp: currentTime
+                          });
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'tool_start') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          newEvents.push({
+                            id: `tool-start-${parsedEvent.content.id || uuidv4()}`,
+                            type: 'tool_start',
+                            content: { 
+                              id: parsedEvent.content.id,
+                              name: parsedEvent.content.name,
+                              arguments: parsedEvent.content.arguments
+                            },
+                            timestamp: currentTime,
+                            status: 'in_progress' as const
+                          });
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'tool_end') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const toolId = parsedEvent.content.id;
+                          const toolStartEvent = m.events?.find(e => e.type === 'tool_start' && e.content.id === toolId);
+                          const toolDuration = toolStartEvent ? currentTime - toolStartEvent.timestamp : undefined;
+                          
+                          const updatedEvents = (m.events || []).map(e => 
+                            (e.type === 'tool_start' && e.content.id === toolId)
+                              ? { ...e, status: 'completed' as const, duration: toolDuration }
+                              : e
+                          );
+                          
+                          updatedEvents.push({
+                            id: `tool-end-${toolId || uuidv4()}`,
+                            type: 'tool_end',
+                            content: { 
+                              id: toolId,
+                              name: parsedEvent.content.name,
+                              result: parsedEvent.content.result
+                            },
+                            timestamp: currentTime,
+                            duration: toolDuration,
+                            status: 'completed' as const
                           });
                           
-                          const errorSystemMessage: ChatMessage = {
-                              id: `error-${uuidv4()}`, 
-                              role: 'system', 
-                              content: `Error: ${parsedEvent.message}`, 
-                              timestamp: new Date().toISOString(), 
-                              isError: true 
-                          };
-                          setMessages(prev => [...prev, errorSystemMessage]);
+                          return { ...m, events: updatedEvents };
                         }
-                    } catch (e) { console.error('Failed to parse SSE data line:', jsonStr, e); }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'error') {
+                      console.error("Backend Stream Error:", parsedEvent.message);
+                      toast({ 
+                        title: 'Backend Error', 
+                        description: parsedEvent.message || 'An unknown error occurred.', 
+                        status: 'error', 
+                        duration: 5000, 
+                        isClosable: true 
+                      });
+                      
+                      const errorSystemMessage: ChatMessage = {
+                          id: `error-${uuidv4()}`, 
+                          role: 'system', 
+                          content: `Error: ${parsedEvent.message}`, 
+                          timestamp: new Date().toISOString(), 
+                          isError: true 
+                      };
+                      setMessages(prev => [...prev, errorSystemMessage]);
+                    }
+                  } catch (e) { console.error('Failed to parse SSE data line:', jsonStr, e); }
                 }
             } else if (line !== '') {
                  console.warn("Received non-data SSE line:", line);
@@ -1281,51 +1439,77 @@ useEffect(() => {
         prevMessages.map(msg => {
           if (msg.id === assistantMessageId) {
             let finalEvents = [...(msg.events || [])];
-            // Replace findLastIndex with manual reverse search for last text event
-            let lastTextEventIndex = -1;
-            for (let i = finalEvents.length - 1; i >= 0; --i) {
-              const e: any = finalEvents[i];
-              if (e.type === 'text') {
-                lastTextEventIndex = i;
-                break;
-              }
-            }
-            if (lastTextEventIndex !== -1) {
-              const textEvent = finalEvents[lastTextEventIndex];
-              const fullContent = textEvent.content;
-              const imgRegex = /(<img\s+src="[^"]+"[^>]*>)/g;
-              const parts = fullContent.split(imgRegex).filter(Boolean);
-              if (parts.length > 1 || (parts.length === 1 && parts[0].startsWith('<img'))) {
-                const newSegmentedEvents: any[] = [];
-                const currentTime = Date.now();
-                parts.forEach((part: string) => {
-                  if (part.startsWith('<img')) {
-                    const srcMatch = /src="([^"]+)"/.exec(part);
-                    const altMatch = /alt="([^"]*)"/.exec(part);
+            // Find all text events and split out <img> tags and <a> tags from each
+            let newEvents: any[] = [];
+            const imgRegex = /(<img\s+src="[^"]+"[^>]*>)/g;
+            const linkRegex = /(<a\s+[^>]*href="[^"]*"[^>]*>.*?<\/a>)/g;
+            
+            for (const event of finalEvents) {
+              if (event.type === 'text') {
+                // First split by img tags
+                const imgParts = event.content.split(imgRegex).filter(Boolean);
+                
+                for (const imgPart of imgParts) {
+                  if (imgPart.startsWith('<img')) {
+                    const srcMatch = /src="([^"]+)"/.exec(imgPart);
+                    const altMatch = /alt="([^"]*)"/.exec(imgPart);
                     if (srcMatch && sessionId) {
                       const filename = srcMatch[1];
                       const altText = altMatch ? altMatch[1] : 'Generated Plot';
                       const plotUrl = `${API_BASE_URL}/api/temp_files/${sessionId}/${filename}`;
-                      newSegmentedEvents.push({
+                      newEvents.push({
                         id: `plot-${uuidv4()}`,
                         type: 'plot',
                         content: { url: plotUrl, alt: altText },
-                        timestamp: currentTime
+                        timestamp: Date.now()
                       });
                     }
-                  } else if (part.trim()) {
-                    newSegmentedEvents.push({
-                      id: `text-${uuidv4()}`,
-                      type: 'text',
-                      content: part,
-                      timestamp: currentTime
-                    });
+                  } else {
+                    // Now split this part by link tags
+                    const linkParts = imgPart.split(linkRegex).filter(Boolean);
+                    
+                    for (const linkPart of linkParts) {
+                      if (linkPart.startsWith('<a')) {
+                        const hrefMatch = /href="([^"]*)"/.exec(linkPart);
+                        const textMatch = />([^<]*)</i.exec(linkPart);
+                        const downloadMatch = /download="([^"]*)"/.exec(linkPart);
+                        
+                        if (hrefMatch) {
+                          const url = hrefMatch[1];
+                          const linkText = textMatch ? textMatch[1] : url;
+                          const isDownload = downloadMatch || linkPart.includes('download');
+                          
+                          newEvents.push({
+                            id: `link-${uuidv4()}`,
+                            type: 'link',
+                            content: { 
+                              url: url, 
+                              text: linkText,
+                              isDownload: !!isDownload,
+                              downloadName: downloadMatch ? downloadMatch[1] : null
+                            },
+                            timestamp: Date.now()
+                          });
+                        }
+                      } else if (linkPart.trim()) {
+                        newEvents.push({
+                          id: `text-${uuidv4()}`,
+                          type: 'text',
+                          content: linkPart,
+                          timestamp: Date.now()
+                        });
+                      }
+                    }
                   }
-                });
-                if (newSegmentedEvents.length > 0) {
-                  finalEvents.splice(lastTextEventIndex, 1, ...newSegmentedEvents);
                 }
+              } else {
+                newEvents.push(event);
               }
+            }
+            // Always use the new events array if we processed any text events
+            const hasTextEvents = finalEvents.some(e => e.type === 'text');
+            if (hasTextEvents) {
+              finalEvents = newEvents;
             }
             const { id, ...finalizedMsg } = msg;
             return {
@@ -1448,8 +1632,9 @@ useEffect(() => {
       content: userMessage.content,
     };
 
+    const truncatedHistoryForApi = prepareApiHistory(messagesUpToUser);
     const apiPayload = {
-      messages: [userMessageForApi],
+      messages: truncatedHistoryForApi,
       stream: true,
       sessionId: sessionId,
       model: selectedModel,
@@ -1505,160 +1690,174 @@ useEffect(() => {
                 const jsonStr = line.substring(5).trim();
                 if (jsonStr === '[DONE]') {
                     console.log("Received [DONE] signal.");
+                } else if (jsonStr === '[PENDING]') {
+                  // Handle pending signal (no-op for now)
                 } else {
-                    try {
-                        const parsedEvent = JSON.parse(jsonStr);
-                        if (parsedEvent.type === 'session_created' && parsedEvent.sessionId) {
-                          setSessionId(parsedEvent.sessionId);
-                          const newUrl = `${window.location.pathname}?sessionId=${parsedEvent.sessionId}`;
-                          window.history.replaceState({ path: newUrl }, '', newUrl);
-                        } else if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
-                          // Only append text, do not parse for <img> tags during streaming
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              const lastEvent = newEvents[newEvents.length - 1];
-                              if (lastEvent && lastEvent.type === 'text') {
-                                // Append to the existing text event
-                                const updatedEvent = { ...lastEvent, content: lastEvent.content + parsedEvent.content };
-                                newEvents[newEvents.length - 1] = updatedEvent;
-                              } else {
-                                // Or create a new one if it's the first bit of text
-                                newEvents.push({
-                                  id: `text-${uuidv4()}`,
-                                  type: 'text',
-                                  content: parsedEvent.content,
-                                  timestamp: currentTime
-                                });
-                              }
-                              return { ...m, events: newEvents };
-                            }
-                            return m;
-                          }));
-                        } else if (parsedEvent.type === 'artifact') {
-                          setMessages(prev => prev.map(m => {
-                              if (m.id === assistantMessageId) {
-                                  const newEvents = [...(m.events || [])];
-                                  let newCodeOutput = m.codeOutput;
-                                  let newPdbInfo = m.pdbInfo;
-                                  let newMolViewSpecInfo = m.molViewSpecInfo;
-
-                                  const artifactData = parsedEvent.data || {};
-                                  const artifactId = parsedEvent.artifact_id || uuidv4();
-                                  
-                                  switch (parsedEvent.artifact_type) {
-                                      case 'code_execution':
-                                          newCodeOutput = {
-                                              code: artifactData.code || '',
-                                              stdout: artifactData.stdout || '',
-                                              stderr: artifactData.stderr || ''
-                                          };
-                                          newEvents.push({ id: `code-${artifactId}`, type: 'code_output', content: newCodeOutput, timestamp: currentTime });
-                                          // **MODIFICATION**: Removed plot_url handling.
-                                          break;
-                                      case 'molviewspec':
-                                          newMolViewSpecInfo = {
-                                              molviewspec: artifactData.molviewspec,
-                                              filename: artifactData.filename
-                                          };
-                                          newEvents.push({ id: `mvs-${artifactId}`, type: 'molviewspec', content: newMolViewSpecInfo, timestamp: currentTime });
-                                          
-                                          if (onMolViewSpecUpdate && newMolViewSpecInfo.molviewspec) {
-                                              try {
-                                                  onMolViewSpecUpdate(newMolViewSpecInfo.molviewspec, newMolViewSpecInfo.filename);
-                                              } catch (e) { console.error("Error updating MolViewSpec from artifact", e); }
-                                          }
-                                          break;
-                                      case 'pdb_file':
-                                          newPdbInfo = {
-                                              url: `${API_BASE_URL}${artifactData.pdb_url}`,
-                                              filename: artifactData.filename
-                                          };
-                                          newEvents.push({ id: `pdb-${artifactId}`, type: 'pdb', content: newPdbInfo, timestamp: currentTime });
-                                          break;
-                                      default:
-                                          console.warn("Unknown artifact type:", parsedEvent.artifact_type);
-                                          break;
-                                  }
-                                  
-                                  return {
-                                      ...m,
-                                      events: newEvents,
-                                      codeOutput: newCodeOutput,
-                                      pdbInfo: newPdbInfo,
-                                      molViewSpecInfo: newMolViewSpecInfo,
-                                  };
-                              }
-                              return m;
-                          }));
-                        } else if (parsedEvent.type === 'tool_start') {
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const newEvents = [...(m.events || [])];
-                              newEvents.push({
-                                id: `tool-start-${parsedEvent.content.id || uuidv4()}`,
-                                type: 'tool_start',
-                                content: { 
-                                  id: parsedEvent.content.id,
-                                  name: parsedEvent.content.name,
-                                  arguments: parsedEvent.content.arguments
-                                },
-                                timestamp: currentTime,
-                                status: 'in_progress' as const
-                              });
-                              return { ...m, events: newEvents };
-                            }
-                            return m;
-                          }));
-                        } else if (parsedEvent.type === 'tool_end') {
-                          setMessages(prev => prev.map(m => {
-                            if (m.id === assistantMessageId) {
-                              const toolId = parsedEvent.content.id;
-                              const toolStartEvent = m.events?.find(e => e.type === 'tool_start' && e.content.id === toolId);
-                              const toolDuration = toolStartEvent ? currentTime - toolStartEvent.timestamp : undefined;
-                              
-                              const updatedEvents = (m.events || []).map(e => 
-                                (e.type === 'tool_start' && e.content.id === toolId)
-                                  ? { ...e, status: 'completed' as const, duration: toolDuration }
-                                  : e
-                              );
-                              
-                              updatedEvents.push({
-                                id: `tool-end-${toolId || uuidv4()}`,
-                                type: 'tool_end',
-                                content: { 
-                                  id: toolId,
-                                  name: parsedEvent.content.name,
-                                  result: parsedEvent.content.result
-                                },
-                                timestamp: currentTime,
-                                duration: toolDuration,
-                                status: 'completed' as const
-                              });
-                              
-                              return { ...m, events: updatedEvents };
-                            }
-                            return m;
-                          }));
-                        } else if (parsedEvent.type === 'error') {
-                          console.error("Backend Stream Error:", parsedEvent.message);
-                          toast({ 
-                            title: 'Backend Error', 
-                            description: parsedEvent.message || 'An unknown error occurred.', 
-                            status: 'error', 
-                            duration: 5000, 
-                            isClosable: true 
-                          });
-                          const errorSystemMessage: ChatMessage = {
-                              id: `error-${uuidv4()}`, 
-                              role: 'system', 
-                              content: `Error: ${parsedEvent.message}`, 
-                              timestamp: new Date().toISOString(), 
-                              isError: true 
-                          };
-                          setMessages(prev => [...prev, errorSystemMessage]);
+                  try {
+                    const parsedEvent = JSON.parse(jsonStr);
+                    if (parsedEvent.type === 'session_created' && parsedEvent.sessionId) {
+                      setSessionId(parsedEvent.sessionId);
+                      const newUrl = `${window.location.pathname}?sessionId=${parsedEvent.sessionId}`;
+                      window.history.replaceState({ path: newUrl }, '', newUrl);
+                    } else if (parsedEvent.type === 'text_delta' && parsedEvent.content) {
+                      // Only append text, do not parse for <img> tags during streaming
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          const lastEvent = newEvents[newEvents.length - 1];
+                          if (lastEvent && lastEvent.type === 'text') {
+                            // Append to the existing text event
+                            const updatedEvent = { ...lastEvent, content: lastEvent.content + parsedEvent.content };
+                            newEvents[newEvents.length - 1] = updatedEvent;
+                          } else {
+                            // Or create a new one if it's the first bit of text
+                            newEvents.push({
+                              id: `text-${uuidv4()}`,
+                              type: 'text',
+                              content: parsedEvent.content,
+                              timestamp: currentTime
+                            });
+                          }
+                          return { ...m, events: newEvents };
                         }
-                    } catch (e) { console.error('Failed to parse SSE data line:', jsonStr, e); }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'code_delta') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          newEvents.push({
+                            id: `code-delta-${uuidv4()}`,
+                            type: 'code_delta',
+                            content: { code: parsedEvent.content },
+                            timestamp: currentTime
+                          });
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'artifact' && parsedEvent.artifact_type === 'code_execution') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          // Remove any code_delta events before adding code_output
+                          const filteredEvents = (m.events || []).filter(e => e.type !== 'code_delta');
+                          filteredEvents.push({
+                            id: `code-output-${uuidv4()}`,
+                            type: 'code_output',
+                            content: {
+                              code: parsedEvent.data?.code || '',
+                              stdout: parsedEvent.data?.stdout || '',
+                              stderr: parsedEvent.data?.stderr || ''
+                            },
+                            timestamp: currentTime
+                          });
+                          return { ...m, events: filteredEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'molviewspec') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          newEvents.push({
+                            id: `mvs-${uuidv4()}`,
+                            type: 'molviewspec',
+                            content: { 
+                              molviewspec: parsedEvent.content.molviewspec, 
+                              filename: parsedEvent.content.filename 
+                            },
+                            timestamp: currentTime
+                          });
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'pdb_file') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          newEvents.push({
+                            id: `pdb-${uuidv4()}`,
+                            type: 'pdb',
+                            content: { 
+                              url: `${API_BASE_URL}${parsedEvent.content.pdb_url}`, 
+                              filename: parsedEvent.content.filename 
+                            },
+                            timestamp: currentTime
+                          });
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'tool_start') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const newEvents = [...(m.events || [])];
+                          newEvents.push({
+                            id: `tool-start-${parsedEvent.content.id || uuidv4()}`,
+                            type: 'tool_start',
+                            content: { 
+                              id: parsedEvent.content.id,
+                              name: parsedEvent.content.name,
+                              arguments: parsedEvent.content.arguments
+                            },
+                            timestamp: currentTime,
+                            status: 'in_progress' as const
+                          });
+                          return { ...m, events: newEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'tool_end') {
+                      setMessages(prev => prev.map(m => {
+                        if (m.id === assistantMessageId) {
+                          const toolId = parsedEvent.content.id;
+                          const toolStartEvent = m.events?.find(e => e.type === 'tool_start' && e.content.id === toolId);
+                          const toolDuration = toolStartEvent ? currentTime - toolStartEvent.timestamp : undefined;
+                          
+                          const updatedEvents = (m.events || []).map(e => 
+                            (e.type === 'tool_start' && e.content.id === toolId)
+                              ? { ...e, status: 'completed' as const, duration: toolDuration }
+                              : e
+                          );
+                          
+                          updatedEvents.push({
+                            id: `tool-end-${toolId || uuidv4()}`,
+                            type: 'tool_end',
+                            content: { 
+                              id: toolId,
+                              name: parsedEvent.content.name,
+                              result: parsedEvent.content.result
+                            },
+                            timestamp: currentTime,
+                            duration: toolDuration,
+                            status: 'completed' as const
+                          });
+                          
+                          return { ...m, events: updatedEvents };
+                        }
+                        return m;
+                      }));
+                    } else if (parsedEvent.type === 'error') {
+                      console.error("Backend Stream Error:", parsedEvent.message);
+                      toast({ 
+                        title: 'Backend Error', 
+                        description: parsedEvent.message || 'An unknown error occurred.', 
+                        status: 'error', 
+                        duration: 5000, 
+                        isClosable: true 
+                      });
+                      
+                      const errorSystemMessage: ChatMessage = {
+                          id: `error-${uuidv4()}`, 
+                          role: 'system', 
+                          content: `Error: ${parsedEvent.message}`, 
+                          timestamp: new Date().toISOString(), 
+                          isError: true 
+                      };
+                      setMessages(prev => [...prev, errorSystemMessage]);
+                    }
+                  } catch (e) { console.error('Failed to parse SSE data line:', jsonStr, e); }
                 }
             } else if (line !== '') {
                  console.warn("Received non-data SSE line:", line);
@@ -1706,6 +1905,8 @@ useEffect(() => {
                 if (parts.length > 1 || (parts.length === 1 && parts[0].startsWith('<img'))) {
                   const newSegmentedEvents: any[] = [];
                   const currentTime = Date.now();
+                  const linkRegex = /(<a\s+[^>]*href="[^"]*"[^>]*>.*?<\/a>)/g;
+                  
                   parts.forEach((part: string) => {
                     if (part.startsWith('<img')) {
                       const srcMatch = /src="([^"]+)"/.exec(part);
@@ -1722,11 +1923,40 @@ useEffect(() => {
                         });
                       }
                     } else if (part.trim()) {
-                      newSegmentedEvents.push({
-                        id: `text-${uuidv4()}`,
-                        type: 'text',
-                        content: part,
-                        timestamp: currentTime
+                      // Now split this part by link tags
+                      const linkParts = part.split(linkRegex).filter(Boolean);
+                      
+                      linkParts.forEach((linkPart: string) => {
+                        if (linkPart.startsWith('<a')) {
+                          const hrefMatch = /href="([^"]*)"/.exec(linkPart);
+                          const textMatch = />([^<]*)</i.exec(linkPart);
+                          const downloadMatch = /download="([^"]*)"/.exec(linkPart);
+                          
+                          if (hrefMatch) {
+                            const url = hrefMatch[1];
+                            const linkText = textMatch ? textMatch[1] : url;
+                            const isDownload = downloadMatch || linkPart.includes('download');
+                            
+                            newSegmentedEvents.push({
+                              id: `link-${uuidv4()}`,
+                              type: 'link',
+                              content: { 
+                                url: url, 
+                                text: linkText,
+                                isDownload: !!isDownload,
+                                downloadName: downloadMatch ? downloadMatch[1] : null
+                              },
+                              timestamp: currentTime
+                            });
+                          }
+                        } else if (linkPart.trim()) {
+                          newSegmentedEvents.push({
+                            id: `text-${uuidv4()}`,
+                            type: 'text',
+                            content: linkPart,
+                            timestamp: currentTime
+                          });
+                        }
                       });
                     }
                   });
@@ -1801,10 +2031,7 @@ useEffect(() => {
                           ) : (
                             <AttachmentIcon boxSize="1em" />
                           )}
-                          <Text fontSize="sm" noOfLines={1} title={msg.attachment?.name || 'Attached file'}>
-                            {(msg.attachment?.isPDB || msg.attachment?.name?.endsWith('.pdb')) ? 'Structure: ' : 'Attached: '}
-                            {msg.attachment?.name || (msg.attachment ? 'File attachment' : msg.content)}
-                          </Text>
+                          <Text fontSize="sm" noOfLines={1} title={msg.attachment?.name}>{msg.attachment?.name}</Text>
                         </HStack>
                       </Button>
                     )}
@@ -2038,7 +2265,7 @@ useEffect(() => {
                     return;
                   }
                   try {
-                    const res = await fetch(`${API_BASE_URL}/api/download/${sessionId}`);
+                    const res = await fetch(`${API_BASE_URL}/api/session/download/${sessionId}`);
                     if (!res.ok) throw new Error('Failed to download session files.');
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
@@ -2061,7 +2288,7 @@ useEffect(() => {
                 <Box as="span" display="flex" alignItems="center" justifyContent="center" mr={1}>
                   <svg fill="#000000" width="20px" height="20px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <g>
-                      <path d="M93.998,45.312c0-3.676-1.659-7.121-4.486-9.414c0.123-0.587,0.184-1.151,0.184-1.706c0-4.579-3.386-8.382-7.785-9.037   c0.101-0.526,0.149-1.042,0.149-1.556c0-4.875-3.842-8.858-8.655-9.111c-0.079-0.013-0.159-0.024-0.242-0.024   c-0.04,0-0.079,0.005-0.12,0.006c-0.04-0.001-0.079-0.006-0.12-0.006c-0.458,0-0.919,0.041-1.406,0.126   c-0.846-4.485-4.753-7.825-9.437-7.825c-5.311,0-9.632,4.321-9.632,9.633v65.918c0,6.723,5.469,12.191,12.191,12.191   c4.46,0,8.508-2.413,10.646-6.246c0.479,0.104,0.939,0.168,1.401,0.198c2.903,0.185,5.73-0.766,7.926-2.693   c2.196-1.927,3.51-4.594,3.7-7.51c0.079-1.215-0.057-2.434-0.403-3.638c3.796-2.691,6.027-6.952,6.027-11.621   c0-3.385-1.219-6.635-3.445-9.224C92.731,51.505,93.998,48.471,93.998,45.312z M90.938,62.999c0,3.484-1.582,6.68-4.295,8.819   c-2.008-3.196-5.57-5.237-9.427-5.237c-0.828,0-1.5,0.672-1.5,1.5s0.672,1.5,1.5,1.5c3.341,0,6.384,2.093,7.582,5.208   c0.41,1.088,0.592,2.189,0.521,3.274c-0.138,2.116-1.091,4.051-2.685,5.449c-1.594,1.399-3.641,2.094-5.752,1.954   c-0.594-0.039-1.208-0.167-1.933-0.402c-0.74-0.242-1.541,0.124-1.846,0.84c-1.445,3.404-4.768,5.604-8.465,5.604   c-5.068,0-9.191-4.123-9.191-9.191V16.399c0-3.657,2.975-6.633,6.632-6.633c3.398,0,6.194,2.562,6.558,5.908   c-2.751,1.576-4.612,4.535-4.612,7.926c0,0.829,0.672,1.5,1.5,1.5s1.5-0.671,1.5-1.5c0-3.343,2.689-6.065,6.016-6.13   c3.327,0.065,6.016,2.787,6.016,6.129c0,0.622-0.117,1.266-0.359,1.971c-0.057,0.166-0.084,0.34-0.081,0.515   c0.001,0.041,0.003,0.079,0.007,0.115c-0.006,0.021-0.01,0.035-0.01,0.035c-0.118,0.465-0.006,0.959,0.301,1.328   c0.307,0.369,0.765,0.569,1.251,0.538c0.104-0.007,0.208-0.02,0.392-0.046c3.383,0,6.136,2.753,6.136,6.136   c0,0.572-0.103,1.159-0.322,1.849c-0.203,0.635,0.038,1.328,0.591,1.7c2.434,1.639,3.909,4.329,4.014,7.242   c0,0.004-0.001,0.008-0.001,0.012c0,5.03-4.092,9.123-9.122,9.123s-9.123-4.093-9.123-9.123c0-0.829-0.672-1.5-1.5-1.5   s-1.5,0.671-1.5,1.5c0,6.685,5.438,12.123,12.123,12.123c2.228,0,4.31-0.615,6.106-1.668C89.88,57.539,90.938,60.212,90.938,62.999   z"/>
+                      <path d="M93.998,45.312c0-3.676-1.659-7.121-4.486-9.414c0.123-0.587,0.184-1.151,0.184-1.706c0-4.579-3.386-8.382-7.785-9.037   c0.101-0.526,0.149-1.042,0.149-1.556c0-4.875-3.842-8.858-8.655-9.111c-0.079-0.013-0.159-0.024-0.242-0.024   c-0.04,0-0.079,0.005-0.12,0.006c-0.04-0.001-0.079-0.006-0.12-0.006c-0.458,0-0.919,0.041-1.406,0.126   c-0.846-4.485-4.753-7.825-9.437-7.825c-5.311,0-9.632,4.321-9.632,9.633v65.918c0,6.723,5.469,12.191,12.191,12.191   c4.46,0,8.508-2.413,10.646-6.246c0.479,0.104,0.939,0.168,1.401,0.198c2.903,0.185,5.73-0.766,7.926-2.693   c2.196-1.927,3.51-4.594,3.7-7.51c0.079-1.215-0.057-2.434-0.403-3.638c3.796-2.691,6.027-6.952,6.027-11.621   c0-3.385-1.219-6.635-3.445-9.224C92.731,51.505,93.998,48.471,93.998,45.312z M90.938,62.999c0,3.484-1.582,6.68-4.295,8.819   c-2.008-3.196-5.57-5.237-9.427-5.237c-0.828,0-1.5,0.672-1.5,1.5s0.672,1.5,1.5,1.5c3.341,0,6.384,2.093,7.582,5.208   c0.41,1.088,0.592,2.189,0.521,3.274c-0.138,2.116-1.091,4.051-2.685,5.449c-1.594,1.399-3.641,2.094-5.752,1.954   c-0.594-0.039-1.208-0.167-1.933-0.402c-0.74-0.242-1.541,0.124-1.846,0.84c-1.445,3.404-4.768,5.604-8.465,5.604   c-5.068,0-9.191-4.123-9.191-9.191V16.399c0-3.657,2.975-6.633,6.632-6.633c3.398,0,6.194,2.562,6.558,5.908   c-2.751,1.576-4.612,4.535-4.612,7.926c0,0.829,0.672,1.5,1.5,1.5s1.5-0.671,1.5-1.5c0-3.343,2.689-6.065,6.016-6.13   c3.327,0.065,6.016,2.787,6.016,6.129c0,0.622-0.117,1.266-0.359,1.971c-0.057,0.166-0.793,2.189-0.793,2.189   c-0.118,0.465-0.006,0.959,0.301,1.328c0.307,0.369,0.765,0.569,1.251,0.538c0.104-0.007,0.208-0.02,0.392-0.046   c3.383,0,6.136,2.753,6.136,6.136c0,0.572-0.103,1.159-0.322,1.849c-0.203,0.635,0.038,1.328,0.591,1.7   c2.434,1.639,3.909,4.329,4.014,7.242c0,0.004-0.001,0.008-0.001,0.012c0,5.03-4.092,9.123-9.122,9.123   s-9.123-4.093-9.123-9.123c0-0.829-0.672-1.5-1.5-1.5s-1.5,0.671-1.5,1.5c0,6.685,5.438,12.123,12.123,12.123   c2.228,0,4.31-0.615,6.106-1.668C89.88,57.539,90.938,60.212,90.938,62.999z"/>
                       <path d="M38.179,6.766c-4.684,0-8.59,3.34-9.435,7.825c-0.488-0.085-0.949-0.126-1.407-0.126c-0.04,0-0.079,0.005-0.12,0.006   c-0.04-0.001-0.079-0.006-0.12-0.006c-0.083,0-0.163,0.011-0.242,0.024c-4.813,0.253-8.654,4.236-8.654,9.111   c0,0.514,0.049,1.03,0.149,1.556c-4.399,0.655-7.785,4.458-7.785,9.037c0,0.554,0.061,1.118,0.184,1.706   c-2.827,2.293-4.486,5.738-4.486,9.414c0,3.159,1.266,6.193,3.505,8.463c-2.227,2.589-3.446,5.839-3.446,9.224   c0,4.669,2.231,8.929,6.027,11.621c-0.347,1.204-0.482,2.423-0.402,3.639c0.19,2.915,1.503,5.582,3.699,7.509   c2.196,1.928,5.015,2.879,7.926,2.693c0.455-0.03,0.919-0.096,1.4-0.199c2.138,3.834,6.186,6.247,10.646,6.247   c6.722,0,12.191-5.469,12.191-12.191V16.399C47.811,11.087,43.49,6.766,38.179,6.766z M44.811,82.317   c0,5.068-4.123,9.191-9.191,9.191c-3.697,0-7.02-2.2-8.464-5.604c-0.241-0.567-0.793-0.914-1.381-0.914   c-0.154,0-0.311,0.023-0.465,0.074c-0.724,0.235-1.338,0.363-1.933,0.402c-2.119,0.139-4.158-0.556-5.751-1.954   c-1.594-1.398-2.547-3.333-2.685-5.449c-0.076-1.16,0.125-2.336,0.598-3.495c0.007-0.017,0.005-0.036,0.011-0.053   c1.342-3.056,4.225-4.953,7.597-4.953c0.829,0,1.5-0.672,1.5-1.5s-0.671-1.5-1.5-1.5c-3.938,0-7.501,2.007-9.548,5.239   c-2.701-2.139-4.277-5.327-4.277-8.802c0-2.787,1.06-5.46,2.978-7.549c1.796,1.053,3.879,1.668,6.107,1.668   c6.685,0,12.123-5.438,12.123-12.123c0-0.829-0.671-1.5-1.5-1.5s-1.5,0.671-1.5,1.5c0,5.03-4.092,9.123-9.123,9.123   s-9.123-4.093-9.123-9.123c0-0.002-0.001-0.004-0.001-0.006c0.103-2.915,1.578-5.607,4.013-7.248   c0.553-0.372,0.793-1.064,0.591-1.699c-0.22-0.691-0.322-1.278-0.322-1.85c0-3.376,2.741-6.125,6.195-6.125   c0.007,0,0.015,0,0.022,0c0.103,0.014,0.206,0.027,0.311,0.034c0.485,0.03,0.948-0.171,1.254-0.542   c0.307-0.372,0.417-0.868,0.294-1.334c0-0.001-0.003-0.014-0.008-0.031c0.003-0.035,0.006-0.067,0.007-0.095   c0.005-0.18-0.022-0.359-0.081-0.529c-0.242-0.707-0.359-1.352-0.359-1.972c0-3.342,2.688-6.065,6.016-6.129   c3.328,0.065,6.016,2.787,6.016,6.13c0,0.829,0.671,1.5,1.5,1.5s1.5-0.671,1.5-1.5c0-3.391-1.861-6.35-4.612-7.926   c0.364-3.346,3.16-5.908,6.558-5.908c3.657,0,6.632,2.976,6.632,6.633V82.317z"/>
                     </g>
                   </svg>
@@ -2138,7 +2365,7 @@ useEffect(() => {
         <ModalContent maxH="80vh">
           <ModalHeader>Structure File Preview</ModalHeader>
           <ModalCloseButton />
-          <ModalBody pb={6}>
+          <ModalBody pb={6} textAlign="center">
             {pdbPreviewContent ? (
               <Code 
                 as="pre" 
