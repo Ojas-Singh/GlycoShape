@@ -312,17 +312,18 @@ const BackendChat: React.FC<{
                     break;
                   case 'pdb_file':
                     const pdbUrl = artifactData.pdb_url || artifactData.visualization_url;
-                    const fullPdbUrl = pdbUrl?.startsWith('http') ? pdbUrl : `${API_BASE_URL}${pdbUrl}`;
-                    
-                    events.push({
-                      id: `hist-pdb-${artifactId}`,
-                      type: 'pdb',
-                      content: { 
-                        url: fullPdbUrl, 
-                        filename: artifactData.filename 
-                      },
-                      timestamp: Date.now()
-                    });
+                    if (pdbUrl) {
+                        const fullPdbUrl = pdbUrl.startsWith('http') ? pdbUrl : `${API_BASE_URL}${pdbUrl}`;
+                        events.push({
+                            id: `hist-pdb-${artifactId}`,
+                            type: 'pdb',
+                            content: { 
+                                url: fullPdbUrl, 
+                                filename: artifactData.filename 
+                            },
+                            timestamp: Date.now()
+                        });
+                    }
                     break;
                 }
               });
@@ -1306,6 +1307,43 @@ useEffect(() => {
                         }
                         return m;
                       }));
+                    } else if (parsedEvent.type === 'artifact' && parsedEvent.artifact_type === 'molviewspec') {
+                        setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                                const newEvents = [...(m.events || [])];
+                                newEvents.push({
+                                    id: `mvs-${uuidv4()}`,
+                                    type: 'molviewspec',
+                                    content: { 
+                                        molviewspec: parsedEvent.data.molviewspec, 
+                                        filename: parsedEvent.data.filename 
+                                    },
+                                    timestamp: currentTime
+                                });
+                                return { ...m, events: newEvents };
+                            }
+                            return m;
+                        }));
+                    } else if (parsedEvent.type === 'artifact' && parsedEvent.artifact_type === 'pdb_file') {
+                        setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                                const newEvents = [...(m.events || [])];
+                                const pdbUrl = parsedEvent.data.pdb_url || parsedEvent.data.visualization_url;
+                                if (pdbUrl) {
+                                    newEvents.push({
+                                        id: `pdb-${uuidv4()}`,
+                                        type: 'pdb',
+                                        content: { 
+                                            url: `${API_BASE_URL}${pdbUrl}`, 
+                                            filename: parsedEvent.data.filename 
+                                        },
+                                        timestamp: currentTime
+                                    });
+                                }
+                                return { ...m, events: newEvents };
+                            }
+                            return m;
+                        }));
                     } else if (parsedEvent.type === 'molviewspec') {
                       setMessages(prev => prev.map(m => {
                         if (m.id === assistantMessageId) {
@@ -1755,6 +1793,43 @@ useEffect(() => {
                         }
                         return m;
                       }));
+                    } else if (parsedEvent.type === 'artifact' && parsedEvent.artifact_type === 'molviewspec') {
+                        setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                                const newEvents = [...(m.events || [])];
+                                newEvents.push({
+                                    id: `mvs-${uuidv4()}`,
+                                    type: 'molviewspec',
+                                    content: { 
+                                        molviewspec: parsedEvent.data.molviewspec, 
+                                        filename: parsedEvent.data.filename 
+                                    },
+                                    timestamp: currentTime
+                                });
+                                return { ...m, events: newEvents };
+                            }
+                            return m;
+                        }));
+                    } else if (parsedEvent.type === 'artifact' && parsedEvent.artifact_type === 'pdb_file') {
+                        setMessages(prev => prev.map(m => {
+                            if (m.id === assistantMessageId) {
+                                const newEvents = [...(m.events || [])];
+                                const pdbUrl = parsedEvent.data.pdb_url || parsedEvent.data.visualization_url;
+                                if (pdbUrl) {
+                                    newEvents.push({
+                                        id: `pdb-${uuidv4()}`,
+                                        type: 'pdb',
+                                        content: { 
+                                            url: `${API_BASE_URL}${pdbUrl}`, 
+                                            filename: parsedEvent.data.filename 
+                                        },
+                                        timestamp: currentTime
+                                    });
+                                }
+                                return { ...m, events: newEvents };
+                            }
+                            return m;
+                        }));
                     } else if (parsedEvent.type === 'molviewspec') {
                       setMessages(prev => prev.map(m => {
                         if (m.id === assistantMessageId) {
