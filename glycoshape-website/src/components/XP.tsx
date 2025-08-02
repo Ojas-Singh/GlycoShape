@@ -298,7 +298,7 @@ const ReGlyco = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const isDevelopment = process.env.REACT_APP_BUILD_DEV === "true";
 
-  
+
 
   const [searchTerm, setSearchTerm] = useState('');
   const [protID, setprotID] = useState<string>("");
@@ -310,12 +310,12 @@ const ReGlyco = () => {
   const searchRef = useRef(null);
   const [placeholderText, setPlaceholderText] = useState('Enter Uniprot Id');
   const [Results, setResults] = useState<Results | null>({
-      box: '',
-      clash: false,
-      output: '',
-      results: [],
-      jobId: ''
-    });
+    box: '',
+    clash: false,
+    output: '',
+    results: [],
+    jobId: ''
+  });
   const location = useLocation(); // Get location object
 
   // Parse query parameters when component mounts or URL changes
@@ -358,13 +358,13 @@ const ReGlyco = () => {
         });
       }
     }
-    
+
 
     if (idParam && !protData && shouldFetchData) {
-        
+
     } else if (protData && selectionsParam) {
-       
-        applySelectionsFromURL(selectionsParam, protData);
+
+      applySelectionsFromURL(selectionsParam, protData);
     }
 
   }, [location.search]);
@@ -414,7 +414,7 @@ const ReGlyco = () => {
           setSelectedGlycanImage(newImageSelections);
         }
       }
-       // Also update selectedGlycans directly if not already set by the first useEffect
+      // Also update selectedGlycans directly if not already set by the first useEffect
       if (JSON.stringify(decodedSelections) !== JSON.stringify(selectedGlycans)) {
         setSelectedGlycans(decodedSelections);
       }
@@ -433,6 +433,21 @@ const ReGlyco = () => {
   const [wiggleAngle, setwiggleAngle] = useState<number>(5);
   const [wiggleAttempts, setwiggleAttempts] = useState<number>(40);
   const [outputFormat, setOutputFormat] = useState<string>("PDB");
+
+
+  const [amberSystemContent, setAmberSystemContent] = useState<string>("");
+  // fetch Amber SYSTEM.pdb when jobId is available
+  useEffect(() => {
+    if (Results?.jobId) {
+      fetch(`${apiUrl}/output/${Results.jobId}/amber/SYSTEM.pdb`)
+        .then(res => res.text())
+        .then(text => setAmberSystemContent(text))
+        .catch(err => {
+          console.error("Failed to load Amber SYSTEM file:", err);
+          setAmberSystemContent("Error loading Amber SYSTEM file.");
+        });
+    }
+  }, [Results?.jobId, apiUrl]);
   const [selectedGlycans, setSelectedGlycans] = useState<{ [key: string]: string }>({});
   // const [jobId, setJobId] = useState<string>("");
   const [selectedGlycanImage, setSelectedGlycanImage] = useState<{ [key: number]: string }>({});
@@ -525,8 +540,8 @@ const ReGlyco = () => {
 
   const fetchProteinData = async () => {
     if (!protID && !isUpload) { // Do not fetch if no ID and not an upload scenario
-        // console.log("FetchProteinData: Aborted, no protID and not an upload.");
-        return;
+      // console.log("FetchProteinData: Aborted, no protID and not an upload.");
+      return;
     }
     // console.log(`FetchProteinData: Fetching for ID: ${protID}, isUpload: ${isUpload}`);
     try {
@@ -541,7 +556,7 @@ const ReGlyco = () => {
       const data: protData = await response.json();
       setprotData(data);
       // setIsUpload(false); // This should be set based on URL or file upload, not reset here
-      
+
       // Reset selections only if not coming from URL, or handled by applySelectionsFromURL
       const queryParams = new URLSearchParams(location.search);
       if (!queryParams.has('selections')) {
@@ -696,8 +711,8 @@ const ReGlyco = () => {
       if (response.ok) {
         const responseData = await response.json();
         setResults(responseData); // Keep setting the main Results state
-        setJobResults(responseData.results || []); 
-        
+        setJobResults(responseData.results || []);
+
         setLastSuccessfulSelections(selectedGlycans); // <-- Store successful selections
 
         setActiveStep(3);
@@ -731,21 +746,21 @@ const ReGlyco = () => {
   const navigate = useNavigate();
   const handleSwitchToEnsemble = () => {
     if (!protData || !lastSuccessfulSelections) {
-        toast({
-            title: "Cannot Switch",
-            description: "Protein data or previous successful selections are missing.",
-            status: "warning",
-            duration: 3000,
-            isClosable: true,
-        });
-        return;
+      toast({
+        title: "Cannot Switch",
+        description: "Protein data or previous successful selections are missing.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
     }
-  
+
     const selectionsString = encodeURIComponent(JSON.stringify(lastSuccessfulSelections));
     // Use the current protID and isUpload state for navigation
-    const protIdParam = protID; 
+    const protIdParam = protID;
     const isUploadParam = isUpload.toString();
-  
+
     // Navigate to the ensemble route with query parameters
     navigate(`/ensemble?id=${protIdParam}&isUpload=${isUploadParam}&selections=${selectionsString}`);
   };
@@ -815,9 +830,9 @@ const ReGlyco = () => {
                 }));
                 // Clear image selection if input is used
                 setSelectedGlycanImage(prevState => {
-                    const newState = {...prevState};
-                    delete newState[glycoConf.residueTag];
-                    return newState;
+                  const newState = { ...prevState };
+                  delete newState[glycoConf.residueTag];
+                  return newState;
                 });
               }}
               size="sm" // Smaller input
@@ -828,13 +843,13 @@ const ReGlyco = () => {
       // --- End Conditional Rendering Logic ---
     }).filter(Boolean); // Filter out null values if any residues were skipped
   }, [
-      protData, 
-      value, 
-      advancedMode, 
-      selectedGlycanImage, 
-      selectedGlycans, 
-      handleResidueSelect, 
-      apiUrl 
+    protData,
+    value,
+    advancedMode,
+    selectedGlycanImage,
+    selectedGlycans,
+    handleResidueSelect,
+    apiUrl
   ]);
 
   // Render
@@ -871,7 +886,7 @@ const ReGlyco = () => {
           fontSize={{ base: "4xl", sm: "4xl", md: "5xl", lg: "5xl", xl: "5xl" }}
           marginBottom="0.2em"
         >
-          <Link fontWeight="bold" fontFamily={'heading'} href="/reglyco" marginRight="20px">
+          <Link fontWeight="bold" fontFamily={'heading'} href="/xp" marginRight="20px">
             Re-Glyco XP
           </Link>
         </Text>
@@ -1123,241 +1138,241 @@ const ReGlyco = () => {
               )}
 
               <div>
-                
-                  
-                      <div>
-                        <Heading
-                          margin={'1rem'}
-                          marginBottom={'1rem'}
-                          // fontFamily={'texts'}
-                          color='#A5494D'
-                          fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}
-                        >
-                          Select residues to glycosylate
-                        </Heading>
-                        <Select
-  value={value}
-  isMulti
-  name="residues"
-  className="basic-multi-select"
-  classNamePrefix="select"
-  onChange={onChange}
-  closeMenuOnSelect={false}
-  options={
-    protData?.glycosylation?.available
-      ?.filter((glycoConf: Glycosylation) => glycoConf.residueName === 'ASN') // Only ASN
-      .map((glycoConf: Glycosylation) => ({
-        value: glycoConf.residueTag,
-        label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
-      }))
-  }
-/>
-
-                        <FormControl display="flex" alignItems="center" justifyContent="flex-end" my={4}>
-                          <FormLabel htmlFor="advanced-mode-toggle" mb="0" fontSize="sm" mr={2}>
-                            Use Lightweight Input?
-                          </FormLabel>
-                          <Switch
-                            id="advanced-mode-toggle"
-                            isChecked={advancedMode === 'lightweight'}
-                            onChange={(e) => setAdvancedMode(e.target.checked ? 'lightweight' : 'fancy')}
-                            colorScheme="teal" // Match theme
-                          />
-                        </FormControl>
-
-                        {/* Render the memoized list */}
-                        {residueSelectionComponents}
-
-                        <br />
-
-                        {/* Add Advanced Settings Accordion */}
-                        <Accordion allowToggle width="100%" mb={2} borderRadius="md" boxShadow="sm">
-                          <AccordionItem border="1px solid" borderColor="gray.200" borderRadius="md">
-                            <h2>
-                              <AccordionButton bg="gray.50" _hover={{ bg: "gray.100" }} borderRadius="md">
-                                <Box flex="1" textAlign="left" fontWeight="medium" color="#B07095">
-                                  Advanced Settings
-                                </Box>
-                                <AccordionIcon />
-                              </AccordionButton>
-                            </h2>
-                            <AccordionPanel pb={4} bg="white">
-                              <VStack spacing={6} align="stretch">
-                                {/* Population Size */}
-                                <FormControl>
-                                  <FormLabel fontWeight="medium" color="#B07095" mb={2}>
-                                    <Tooltip label="Population size to be used in genetic optimization. Higher values may capture more conformational space but increase computational cost.">
-                                    Population Size: {populationSize}
-                                    </Tooltip>
-                                  </FormLabel>
-                                  <Slider
-                                    aria-label="Population Size"
-                                    defaultValue={50}
-                                    value={populationSize}
-                                    min={32}
-                                    max={512}
-                                    step={32}
-                                    colorScheme="teal"
-                                    onChange={(val) => setpopulationSize(val)}
-                                  >
-                                    <SliderTrack>
-                                      <SliderFilledTrack />
-                                    </SliderTrack>
-                                    <SliderThumb />
-                                  </Slider>
-                                  {/* <FormHelperText >Adjust ray size for glycan ensemble generation</FormHelperText> */}
-                                </FormControl>
-
-                                {/* maxGenerations Slider */}
-                                <FormControl>
-                                  <FormLabel fontWeight="medium" color="#B07095" mb={2}>
-                                    <Tooltip label="Maximum number of generation to used in the optimization. Higher values produce better results but take longer.">
-                                    Maximum generation: {maxGenerations}
-                                    </Tooltip>
-                                  </FormLabel>
-                                  <Slider
-                                    aria-label="max Generation"
-                                    defaultValue={4}
-                                    value={maxGenerations}
-                                    min={1}
-                                    max={20}
-                                    step={1}
-                                    colorScheme="teal"
-                                    onChange={(val) => setmaxGenerations(val)}
-                                  >
-                                    <SliderTrack>
-                                      <SliderFilledTrack />
-                                    </SliderTrack>
-                                    <SliderThumb />
-                                  </Slider>
-                                  {/* <FormHelperText fontSize={'xs'}>1 = Fast but less accurate, 10 = Slow but more accurate</FormHelperText> */}
-                                </FormControl>
-
-                                {/* wiggle Angle Slider */}
-                                <FormControl>
-                                  <FormLabel fontWeight="medium" color="#B07095" mb={2}>
-                                    <Tooltip label="Wiggle angle for the glycan. Higher values produce more diverse conformations but may be less realistic.">
-                                    Wiggle Angle: {wiggleAngle}
-                                    </Tooltip>
-                                  </FormLabel>
-                                  <Slider
-                                    aria-label="Wiggle Angle"
-                                    defaultValue={5}
-                                    value={wiggleAngle}
-                                    min={0}
-                                    max={10}
-                                    step={1}
-                                    colorScheme="teal"
-                                    onChange={(val) => setwiggleAngle(val)}
-                                  >
-                                    <SliderTrack>
-                                      <SliderFilledTrack />
-                                    </SliderTrack>
-                                    <SliderThumb />
-                                  </Slider>
-                                  {/* <FormHelperText fontSize={'xs'}>Adjust ray size for glycan ensemble generation</FormHelperText> */}
-                                </FormControl>
-
-                                {/* wiggle Attempts Slider */}
-                                <FormControl>
-                                  <FormLabel fontWeight="medium" color="#B07095" mb={2}>
-                                    <Tooltip label="Number of attempts to wiggle the glycan. Higher values produce more diverse conformations but use more compute.">
-                                    Wiggle Attempts: {wiggleAttempts}
-                                    </Tooltip>
-                                  </FormLabel>
-                                  <Slider
-                                    aria-label="Wiggle Attempts"
-                                    defaultValue={10}
-                                    value={wiggleAttempts}
-                                    min={1}
-                                    max={100}
-                                    step={1}
-                                    colorScheme="teal"
-                                    onChange={(val) => setwiggleAttempts(val)}
-                                  >
-                                    <SliderTrack>
-                                      <SliderFilledTrack />
-                                    </SliderTrack>
-                                    <SliderThumb />
-                                  </Slider>
-                                  {/* <FormHelperText fontSize={'xs'}>Adjust ray size for glycan ensemble generation</FormHelperText> */}
-                                </FormControl>
-
-                                
 
 
-                                {/* Output Format */}
-                                <FormControl>
-                                  <HStack spacing={2}>
-                                    <FormLabel justifySelf={'center'} fontWeight="medium" color="#B07095" mb={2}>
-                                      <Tooltip label="Select the output format for the generated structure.">
-                                        Output Format
-                                      </Tooltip>
-                                    </FormLabel>
-                                    {["PDB", "GLYCAM", "CHARMM"].map((format) => (
-                                      <Button
-                                        key={format}
-                                        onClick={() => setOutputFormat(format)}
-                                        colorScheme={outputFormat === format ? "teal" : "gray"}
-                                        variant={outputFormat === format ? "solid" : "outline"}
-                                        size="sm"
-                                        textTransform="uppercase"
-                                      >
-                                        {format}
-                                      </Button>
-                                    ))}
-                                  </HStack>
-                                </FormControl>
-                              </VStack>
-                            </AccordionPanel>
-                          </AccordionItem>
-                        </Accordion>
+                <div>
+                  <Heading
+                    margin={'1rem'}
+                    marginBottom={'1rem'}
+                    // fontFamily={'texts'}
+                    color='#A5494D'
+                    fontSize={{ base: "1xl", sm: "1xl", md: "1xl", lg: "2xl", xl: "2xl" }}
+                  >
+                    Select residues to glycosylate
+                  </Heading>
+                  <Select
+                    value={value}
+                    isMulti
+                    name="residues"
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    onChange={onChange}
+                    closeMenuOnSelect={false}
+                    options={
+                      protData?.glycosylation?.available
+                        ?.filter((glycoConf: Glycosylation) => glycoConf.residueName === 'ASN') // Only ASN
+                        .map((glycoConf: Glycosylation) => ({
+                          value: glycoConf.residueTag,
+                          label: `${glycoConf.residueName}${glycoConf.residueID}${glycoConf.residueChain}`
+                        }))
+                    }
+                  />
 
-                        <VStack align={"self-start"}>
+                  <FormControl display="flex" alignItems="center" justifyContent="flex-end" my={4}>
+                    <FormLabel htmlFor="advanced-mode-toggle" mb="0" fontSize="sm" mr={2}>
+                      Use Lightweight Input?
+                    </FormLabel>
+                    <Switch
+                      id="advanced-mode-toggle"
+                      isChecked={advancedMode === 'lightweight'}
+                      onChange={(e) => setAdvancedMode(e.target.checked ? 'lightweight' : 'fancy')}
+                      colorScheme="teal" // Match theme
+                    />
+                  </FormControl>
 
-                          <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                            This will take a few minutes. Please be patient.
-                          </Text>
+                  {/* Render the memoized list */}
+                  {residueSelectionComponents}
 
-                          <Button
-                            position={"relative"}
-                            margin={'1rem'}
-                            borderRadius="full"
-                            backgroundColor="#ECD292"
-                            _hover={{ backgroundColor: "#D27254" }}
-                            size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                            onClick={() => handleProcessJob()}
-                            isDisabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
-                                <CircularProgress
-                                  position="absolute"
-                                  color="#ECD292"
-                                  size="50px"
-                                  thickness="5px"
-                                  isIndeterminate
-                                  marginLeft={"15rem"}
-                                  capIsRound
-                                  onClick={() => handleProcessJob()}>
-                                  <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
-                                </CircularProgress>
-                                Processing...
-                              </Box>
-                            ) : (
-                              "Process"
-                            )}
-                          </Button>
+                  <br />
 
-                          {isLoading && (
-                            <Alert status='info'>
-                              <AlertIcon />
-                              It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
-                            </Alert>
-                          )}
+                  {/* Add Advanced Settings Accordion */}
+                  <Accordion allowToggle width="100%" mb={2} borderRadius="md" boxShadow="sm">
+                    <AccordionItem border="1px solid" borderColor="gray.200" borderRadius="md">
+                      <h2>
+                        <AccordionButton bg="gray.50" _hover={{ bg: "gray.100" }} borderRadius="md">
+                          <Box flex="1" textAlign="left" fontWeight="medium" color="#B07095">
+                            Advanced Settings
+                          </Box>
+                          <AccordionIcon />
+                        </AccordionButton>
+                      </h2>
+                      <AccordionPanel pb={4} bg="white">
+                        <VStack spacing={6} align="stretch">
+                          {/* Population Size */}
+                          <FormControl>
+                            <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                              <Tooltip label="Population size to be used in genetic optimization. Higher values may capture more conformational space but increase computational cost.">
+                                Population Size: {populationSize}
+                              </Tooltip>
+                            </FormLabel>
+                            <Slider
+                              aria-label="Population Size"
+                              defaultValue={50}
+                              value={populationSize}
+                              min={32}
+                              max={512}
+                              step={32}
+                              colorScheme="teal"
+                              onChange={(val) => setpopulationSize(val)}
+                            >
+                              <SliderTrack>
+                                <SliderFilledTrack />
+                              </SliderTrack>
+                              <SliderThumb />
+                            </Slider>
+                            {/* <FormHelperText >Adjust ray size for glycan ensemble generation</FormHelperText> */}
+                          </FormControl>
+
+                          {/* maxGenerations Slider */}
+                          <FormControl>
+                            <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                              <Tooltip label="Maximum number of generation to used in the optimization. Higher values produce better results but take longer.">
+                                Maximum generation: {maxGenerations}
+                              </Tooltip>
+                            </FormLabel>
+                            <Slider
+                              aria-label="max Generation"
+                              defaultValue={4}
+                              value={maxGenerations}
+                              min={1}
+                              max={20}
+                              step={1}
+                              colorScheme="teal"
+                              onChange={(val) => setmaxGenerations(val)}
+                            >
+                              <SliderTrack>
+                                <SliderFilledTrack />
+                              </SliderTrack>
+                              <SliderThumb />
+                            </Slider>
+                            {/* <FormHelperText fontSize={'xs'}>1 = Fast but less accurate, 10 = Slow but more accurate</FormHelperText> */}
+                          </FormControl>
+
+                          {/* wiggle Angle Slider */}
+                          <FormControl>
+                            <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                              <Tooltip label="Wiggle angle for the glycan. Higher values produce more diverse conformations but may be less realistic.">
+                                Wiggle Angle: {wiggleAngle}
+                              </Tooltip>
+                            </FormLabel>
+                            <Slider
+                              aria-label="Wiggle Angle"
+                              defaultValue={5}
+                              value={wiggleAngle}
+                              min={0}
+                              max={10}
+                              step={1}
+                              colorScheme="teal"
+                              onChange={(val) => setwiggleAngle(val)}
+                            >
+                              <SliderTrack>
+                                <SliderFilledTrack />
+                              </SliderTrack>
+                              <SliderThumb />
+                            </Slider>
+                            {/* <FormHelperText fontSize={'xs'}>Adjust ray size for glycan ensemble generation</FormHelperText> */}
+                          </FormControl>
+
+                          {/* wiggle Attempts Slider */}
+                          <FormControl>
+                            <FormLabel fontWeight="medium" color="#B07095" mb={2}>
+                              <Tooltip label="Number of attempts to wiggle the glycan. Higher values produce more diverse conformations but use more compute.">
+                                Wiggle Attempts: {wiggleAttempts}
+                              </Tooltip>
+                            </FormLabel>
+                            <Slider
+                              aria-label="Wiggle Attempts"
+                              defaultValue={10}
+                              value={wiggleAttempts}
+                              min={1}
+                              max={100}
+                              step={1}
+                              colorScheme="teal"
+                              onChange={(val) => setwiggleAttempts(val)}
+                            >
+                              <SliderTrack>
+                                <SliderFilledTrack />
+                              </SliderTrack>
+                              <SliderThumb />
+                            </Slider>
+                            {/* <FormHelperText fontSize={'xs'}>Adjust ray size for glycan ensemble generation</FormHelperText> */}
+                          </FormControl>
+
+
+
+
+                          {/* Output Format */}
+                          <FormControl>
+                            <HStack spacing={2}>
+                              <FormLabel justifySelf={'center'} fontWeight="medium" color="#B07095" mb={2}>
+                                <Tooltip label="Select the output format for the generated structure.">
+                                  Output Format
+                                </Tooltip>
+                              </FormLabel>
+                              {["PDB", "GLYCAM", "CHARMM"].map((format) => (
+                                <Button
+                                  key={format}
+                                  onClick={() => setOutputFormat(format)}
+                                  colorScheme={outputFormat === format ? "teal" : "gray"}
+                                  variant={outputFormat === format ? "solid" : "outline"}
+                                  size="sm"
+                                  textTransform="uppercase"
+                                >
+                                  {format}
+                                </Button>
+                              ))}
+                            </HStack>
+                          </FormControl>
                         </VStack>
-                      </div>
-                  
+                      </AccordionPanel>
+                    </AccordionItem>
+                  </Accordion>
+
+                  <VStack align={"self-start"}>
+
+                    <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+                      This will take a few minutes. Please be patient.
+                    </Text>
+
+                    <Button
+                      position={"relative"}
+                      margin={'1rem'}
+                      borderRadius="full"
+                      backgroundColor="#ECD292"
+                      _hover={{ backgroundColor: "#D27254" }}
+                      size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                      onClick={() => handleProcessJob()}
+                      isDisabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Box position="relative" display="inline-flex" alignItems="center" justifyContent="center">
+                          <CircularProgress
+                            position="absolute"
+                            color="#ECD292"
+                            size="50px"
+                            thickness="5px"
+                            isIndeterminate
+                            marginLeft={"15rem"}
+                            capIsRound
+                            onClick={() => handleProcessJob()}>
+                            <CircularProgressLabel>{elapsedTime}</CircularProgressLabel>
+                          </CircularProgress>
+                          Processing...
+                        </Box>
+                      ) : (
+                        "Process"
+                      )}
+                    </Button>
+
+                    {isLoading && (
+                      <Alert status='info'>
+                        <AlertIcon />
+                        It can take up to 5 minutes to process your request. Please wait. <br /> Please be advised that in the case of multiple users running simultaneously, your Re-Glyco job may take longer than expected.
+                      </Alert>
+                    )}
+                  </VStack>
+                </div>
+
               </div>
 
 
@@ -1374,66 +1389,113 @@ const ReGlyco = () => {
                       Processed!
                     </Alert>
                   )}
-                    <iframe
-                      width="100%"
-                      height="400px"
-                      src={`/viewer/embeddedfit.html?pdbUrl=${apiUrl}/output/${Results?.output}&format=pdb`}
-                      
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      title="Protein Structure"
-                    />
+                  <iframe
+                    width="100%"
+                    height="400px"
+                    src={`/viewer/embeddedfit.html?pdbUrl=${apiUrl}/output/${Results?.jobId}/all.pdb&format=pdb`}
 
-                  
-                    
-                    <div>
-                      <a href={`${apiUrl}/output/${Results?.output}`} download>
-                        <Button
-                          position={"relative"}
-                          margin={'1rem'}
-                          borderRadius="full"
-                          isDisabled={isLoading}
-                          backgroundColor="#B07095"
-                          _hover={{ backgroundColor: "#CF6385" }}
-                          size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                        >
-                          Download Re-glycosylated Structure PDB File
-                        </Button>
-                      </a>
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Protein Structure"
+                  />
+                  <iframe
+                    width="100%"
+                    height="400px"
+                    src={`/viewer/embeddedfit.html?pdbUrl=${apiUrl}/output/${Results?.jobId}/amber/SYSTEM.pdb&format=pdb`}
 
-                      <a href={`${apiUrl}/api/reglyco/download/${Results.jobId}`} download>
-                                                <Button
-                                                  position={"relative"}
-                                                  margin={'1rem'}
-                                                  borderRadius="full"
-                                                  isDisabled={isLoading}
-                                                  backgroundColor="#81D8D0"
-                                                  _hover={{ backgroundColor: "#008081" }}
-                                                  size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
-                                                >
-                                                  Download full job Files
-                                                </Button>
-                                              </a>
-                      
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Protein Structure"
+                  />
+
+
+                  <Box mt={4} mb={4} p={4} borderWidth="1px" borderRadius="lg" bg="gray.50">
+                    <Heading as="h6" size="sm" mb={3} color="#B07095">
+                      AMBER System File Preview
+                    </Heading>
+                    <Box
+                      maxH="300px"
+                      overflowY="auto"
+                      p={3}
+                      bg="white"
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor="gray.200"
+                      fontFamily="monospace"
+                      fontSize="sm"
+                      sx={{
+                        '&::-webkit-scrollbar': { width: '8px' },
+                        '&::-webkit-scrollbar-track': { backgroundColor: 'gray.100', borderRadius: '4px' },
+                        '&::-webkit-scrollbar-thumb': { backgroundColor: 'gray.400', borderRadius: '4px' },
+                      }}
+                    >
+                      <Code whiteSpace="pre-wrap" display="block">
+                        {amberSystemContent || "Loading Amber SYSTEM file..."}
+                      </Code>
+                    </Box>
+                  </Box>
+
+                  <iframe
+                    width="100%"
+                    height="400px"
+                    src={`/viewer/embeddedfit.html?pdbUrl=${apiUrl}/output/${Results?.output}&format=pdb`}
+
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Protein Structure"
+                  />
+
+
+                  <div>
+                    <a href={`${apiUrl}/output/${Results?.output}`} download>
                       <Button
-                position={"relative"}
-                margin={'1rem'}
-                borderRadius="full"
-                isDisabled={!lastSuccessfulSelections} // Disable if no successful selections stored
-                backgroundColor="#8C619D" // Ensemble-like color
-                _hover={{ backgroundColor: "#A77CA6" }}
-                size={{ base: "md", lg: "lg" }}
-                onClick={handleSwitchToEnsemble}
-                title="Switch to Ensemble mode with current selections"
-              >
-                Switch to Ensemble Mode
-              </Button>
+                        position={"relative"}
+                        margin={'1rem'}
+                        borderRadius="full"
+                        isDisabled={isLoading}
+                        backgroundColor="#B07095"
+                        _hover={{ backgroundColor: "#CF6385" }}
+                        size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                      >
+                        Download Re-glycosylated Structure PDB File
+                      </Button>
+                    </a>
 
-                    </div>
-                    <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
-                      If you encounter any issues or suspect a bug contact us <Link href="mailto:OJAS.SINGH.2023@mumail.ie">here</Link>
-                    </Text>
+                    <a href={`${apiUrl}/api/reglyco/download/${Results.jobId}`} download>
+                      <Button
+                        position={"relative"}
+                        margin={'1rem'}
+                        borderRadius="full"
+                        isDisabled={isLoading}
+                        backgroundColor="#81D8D0"
+                        _hover={{ backgroundColor: "#008081" }}
+                        size={{ base: "md", sm: "md", md: "md", lg: "lg", xl: "lg" }}
+                      >
+                        Download full job Files
+                      </Button>
+                    </a>
+
+                    <Button
+                      position={"relative"}
+                      margin={'1rem'}
+                      borderRadius="full"
+                      isDisabled={!lastSuccessfulSelections} // Disable if no successful selections stored
+                      backgroundColor="#8C619D" // Ensemble-like color
+                      _hover={{ backgroundColor: "#A77CA6" }}
+                      size={{ base: "md", lg: "lg" }}
+                      onClick={handleSwitchToEnsemble}
+                      title="Switch to Ensemble mode with current selections"
+                    >
+                      Switch to Ensemble Mode
+                    </Button>
+
+                  </div>
+                  <Text color='#B195A2' alignSelf={"left"} fontSize={'xs'}>
+                    If you encounter any issues or suspect a bug contact us <Link href="mailto:OJAS.SINGH.2023@mumail.ie">here</Link>
+                  </Text>
                   {jobResults && jobResults.length > 0 && (
                     <Box mt={6} mb={6} p={5} borderWidth="1px" borderRadius="lg" borderColor="gray.200" bg="white" boxShadow="sm">
                       <Heading as="h5" size="md" color="#B07095" mb={4}>
@@ -1483,7 +1545,7 @@ const ReGlyco = () => {
                       </VStack>
                     </Box>
                   )}
-                      
+
                   <Text fontWeight="bold">Processing log:</Text>
                   <Code>
                     {Results?.box.split('\n').map((line, index) => (
@@ -1606,7 +1668,7 @@ const ReGlyco = () => {
               </Box>
             </SimpleGrid>
           </Flex>
-        ) }
+        )}
 
         {/* Error display */}
         {error && (

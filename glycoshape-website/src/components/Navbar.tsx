@@ -23,9 +23,13 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  MenuDivider,
+  Avatar,
+  HStack,
   Spacer
 } from "@chakra-ui/react";
-import { HamburgerIcon } from '@chakra-ui/icons';
+import { HamburgerIcon, ChevronDownIcon } from '@chakra-ui/icons';
+import { useAuth } from './pro/contexts/AuthContext';
 import logo from './assets/logo_white.png';
 
 const Navbar: React.FC = () => {
@@ -35,8 +39,8 @@ const Navbar: React.FC = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  
   
   const handleNavigation = (path: string) => {
     console.log(`Current path: ${location.pathname}, Target path: ${path}`);
@@ -50,30 +54,50 @@ const Navbar: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    return user?.email || 'User';
+  };
+
   return (
-    // <Flex as="nav" position="sticky" top="0" zIndex="1000" bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
-    
     <Flex 
-   
-    as="nav"  bgColor="#28363F" align="center" justify="space-between" wrap="wrap" padding="0.8rem" marginTop={"-0.6rem"} boxShadow="md">
+      as="nav"  
+      bgColor="#28363F" 
+      align="center" 
+      justify="space-between" 
+      wrap="wrap" 
+      padding="0.8rem" 
+      marginTop={"-0.6rem"} 
+      boxShadow="md"
+      position="relative"
+      zIndex="1000"
+    >
       
         <Flex  justify="center" width={{ base: "100%", md: "100%", lg: "100%", xl: "100%" }} margin="0 auto">
-      <Box >
-        {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
-        <Stack direction='row'>
+      <Box>
+        <Stack direction='row' align="center" spacing={2}>
         
 
         {isDevelopment ? (
         <Text top="50%" fontFamily={'texts'} 
-        transform="translateY(30%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Dev</Badge>   </Text>
+        transform="translateY(0%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Dev</Badge>   </Text>
       ) : (
-        <Image src={logo} transform="translateY(5%)"  alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} />
+        <Image src={logo} alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} alignSelf="center" />
       )}
-  
-          
-         
-        <Link as={RouterLink} fontWeight="bold" fontSize={"3xl"} transform="translateY(8%)" color={"#F7FFE6"} to="/" >GlycoShape</Link> 
-        {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
+
+        <Link as={RouterLink} fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} to="/" fontFamily="heading" alignSelf="center" >GlycoShape</Link>
+
         </Stack>
       </Box>
 <Spacer />  
@@ -93,22 +117,23 @@ const Navbar: React.FC = () => {
                 <DrawerCloseButton />
                 <DrawerHeader borderBottomWidth="1px">
                 <Box>
-        {/* <Image src={logo} alt="GlycoShape Logo" height="60px" paddingLeft={"1.5rem"} /> */}
-        <Stack direction='row'>
+        <Stack direction='row' align="center" spacing={2}>
   
         {isDevelopment ? (
         <Text top="50%" fontFamily={'texts'} 
         transform="translateY(10%)"  paddingLeft={"0.5rem"}> <Badge color='#CF6385'>Dev</Badge>   </Text>
       ) : (
-        <Image src={logo} transform="translateY(5%)"  alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} />
+        <Image src={logo} alt="GlycoShape Logo" height="50px" paddingLeft={"1rem"} alignSelf="center" />
       )}
         
-        <Link fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} href="/" >GlycoShape</Link> 
-        {/* <Text fontWeight={"bold"} fontSize={"3xl"} color="#F7FFE6" paddingLeft={"1.5rem"}>GlycoShape.io</Text> */}
+        <Link as={RouterLink} fontWeight="bold" fontSize={"3xl"} color={"#F7FFE6"} to="/" fontFamily="heading">GlycoShape</Link> 
         </Stack>
       </Box>
                 </DrawerHeader>
                 <DrawerBody>
+                  <Button _hover={{
+              backgroundColor: "#F7FFE6"
+            }} as={RouterLink}  to="/dashboard" w="100%"  onClick={() => { handleNavigation('/dashboard'); onClose(); }} mb={4}>Dashboard</Button>
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/search?query=all" w="100%"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }} mb={4}>Database</Button>
@@ -153,6 +178,40 @@ const Navbar: React.FC = () => {
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/elab" w="100%" onClick={onClose} mb={4}>eLab</Button>
+                  
+                  {/* Authentication Buttons for Mobile */}
+                  <Divider my={4} />
+                  {user ? (
+                    <>
+                      <Button _hover={{
+                        backgroundColor: "#F7FFE6"
+                      }} as={RouterLink} to="/ums/" w="100%" onClick={onClose} mb={4}>
+                        Dashboard
+                      </Button>
+                      <Button _hover={{
+                        backgroundColor: "#F7FFE6"
+                      }} as={RouterLink} to="/ums/profile" w="100%" onClick={onClose} mb={4}>
+                        Profile
+                      </Button>
+                      <Button 
+                        colorScheme="red" 
+                        variant="outline" 
+                        w="100%" 
+                        onClick={() => { handleLogout(); onClose(); }}
+                        mb={4}
+                      >
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button _hover={{
+                        backgroundColor: "#F7FFE6"
+                      }} as={RouterLink} to="/ums/login" w="100%" onClick={onClose} mb={4}>
+                        Login
+                      </Button>
+                    </>
+                  )}
                 </DrawerBody>
               </DrawerContent>
             </DrawerOverlay>
@@ -160,16 +219,16 @@ const Navbar: React.FC = () => {
         </>
       ) : (
         <Flex align="center" >
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }}  marginRight="20px">Database</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/search?query=all"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }}  marginRight="20px" fontFamily="body">Database</Link>
 
           
         <Menu>
-        <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
+        <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={2} py={2} rounded={'md'} transition="all 0.2s" bg="transparent" fontFamily="body">
           Tools
         </MenuButton>
         <MenuList bg="#28363F" borderColor="#28363F">
-          <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco</MenuItem>
-          <MenuItem fontWeight="bold" as={RouterLink} to="/ensemble" onClick={() =>  handleNavigation('/ensemble')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Re-Glyco Ensemble</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/reglyco" onClick={() =>  handleNavigation('/reglyco')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">Re-Glyco</MenuItem>
+          <MenuItem fontWeight="bold" as={RouterLink} to="/ensemble" onClick={() =>  handleNavigation('/ensemble')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">Re-Glyco Ensemble</MenuItem>
             {isDevelopment && (
             <MenuItem fontWeight="bold" as={RouterLink} to="/fit" onClick={() => handleNavigation('/fit')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>
               Re-Glyco Fit
@@ -191,22 +250,22 @@ const Navbar: React.FC = () => {
           
           
           
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/downloads" marginRight="20px">Downloads</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/downloads" marginRight="20px" fontFamily="body">Downloads</Link>
           <Box alignContent={"center"} height='40px'>
   {/* <Divider orientation='vertical' /> */}
           </Box>
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/api-docs" marginRight="20px" >API</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/api-docs" marginRight="20px" fontFamily="body">API</Link>
           
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/sparql-query" marginRight="20px" >SPARQL</Link>
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/sparql-query" marginRight="20px" fontFamily="body">SPARQL</Link>
           <Box alignContent={"center"} height='40px'>
   {/* <Divider orientation='vertical' /> */}
           </Box> 
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/faq" marginRight="20px" >FAQ</Link> 
-          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/tutorial" marginRight="20px" >Tutorials</Link> 
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/faq" marginRight="20px" fontFamily="body">FAQ</Link> 
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/tutorial" marginRight="10px" fontFamily="body">Tutorials</Link> 
 
           {/* <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/elab" marginRight="20px">eLab</Link> */}
           <Menu>
-        <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="20px" px={4} py={2} rounded={'md'} transition="all 0.2s" bg="transparent">
+        <MenuButton as={Link} fontWeight="bold" color={"#F7FFE6"} href="#" _hover={{ textDecoration: "none" }} marginRight="0px" px={2} py={2} rounded={'md'} transition="all 0.2s" bg="transparent" fontFamily="body">
           eLab
         </MenuButton>
         <MenuList bg="#28363F" borderColor="#28363F">
@@ -216,6 +275,52 @@ const Navbar: React.FC = () => {
           <MenuItem fontWeight="bold" as={RouterLink} to="/publications" onClick={() =>  handleNavigation('/publications')} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"}>Publications</MenuItem>
         </MenuList>
       </Menu>
+      
+      {/* Authentication Section */}
+      <Box alignContent={"center"} height='40px' mx={2}>
+        <Divider orientation='vertical' />
+      </Box>
+
+      <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/pro" marginRight="0px" px={2} fontFamily="body">Pro</Link> 
+      
+      {user ? (
+        <Menu>
+          <MenuButton as={Button} rightIcon={<ChevronDownIcon />} bg="transparent" color="#F7FFE6" _hover={{ bg: "rgba(247, 255, 230, 0.1)" }} _active={{ bg: "rgba(247, 255, 230, 0.2)" }} fontFamily="body">
+            <HStack spacing={2}>
+              <Avatar size="sm" name={getUserDisplayName()} />
+              <Text fontFamily="body">{user.first_name || user.email}</Text>
+            </HStack>
+          </MenuButton>
+          <MenuList bg="#28363F" borderColor="#28363F">
+            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/dashboard" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+              Dashboard
+            </MenuItem>
+            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/profile" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+              Profile
+            </MenuItem>
+            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/subscriptions" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+              Subscriptions
+            </MenuItem>
+            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/licenses" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+              Licenses
+            </MenuItem>
+            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/api-keys" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+              API Keys
+            </MenuItem>
+            <MenuDivider />
+            <MenuItem fontWeight="bold" onClick={handleLogout} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+              Logout
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      ) : (
+        <HStack spacing={4}>
+
+          <Button as={RouterLink} to="/ums/login" fontWeight="bold" variant="ghost" color="#F7FFE6" _hover={{ bg: "rgba(247, 255, 230, 0.1)" }} fontFamily="body">
+            Login
+          </Button>
+        </HStack>
+      )}
         </Flex>
       )}
       </Flex>

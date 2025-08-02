@@ -36,6 +36,13 @@ import Chat from './components/Chat';
 import DBHealth from './components/DatabaseHealth';
 import XP from './components/XP';
 
+// Importing Pro components
+import Pro from './components/pro/Pro';
+
+// UMS System
+import UMSApp from './components/pro/UMSApp';
+import { AuthProvider } from './components/pro/contexts/AuthContext';
+
 // First create a Layout component for the main layout
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Flex direction="column" minHeight="100vh">
@@ -65,66 +72,74 @@ const App: React.FC = () => {
   }, []);
   
   return (
-    <Router>
-      <ChakraProvider theme={theme}>
-        <CSSReset />
-        <Routes>
-          {/* View route with minimal layout */}
-          <Route 
-            path="/view" 
-            element={
-              <ViewLayout>
-                <View />
-              </ViewLayout>
-            } 
-          />
-          <Route 
-            path="/chat" 
-            element={
-              <ViewLayout>
-                <Navbar />
-                <CookieConsent />
-                <Chat />
-              </ViewLayout>
-            } 
-          />
-          
-          {/* All other routes with main layout */}
-          <Route
-            path="/*"
-            element={
-              <MainLayout>
-                <Routes>
-                  <Route path="/" element={<ContentSection />} />
-                  <Route path="/faq" element={<div><Search /><FAQ /></div>} />
-                  <Route path="/tutorial" element={<div><Search /><Tutorials /></div>} />
-                  <Route path="/api-docs" element={<div><Search /><API /></div>} />
-                  <Route path="/sparql-query" element={<div><Sparql /></div>} />
-                  <Route path="/downloads/*" element={<div><Search /> <Download /></div>} />
-                  <Route path="/reglyco" element={<div><ReGlyco /></div>} />
-                  <Route path="/search" element={<SearchPage />} />
-                  <Route path="/glycan" element={<div><Search /><GlycanPage /></div>} />
-                  <Route path="/elab" element={<div><Search /><Elab /></div>} />
-                  <Route path="/team" element={<div><Search /><Elab /></div>} />
-                  <Route path="/blog" element={<div><Search /><Elab /></div>} />
-                  <Route path="/blog/:slug" element={<Elab />} /> 
-                  <Route path="/publications" element={<div><Search /><Elab /></div>} />
-                  <Route path="/swap" element={<div><Swap /></div>} />
-                  <Route path="/fit" element={<div><Fit /></div>} />
-                  <Route path="/job" element={<div><Search /><JobView /></div>} />
-                  <Route path="/ensemble" element={<div><Ensemble /></div>} />
-                  <Route path="/xp" element={<div><XP /></div>} />
-                  <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
-                  <Route path="/stats" element={<div><Stats /></div>} />
-                  <Route path="/db_health" element={<div><DBHealth /></div>} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-              </MainLayout>
-            }
-          />
-        </Routes>
-      </ChakraProvider>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <ChakraProvider theme={theme}>
+          <CSSReset />
+          <Routes>
+            {/* View route with minimal layout */}
+            <Route 
+              path="/view" 
+              element={
+                <ViewLayout>
+                  <View />
+                </ViewLayout>
+              } 
+            />
+            <Route 
+              path="/chat" 
+              element={
+                <ViewLayout>
+                  <Navbar />
+                  <CookieConsent />
+                  <Chat />
+                </ViewLayout>
+              } 
+            />
+            
+            {/* UMS Routes - User Management System (with main Navbar) */}
+            <Route path="/ums/*" element={<UMSApp />} />
+
+            {/* All other routes with main layout */}
+            <Route
+              path="/*"
+              element={
+                <MainLayout>
+                  <Routes>
+                    <Route path="/" element={<ContentSection />} />
+                    <Route path="/faq" element={<div><Search /><FAQ /></div>} />
+                    <Route path="/tutorial" element={<div><Search /><Tutorials /></div>} />
+                    <Route path="/api-docs" element={<div><Search /><API /></div>} />
+                    <Route path="/sparql-query" element={<div><Sparql /></div>} />
+                    <Route path="/downloads/*" element={<div><Search /> <Download /></div>} />
+                    <Route path="/reglyco" element={<div><ReGlyco /></div>} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/glycan" element={<div><Search /><GlycanPage /></div>} />
+                    <Route path="/elab" element={<div><Search /><Elab /></div>} />
+                    <Route path="/team" element={<div><Search /><Elab /></div>} />
+                    <Route path="/blog" element={<div><Search /><Elab /></div>} />
+                    <Route path="/blog/:slug" element={<Elab />} /> 
+                    <Route path="/publications" element={<div><Search /><Elab /></div>} />
+                    <Route path="/swap" element={<div><Swap /></div>} />
+                    <Route path="/fit" element={<div><Fit /></div>} />
+                    <Route path="/job" element={<div><Search /><JobView /></div>} />
+                    <Route path="/ensemble" element={<div><Ensemble /></div>} />
+                    <Route path="/xp" element={<div><XP /></div>} />
+                    <Route path="/gotw" element={<div><Search /><GOTW /></div>} />
+                    <Route path="/stats" element={<div><Stats /></div>} />
+                    <Route path="/db_health" element={<div><DBHealth /></div>} />
+
+                    <Route path="/pro" element={<Pro />} />
+                    
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </MainLayout>
+              }
+            />
+          </Routes>
+        </ChakraProvider>
+      </Router>
+    </AuthProvider>
   );
 }
 

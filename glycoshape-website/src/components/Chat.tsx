@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, memo, lazy, Suspense, startTransition } from 'react';
 import {
   Spacer,
   Box,
@@ -24,6 +24,7 @@ import {
   ModalHeader,
   ModalCloseButton,
   ModalBody,
+  ModalFooter,
   useDisclosure,
   Image,
   Code,
@@ -32,9 +33,14 @@ import {
   AlertDescription,
   Kbd,
   Select,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
 } from '@chakra-ui/react';
 import { ChatIcon, LinkIcon, ChevronUpIcon, ChevronDownIcon, AttachmentIcon, CloseIcon, CopyIcon, CheckIcon, ExternalLinkIcon, RepeatIcon, DeleteIcon, DownloadIcon} from '@chakra-ui/icons';
-import { VscSymbolProperty, VscTerminal, VscCheck, VscSymbolFile, VscCloudDownload } from "react-icons/vsc";
+import { VscSymbolProperty, VscTerminal, VscCheck, VscSymbolFile, VscCloudDownload, VscFilePdf, VscKebabVertical, VscRefresh, VscTrash } from "react-icons/vsc";
 import { Slide } from '@chakra-ui/react';
 import 'katex/dist/katex.min.css';
 import ReactMarkdown, { Components } from 'react-markdown';
@@ -48,6 +54,11 @@ import { v4 as uuidv4 } from 'uuid';
 // --- Constants ---
 const API_BASE_URL = 'https://glycoshape.io';
 const CHAT_API_ENDPOINT = `${API_BASE_URL}/api/chat`;
+
+// Performance constants
+const MESSAGE_BATCH_SIZE = 20;
+const SCROLL_THRESHOLD = 100;
+const DEBOUNCE_DELAY = 150;
 
 // --- Interfaces ---
 interface CodeOutput {
@@ -78,7 +89,7 @@ interface ToolStatus {
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system' | 'tool_info';
-  content: string; // Unified content field
+  content: string | null; // Unified content field - can be null for streaming messages
   timestamp: string;
   attachment?: {
     name: string;
@@ -89,6 +100,8 @@ interface ChatMessage {
     isCSV?: boolean;
     isJSON?: boolean;
     isPDB?: boolean;
+    isPDF?: boolean;
+    sessionUrl?: string; // URL for session-stored files
   } | null;
   id?: string; // Unique ID for assistant messages during streaming
   codeOutput?: CodeOutput | null;
@@ -118,9 +131,175 @@ interface FileAttachment {
   isText?: boolean;
   isCSV?: boolean;
   isJSON?: boolean;
+  isPDF?: boolean;
 }
 
 // --- Helper Components & Functions ---
+
+// Debounced input hook for better performance
+const useDebounceValue = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+// Virtual message list component for better performance with long conversations
+const VirtualMessageList = memo<{
+  messages: ChatMessage[];
+  isLoading: boolean;
+  onOpenAttachmentModal: (attachment: ChatMessage['attachment']) => void;
+  onMolViewSpecUpdate?: (molviewspec: any, filename: string) => void;
+  onRemoveMessages: (idx: number) => void;
+  onRetryFromPoint: (idx: number) => void;
+  EventRenderer: React.FC<any>;
+  colorScheme: any;
+  sessionLoaded?: boolean; // Add prop to track when session is loaded
+}>(({ 
+  messages, 
+  isLoading, 
+  onOpenAttachmentModal, 
+  onMolViewSpecUpdate, 
+  onRemoveMessages, 
+  onRetryFromPoint, 
+  EventRenderer,
+  colorScheme,
+  sessionLoaded = false
+}) => {
+  const [visibleCount, setVisibleCount] = useState(MESSAGE_BATCH_SIZE);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Show more messages when requested, but cap at total length
+  const visibleMessages = useMemo(() => {
+    const count = Math.min(visibleCount, messages.length);
+    return messages.slice(-count);
+  }, [messages, visibleCount]);
+
+  const startIndex = messages.length - visibleMessages.length;
+  const hasMoreMessages = messages.length > visibleCount;
+
+  const loadMoreMessages = useCallback(() => {
+    setVisibleCount(prev => Math.min(prev + MESSAGE_BATCH_SIZE, messages.length));
+  }, [messages.length]);
+
+  // Reset visible count when messages change significantly (new conversation or session loaded)
+  useEffect(() => {
+    if (messages.length < visibleCount) {
+      setVisibleCount(Math.min(MESSAGE_BATCH_SIZE, messages.length));
+    }
+  }, [messages.length, visibleCount]);
+
+  // Reset to show only latest 5 messages when a session is loaded
+  useEffect(() => {
+    if (sessionLoaded && messages.length > 0) {
+      setVisibleCount(Math.min(5, messages.length));
+    }
+  }, [sessionLoaded, messages.length]);
+
+  // Auto-load more messages on scroll to top
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !hasMoreMessages) return;
+
+    const handleScroll = () => {
+      if (container.scrollTop < 100) {
+        loadMoreMessages();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [hasMoreMessages, loadMoreMessages]);
+
+  return (
+    <VStack spacing={4} align="stretch" ref={containerRef}>
+      {hasMoreMessages && (
+        <Flex justify="center" mb={2}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={loadMoreMessages}
+            colorScheme="purple"
+            borderRadius="full"
+          >
+            Load {Math.min(MESSAGE_BATCH_SIZE, messages.length - visibleCount)} more messages
+          </Button>
+        </Flex>
+      )}
+      
+      {visibleMessages.map((msg, idx) => {
+        const actualIdx = startIndex + idx;
+        const messageKey = `${msg.role}-${actualIdx}-${msg.timestamp}`;
+        
+        return (
+          <Suspense key={messageKey} fallback={<Box h="60px" />}>
+            <ChatMessageComponent
+              msg={msg}
+              idx={actualIdx}
+              messageKey={messageKey}
+              isLoading={isLoading}
+              onOpenAttachmentModal={onOpenAttachmentModal}
+              onMolViewSpecUpdate={onMolViewSpecUpdate}
+              onRemoveMessages={onRemoveMessages}
+              onRetryFromPoint={onRetryFromPoint}
+              EventRenderer={EventRenderer}
+              userMessageBg={colorScheme.userMessageBg}
+              assistantMessageBg={colorScheme.assistantMessageBg}
+              toolInfoMessageBg={colorScheme.toolInfoMessageBg}
+              errorMessageBg={colorScheme.errorMessageBg}
+              attachmentBg={colorScheme.attachmentBg}
+              colorScheme={colorScheme}
+            />
+          </Suspense>
+        );
+      })}
+    </VStack>
+  );
+});
+
+VirtualMessageList.displayName = 'VirtualMessageList';
+
+// Lightweight text renderer for better performance
+const LightTextRenderer = memo<{ content: string; colorScheme: any }>(({ content, colorScheme }) => {
+  // Check if content has markdown formatting
+  const hasMarkdown = useMemo(() => {
+    return /[*_`#\[\]()>-]/.test(content) || content.includes('```') || content.includes('**');
+  }, [content]);
+
+  if (!hasMarkdown) {
+    // Render plain text for better performance
+    return (
+      <Text whiteSpace="pre-wrap" wordBreak="break-word">
+        {content}
+      </Text>
+    );
+  }
+
+  // Use ReactMarkdown for complex content
+  return (
+    <Suspense fallback={<Text>{content}</Text>}>
+      <ReactMarkdown
+        components={markdownComponents}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
+      >
+        {content}
+      </ReactMarkdown>
+    </Suspense>
+  );
+});
+
+LightTextRenderer.displayName = 'LightTextRenderer';
+
 const PaperPlane = (props: any) => (
   <svg viewBox="0 0 24 24" fill="currentColor" height="1em" width="1em" {...props}>
     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
@@ -142,6 +321,186 @@ const prepareApiHistory = (messagesToPrepare: ChatMessage[]): { role: string; co
     });
 };
 
+// Shared CodeBlock component for markdown rendering
+const CodeBlock: React.FC<any> = ({ node, inline, className, children, ...props }) => {
+  const content = String(children).replace(/\n$/, '');
+  const containsNewlines = content.includes('\n');
+  const isCodeBlock = containsNewlines || (className && className.startsWith('language-'));
+  const effectiveInline = !isCodeBlock;
+  const { hasCopied, onCopy } = useClipboard(content);
+  const match = /language-(\w+)/.exec(className || '');
+  const language = match ? match[1] : 'plaintext';
+
+  // Color constants - these should match the theme
+  const inlineCodeBg = 'gray.100';
+  const codeOutputBg = 'gray.50';
+  const codeBlockHeaderBg = 'gray.100';
+  const borderColor = 'gray.100';
+  const codeStyle = oneLight;
+
+  if (effectiveInline) {
+    return (
+      <Code display="inline-block" verticalAlign="baseline" px={1} py={0.5}
+            bg={inlineCodeBg} borderRadius="sm" fontSize="sm" fontFamily="monospace" {...props}>
+        {children}
+      </Code>
+    );
+  } else {
+    return (
+      <Box position="relative" my={4} className="code-block" bg={codeOutputBg} borderRadius="md" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
+         <HStack px={3} py={1} bg={codeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
+            <Text fontSize="xs" color="gray.500" textTransform="uppercase">{language}</Text>
+             <Tooltip label={hasCopied ? 'Copied!' : 'Copy code'} placement="top">
+              <IconButton aria-label="Copy code" icon={hasCopied ? <CheckIcon /> : <CopyIcon />}
+                          size="xs" onClick={onCopy} variant="ghost" colorScheme={hasCopied ? 'green' : 'gray'}/>
+            </Tooltip>
+         </HStack>
+        <SyntaxHighlighter style={codeStyle} language={language} PreTag="div" {...props}
+                         customStyle={{ margin: 0, padding: '1rem', fontSize: '0.875rem', backgroundColor: 'transparent' }}
+                         wrapLongLines={false} codeTagProps={{ style: { fontFamily: 'monospace' } }}>
+          {content}
+        </SyntaxHighlighter>
+      </Box>
+    );
+  }
+};
+
+// Shared markdown components
+const markdownComponents: Components = {
+  code: CodeBlock,
+  // By not providing an 'img' override, ReactMarkdown will try to render them.
+  // However, our parsing logic removes them from the text stream before it gets to ReactMarkdown.
+};
+
+// Memoized Message Component for performance optimization
+const ChatMessageComponent = memo<{
+  msg: ChatMessage;
+  idx: number;
+  messageKey: string;
+  isLoading: boolean;
+  onOpenAttachmentModal: (attachment: ChatMessage['attachment']) => void;
+  onMolViewSpecUpdate?: (molviewspec: any, filename: string) => void;
+  onRemoveMessages: (idx: number) => void;
+  onRetryFromPoint: (idx: number) => void;
+  EventRenderer: React.FC<any>;
+  userMessageBg: string;
+  assistantMessageBg: string;
+  toolInfoMessageBg: string;
+  errorMessageBg: string;
+  attachmentBg: string;
+  colorScheme: any;
+}>(({ 
+  msg, 
+  idx, 
+  messageKey, 
+  isLoading, 
+  onOpenAttachmentModal, 
+  onMolViewSpecUpdate, 
+  onRemoveMessages, 
+  onRetryFromPoint, 
+  EventRenderer,
+  userMessageBg,
+  assistantMessageBg,
+  toolInfoMessageBg,
+  errorMessageBg,
+  attachmentBg,
+  colorScheme
+}) => {
+  if (msg.role === 'system' && !msg.isError) return null;
+
+  const isEmptyPlaceholder = msg.role === 'assistant' && msg.id &&
+                            (!msg.events || msg.events.length === 0) && isLoading;
+  if (isEmptyPlaceholder) return null;
+
+  let msgBg = assistantMessageBg, justify = 'flex-start';
+  if (msg.role === 'user') { msgBg = userMessageBg; justify = 'flex-end'; }
+  else if (msg.role === 'tool_info') { msgBg = msg.toolStatus?.status === 'error' ? errorMessageBg : toolInfoMessageBg; }
+  else if (msg.isError && msg.role === 'system') { msgBg = errorMessageBg; }
+
+  return (
+    <Flex key={messageKey} justify={justify} w="100%">
+      <Box maxW={{ base: '90%', md: '80%' }} bg={msgBg} px={4} py={2} borderRadius="lg" boxShadow="sm"
+           className="chat-message-content" w={msg.role === 'assistant' ? { base: '90%', md: '80%' } : 'auto'}>
+        
+        {msg.role === 'user' && msg.attachment && (
+          <Button variant="link" size="sm" onClick={() => onOpenAttachmentModal(msg.attachment)} mb={2}
+                  p={0} height="auto" _hover={{ textDecoration: 'none' }} w="full" display="block" textAlign="left">
+            <HStack spacing={2} p={2} bg={attachmentBg} borderRadius="md" w="full">
+              {(msg.attachment?.name?.endsWith('.pdb') || msg.attachment?.type === 'chemical/x-pdb') ? (
+                <Icon as={VscSymbolFile} color="blue.500" boxSize="1em" />
+              ) : msg.attachment?.isPDF ? (
+                <Icon as={VscFilePdf} color="red.500" boxSize="1em" />
+              ) : (
+                <AttachmentIcon boxSize="1em" />
+              )}
+              <Text fontSize="sm" noOfLines={1} title={msg.attachment?.name}>{msg.attachment?.name}</Text>
+            </HStack>
+          </Button>
+        )}
+
+        {msg.role === 'assistant' && msg.events && msg.events.length > 0 ? (
+          <Box>
+            {msg.events.map((event, eventIdx) => (
+              <EventRenderer 
+                key={event.id || `event-${eventIdx}`} 
+                event={event} 
+                messageKey={messageKey}
+                onMolViewSpecUpdate={onMolViewSpecUpdate}
+                isLast={eventIdx === msg.events!.length - 1}
+                colorScheme={colorScheme}
+              />
+            ))}
+          </Box>
+        ) : msg.role === 'assistant' && msg.content ? (
+          <LightTextRenderer content={msg.content} colorScheme={colorScheme} />
+        ) : msg.role === 'user' && msg.content ? (
+          <Text whiteSpace="pre-wrap" wordBreak="break-word">{msg.content}</Text>
+        ) : msg.role === 'system' && msg.isError ? (
+          <Text color="red.600">{msg.content}</Text>
+        ) : msg.role === 'tool_info' ? (
+          <HStack>
+            <Text fontSize="sm" fontWeight="bold">
+              {msg.toolStatus?.name || 'Tool'}: {msg.toolStatus?.status}
+            </Text>
+            {msg.toolStatus?.status === 'running' && <Spinner size="xs" />}
+          </HStack>
+        ) : null}
+
+        {/* Message actions menu */}
+        {((msg.role === 'assistant' && !msg.id) || msg.role === 'user') && (
+          <Flex justify="flex-end" mt={2}>
+            <Menu size="sm">
+              <MenuButton
+                as={IconButton}
+                icon={<Icon as={VscKebabVertical} />}
+                variant="ghost"
+                size="xs"
+                aria-label="Message options"
+              />
+              <MenuList fontSize="sm">
+                {msg.role === 'assistant' && (
+                  <MenuItem onClick={() => onRetryFromPoint(idx)}>
+                    <Icon as={VscRefresh} mr={2} />
+                    Retry this response
+                  </MenuItem>
+                )}
+                {msg.role === 'user' && (
+                  <MenuItem onClick={() => onRemoveMessages(idx)}>
+                    <Icon as={VscTrash} mr={2} />
+                    Remove from here
+                  </MenuItem>
+                )}
+              </MenuList>
+            </Menu>
+          </Flex>
+        )}
+      </Box>
+    </Flex>
+  );
+});
+
+ChatMessageComponent.displayName = 'ChatMessageComponent';
+
 // --- Main Chat Component ---
 const BackendChat: React.FC<{
   onMolViewSpecUpdate?: (molviewspec: any, filename: string) => void;
@@ -155,6 +514,9 @@ const BackendChat: React.FC<{
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [models, setModels] = useState<{id: string, label: string}[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
+  const [sessionLoaded, setSessionLoaded] = useState<boolean>(false);
+  
+  // Performance optimization: reduce re-renders with stable refs
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -205,7 +567,7 @@ const BackendChat: React.FC<{
     const loadSessionHistory = async (sid: string) => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/session/${sid}`);
+        const response = await fetch(`${API_BASE_URL}/api/session/${sid}/history`);
         if (!response.ok) {
           let errorMsg = `Failed to load session: ${response.status} ${response.statusText}`;
           try {
@@ -245,10 +607,27 @@ const BackendChat: React.FC<{
         const adaptedMessages = filteredMessages.map((msg: any) => {
           const events: ChatMessage['events'] = [];
           
-          // Handle legacy file attachment formats
+          // Handle user message attachments
           if (msg.role === 'user') {
-            // Handle old 'files' array format
-            if (msg.files) {
+            // Handle new attachments array format from session history
+            if (msg.attachments && Array.isArray(msg.attachments) && msg.attachments.length > 0) {
+              const attachment = msg.attachments[0]; // Take the first attachment
+              msg.attachment = {
+                name: attachment.filename,
+                content: null, // Content not stored in session history
+                type: attachment.type || 'application/octet-stream',
+                isImage: attachment.type?.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(attachment.filename),
+                isText: attachment.type?.startsWith('text/') || /\.(pdb|cif|py|txt|md|gro)$/i.test(attachment.filename),
+                isCSV: attachment.type === 'text/csv' || attachment.filename?.endsWith('.csv'),
+                isJSON: attachment.type === 'application/json' || attachment.filename?.endsWith('.json'),
+                isPDB: attachment.filename?.endsWith('.pdb') || attachment.filename?.endsWith('.cif'),
+                isPDF: attachment.type === 'application/pdf' || attachment.filename?.endsWith('.pdf'),
+                // Store the session URL for retrieval
+                sessionUrl: `${API_BASE_URL}${attachment.url}`
+              };
+            }
+            // Handle old 'files' array format (legacy support)
+            else if (msg.files) {
               msg.attachment = {
                 name: msg.files[0].filename,
                 content: null,
@@ -256,9 +635,9 @@ const BackendChat: React.FC<{
                 isText: msg.files[0].filename.endsWith('.pdb') || msg.files[0].filename.endsWith('.cif')
               };
             }
-            // Handle text-based file notification format
+            // Handle text-based file notification format (legacy support)
             else if (msg.content?.includes('User uploaded file')) {
-              const filenameMatch = msg.content.match(/\[User uploaded file: '([^']+\.pdb)'\. It is available[^\]]*\]/i);
+              const filenameMatch = typeof msg.content === 'string' ? msg.content.match(/\[User uploaded file: '([^']+\.pdb)'\. It is available[^\]]*\]/i) : null;
               if (filenameMatch) {
                 const fullMatch = filenameMatch[0];
                 const filename = filenameMatch[1];
@@ -364,9 +743,14 @@ const BackendChat: React.FC<{
                                 const downloadMatch = /download="([^"]*)"/.exec(linkPart);
                                 
                                 if (hrefMatch) {
-                                    const url = hrefMatch[1];
+                                    let url = hrefMatch[1];
                                     const linkText = textMatch ? textMatch[1] : url;
                                     const isDownload = downloadMatch || linkPart.includes('download');
+                                    
+                                    // Build correct URL for files that don't start with http
+                                    if (!url.startsWith('http') && !url.startsWith('/') && sid) {
+                                        url = `${API_BASE_URL}/api/temp_files/${sid}/${url}`;
+                                    }
                                     
                                     events.push({
                                         id: `hist-link-${uuidv4()}`,
@@ -422,9 +806,14 @@ const BackendChat: React.FC<{
 
         setMessages(adaptedMessages);
         didReplayMolViewSpecs.current = false; // Reset molviewspec replay guard on session load
+        setSessionLoaded(true); // Mark that session has been loaded
+        
+        // Scroll to bottom after loading session history
+        setTimeout(() => scrollToBottom(true), 500);
+        
         toast({
           title: 'Session Loaded',
-          description: `Successfully loaded session ${sid}.`,
+          description: `Successfully loaded session ${sid}. Showing latest messages.`,
           status: 'success',
           duration: 3000,
         });
@@ -451,6 +840,7 @@ const BackendChat: React.FC<{
       loadSessionHistory(sidFromUrl);
     } else {
       setSessionId(null);
+      setSessionLoaded(false); // Reset for new sessions
     }
   }, [toast]);
 
@@ -486,24 +876,55 @@ const BackendChat: React.FC<{
     }
   }, [messages, isLoading, onMolViewSpecUpdate]);
 
-  const userMessageBg = '#F7F9E5';
-  const assistantMessageBg = '#f9fffd';
-  const toolInfoMessageBg = 'purple.50';
-  const errorMessageBg = 'red.100';
-  const chatBg = 'white';
-  const borderColor = 'gray.100';
-  const inputBg = 'white';
-  const attachmentBg = 'blackAlpha.100';
-  const attachmentTextColor = 'gray.600';
-  const inputAttachmentBg = 'gray.100';
-  const welcomeHeadingColor = 'gray.600';
-  const welcomeTextColor = 'gray.500';
-  const codeStyle = oneLight;
-  const inlineCodeBg = 'gray.100';
-  const codeOutputBg = 'gray.50';
-  const codeBlockHeaderBg = 'gray.100';
-  const stderrColor = "red.600";
-  const stderrCodeColor = "red.600";
+  // Memoize color constants to prevent re-renders
+  const colorScheme = useMemo(() => ({
+    userMessageBg: '#F7F9E5',
+    assistantMessageBg: '#f9fffd',
+    toolInfoMessageBg: 'purple.50',
+    errorMessageBg: 'red.100',
+    chatBg: 'white',
+    borderColor: 'gray.100',
+    inputBg: 'white',
+    attachmentBg: 'blackAlpha.100',
+    attachmentTextColor: 'gray.600',
+    inputAttachmentBg: 'gray.100',
+    welcomeHeadingColor: 'gray.600',
+    welcomeTextColor: 'gray.500',
+    codeStyle: oneLight,
+    inlineCodeBg: 'gray.100',
+    codeOutputBg: 'gray.50',
+    codeBlockHeaderBg: 'gray.100',
+    stderrColor: "red.600",
+    stderrCodeColor: "red.600"
+  }), []);
+
+  // Optimized input handler - removed startTransition to prevent dropped keystrokes
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInput(value);
+  }, []);
+
+  // Optimized scroll handler with gentle auto-scroll during loading
+  const scrollToBottom = useCallback((force: boolean = false) => {
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer) {
+      const isScrolledToBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + SCROLL_THRESHOLD;
+      
+      if (force || isScrolledToBottom) {
+        // Only auto-scroll if user is near bottom or explicitly forced
+        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+      } else if (isLoading) {
+        // During loading, check if user has manually scrolled up significantly
+        const scrollFromBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight;
+        
+        // Only auto-scroll if user hasn't scrolled up more than 200px from bottom
+        if (scrollFromBottom < 200) {
+          chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+        // If user has scrolled up more, respect their choice and don't auto-scroll
+      }
+    }
+  }, [isLoading]);
 
   const CodeBlock: React.FC<any> = ({ node, inline, className, children, ...props }) => {
     const content = String(children).replace(/\n$/, '');
@@ -517,21 +938,21 @@ const BackendChat: React.FC<{
     if (effectiveInline) {
       return (
         <Code display="inline-block" verticalAlign="baseline" px={1} py={0.5}
-              bg={inlineCodeBg} borderRadius="sm" fontSize="sm" fontFamily="monospace" {...props}>
+              bg={colorScheme.inlineCodeBg} borderRadius="sm" fontSize="sm" fontFamily="monospace" {...props}>
           {children}
         </Code>
       );
     } else {
       return (
-        <Box position="relative" my={4} className="code-block" bg={codeOutputBg} borderRadius="md" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
-           <HStack px={3} py={1} bg={codeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
+        <Box position="relative" my={4} className="code-block" bg={colorScheme.codeOutputBg} borderRadius="md" overflow="hidden" borderWidth="1px" borderColor={colorScheme.borderColor}>
+           <HStack px={3} py={1} bg={colorScheme.codeBlockHeaderBg} borderBottomWidth="1px" borderColor={colorScheme.borderColor} justifyContent="space-between">
               <Text fontSize="xs" color="gray.500" textTransform="uppercase">{language}</Text>
                <Tooltip label={hasCopied ? 'Copied!' : 'Copy code'} placement="top">
                 <IconButton aria-label="Copy code" icon={hasCopied ? <CheckIcon /> : <CopyIcon />}
                             size="xs" onClick={onCopy} variant="ghost" colorScheme={hasCopied ? 'green' : 'gray'}/>
               </Tooltip>
            </HStack>
-          <SyntaxHighlighter style={codeStyle} language={language} PreTag="div" {...props}
+          <SyntaxHighlighter style={colorScheme.codeStyle} language={language} PreTag="div" {...props}
                            customStyle={{ margin: 0, padding: '1rem', fontSize: '0.875rem', backgroundColor: 'transparent' }}
                            wrapLongLines={false} codeTagProps={{ style: { fontFamily: 'monospace' } }}>
             {content}
@@ -553,7 +974,8 @@ const BackendChat: React.FC<{
     messageKey: string; 
     onMolViewSpecUpdate?: (molviewspec: any, filename: string) => void;
     isLast?: boolean;
-  }> = ({ event, messageKey, onMolViewSpecUpdate, isLast = false }) => {
+    colorScheme: any;
+  }> = ({ event, messageKey, onMolViewSpecUpdate, isLast = false, colorScheme }) => {
     const getEventIcon = (type: string, status?: string) => {
       switch (type) {
         case 'text':
@@ -678,13 +1100,7 @@ const BackendChat: React.FC<{
         <Box flex="1" minW="0">
           {event.type === 'text' && (
             <Box className="markdown-container">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[rehypeKatex]}
-                components={markdownComponents}
-              >
-                {event.content}
-              </ReactMarkdown>
+              <LightTextRenderer content={event.content} colorScheme={colorScheme} />
             </Box>
           )}
 
@@ -696,8 +1112,8 @@ const BackendChat: React.FC<{
                   Pending Execution
                 </Text>
               </HStack>
-              <Box mb={2} bg={codeOutputBg} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
-                <HStack px={3} py={1} bg={codeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
+              <Box mb={2} bg={colorScheme.codeOutputBg} borderRadius="md" borderWidth="1px" borderColor={colorScheme.borderColor}>
+                <HStack px={3} py={1} bg={colorScheme.codeBlockHeaderBg} borderBottomWidth="1px" borderColor={colorScheme.borderColor} justifyContent="space-between">
                   <Text fontSize="xs" color="gray.500" textTransform="uppercase">python</Text>
                   <Text fontSize="xs" color="gray.500">
                     Code to Run
@@ -705,7 +1121,7 @@ const BackendChat: React.FC<{
                 </HStack>
                 <Box>
                   <SyntaxHighlighter
-                    style={codeStyle}
+                    style={colorScheme.codeStyle}
                     language="python"
                     PreTag="div"
                     customStyle={{
@@ -762,8 +1178,8 @@ const BackendChat: React.FC<{
               </HStack>
 
               {event.content.code && (
-                <Box mb={2} bg={codeOutputBg} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
-                  <HStack px={3} py={1} bg={codeBlockHeaderBg} borderBottomWidth="1px" borderColor={borderColor} justifyContent="space-between">
+                <Box mb={2} bg={colorScheme.codeOutputBg} borderRadius="md" borderWidth="1px" borderColor={colorScheme.borderColor}>
+                  <HStack px={3} py={1} bg={colorScheme.codeBlockHeaderBg} borderBottomWidth="1px" borderColor={colorScheme.borderColor} justifyContent="space-between">
                     <Text fontSize="xs" color="gray.500" textTransform="uppercase">python</Text>
                     <Text fontSize="xs" color="gray.500">
                       {codeOutputVisible[`${messageKey}-${event.id}`] ? 'Full Code' : 'Preview'}
@@ -771,7 +1187,7 @@ const BackendChat: React.FC<{
                   </HStack>
                   <Box>
                     <SyntaxHighlighter 
-                      style={codeStyle} 
+                      style={colorScheme.codeStyle} 
                       language="python" 
                       PreTag="div"
                       customStyle={{ 
@@ -802,18 +1218,18 @@ const BackendChat: React.FC<{
                   {event.content.stdout && (
                     <Box mb={event.content.stderr ? 2 : 0}>
                       <Text fontSize="xs" color="gray.500" mb={1}>STDOUT:</Text>
-                      <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" 
-                            wordBreak="break-all" fontSize="sm" w="full" borderWidth="1px" borderColor={borderColor}>
+                      <Code as="pre" p={3} bg={colorScheme.codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" 
+                            wordBreak="break-all" fontSize="sm" w="full" borderWidth="1px" borderColor={colorScheme.borderColor}>
                         {event.content.stdout}
                       </Code>
                     </Box>
                   )}
                   {event.content.stderr && (
                     <Box>
-                      <Text fontSize="xs" color={stderrColor} mb={1}>STDERR:</Text>
-                      <Code as="pre" p={3} bg={codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" 
-                            wordBreak="break-all" fontSize="sm" w="full" color={stderrCodeColor} 
-                            borderWidth="1px" borderColor={borderColor}>
+                      <Text fontSize="xs" color={colorScheme.stderrColor} mb={1}>STDERR:</Text>
+                      <Code as="pre" p={3} bg={colorScheme.codeOutputBg} borderRadius="md" whiteSpace="pre-wrap" 
+                            wordBreak="break-all" fontSize="sm" w="full" color={colorScheme.stderrCodeColor} 
+                            borderWidth="1px" borderColor={colorScheme.borderColor}>
                         {event.content.stderr}
                       </Code>
                     </Box>
@@ -845,7 +1261,7 @@ const BackendChat: React.FC<{
                   borderRadius="md"
                   boxShadow="sm" 
                   borderWidth="1px" 
-                  borderColor={borderColor} 
+                  borderColor={colorScheme.borderColor} 
                   cursor="pointer"
                   _hover={{ transform: "scale(1.02)", transition: "transform 0.2s" }}
                   onClick={() => {
@@ -862,7 +1278,7 @@ const BackendChat: React.FC<{
           )}
 
           {event.type === 'pdb' && (
-            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={borderColor} bg="blue.50">
+            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={colorScheme.borderColor} bg="blue.50">
               <HStack justifyContent="space-between" mb={2} wrap="wrap">
                 <HStack>
                   <Text fontSize="sm" fontWeight="bold">Generated Structure</Text>
@@ -898,7 +1314,7 @@ const BackendChat: React.FC<{
           )}
 
           {event.type === 'molviewspec' && (
-            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={borderColor} bg="green.50">
+            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={colorScheme.borderColor} bg="green.50">
               <HStack justifyContent="space-between" mb={2} wrap="wrap">
                 <HStack>
                   <Text fontSize="sm" fontWeight="bold">Interactive Molecular View</Text>
@@ -952,7 +1368,7 @@ const BackendChat: React.FC<{
           )}
 
           {event.type === 'link' && (
-            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={borderColor} bg="blue.50">
+            <Box p={3} borderWidth="1px" borderRadius="md" borderColor={colorScheme.borderColor} bg="blue.50">
               <HStack justifyContent="space-between" mb={2} wrap="wrap">
                 <HStack>
                   <Text fontSize="sm" fontWeight="bold" color="blue.600">
@@ -1009,15 +1425,28 @@ const BackendChat: React.FC<{
     }
   }, [messages, onMolViewSpecUpdate, isLoading]);
 
+  // Optimized scroll effect with gentle auto-scroll behavior during loading
   useEffect(() => {
-    const chatContainer = chatContainerRef.current;
-    if (chatContainer) {
-      const isScrolledToBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 100;
-      if (isScrolledToBottom || isLoading) {
-        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-      }
+    let timeoutId: NodeJS.Timeout;
+    
+    const scheduleScroll = () => {
+      clearTimeout(timeoutId);
+      // Use longer delay during loading to be less aggressive
+      const delay = isLoading ? 200 : 50;
+      timeoutId = setTimeout(() => scrollToBottom(), delay);
+    };
+
+    scheduleScroll();
+    return () => clearTimeout(timeoutId);
+  }, [messages, scrollToBottom, isLoading]); // Changed from messages.length to messages to catch content updates
+
+  // Additional scroll trigger specifically for message streaming updates
+  useEffect(() => {
+    if (isLoading) {
+      const timeoutId = setTimeout(() => scrollToBottom(), 100);
+      return () => clearTimeout(timeoutId);
     }
-  }, [messages, messages[messages.length - 1]?.content, isLoading]);
+  }, [messages, isLoading, scrollToBottom]);
 
   useEffect(() => {
 
@@ -1105,10 +1534,17 @@ useEffect(() => {
   const openAttachmentModal = (attachmentData: ChatMessage['attachment']) => {
     if (attachmentData) {
       if (attachmentData.isPDB || attachmentData.name?.endsWith('.pdb')) {
-        const url = attachmentData.content ?
-          (attachmentData.content.startsWith('data:') ? attachmentData.content :
-          `${API_BASE_URL}/api/temp_files/${sessionId}/${attachmentData.name}`) :
-          `${API_BASE_URL}/api/temp_files/${sessionId}/${attachmentData.name}`;
+        let url: string;
+        if (attachmentData.content && attachmentData.content.startsWith('data:')) {
+          // Data URL
+          url = attachmentData.content;
+        } else if (attachmentData.sessionUrl) {
+          // Session-stored file
+          url = attachmentData.sessionUrl;
+        } else {
+          // Current session temp file
+          url = `${API_BASE_URL}/api/temp_files/${sessionId}/${attachmentData.name}`;
+        }
         openPdbPreview(url, attachmentData.name);
       } else {
         setModalContent(attachmentData);
@@ -1162,7 +1598,7 @@ useEffect(() => {
       role: 'user', content: userMessageContent, timestamp: new Date().toISOString(),
       attachment: currentAttachment ? {
         name: currentAttachment.name, content: currentAttachment.previewContent, type: currentAttachment.type || null,
-        isImage: currentAttachment.isImage, isText: currentAttachment.isText, isCSV: currentAttachment.isCSV, isJSON: currentAttachment.isJSON,
+        isImage: currentAttachment.isImage, isText: currentAttachment.isText, isCSV: currentAttachment.isCSV, isJSON: currentAttachment.isJSON, isPDF: currentAttachment.isPDF,
       } : null,
     };
 
@@ -1171,7 +1607,12 @@ useEffect(() => {
     setInput('');
     setFileAttachment(null);
     setIsLoading(true);
+    setSessionLoaded(false); // Reset session loaded state when sending new message
     abortControllerRef.current = new AbortController();
+
+    // Force scroll to bottom when starting new message - immediate and delayed
+    scrollToBottom(true);
+    setTimeout(() => scrollToBottom(true), 100);
 
     const assistantMessageId = `assistant-${Date.now()}`;
     const messageStartTime = Date.now();
@@ -1184,6 +1625,9 @@ useEffect(() => {
         startTime: messageStartTime,
       } as ChatMessage,
     ]);
+
+    // Additional scroll after assistant message is added
+    setTimeout(() => scrollToBottom(true), 200);
 
     // Send only the new user message to the backend
     const userMessageForApi = {
@@ -1513,9 +1957,14 @@ useEffect(() => {
                         const downloadMatch = /download="([^"]*)"/.exec(linkPart);
                         
                         if (hrefMatch) {
-                          const url = hrefMatch[1];
+                          let url = hrefMatch[1];
                           const linkText = textMatch ? textMatch[1] : url;
                           const isDownload = downloadMatch || linkPart.includes('download');
+                          
+                          // Build correct URL for files that don't start with http
+                          if (!url.startsWith('http') && !url.startsWith('/') && sessionId) {
+                            url = `${API_BASE_URL}/api/temp_files/${sessionId}/${url}`;
+                          }
                           
                           newEvents.push({
                             id: `link-${uuidv4()}`,
@@ -1587,10 +2036,11 @@ useEffect(() => {
       const isCSV = fileType === 'text/csv' || file.name.endsWith('.csv');
       const isPDB = file.name.endsWith('.pdb') || file.name.endsWith('.cif');
       const isJSON = fileType === 'application/json' || file.name.endsWith('.json');
+      const isPDF = fileType === 'application/pdf' || file.name.endsWith('.pdf');
 
       reader.onload = (event) => {
         const result = event.target?.result;
-        setFileAttachment({ file, name: file.name, previewContent: typeof result === 'string' ? result : null, type: fileType, isImage, isText, isCSV, isJSON });
+        setFileAttachment({ file, name: file.name, previewContent: typeof result === 'string' ? result : null, type: fileType, isImage, isText, isCSV, isJSON, isPDF });
       };
       reader.onerror = (error) => {
         console.error('File reading error:', error);
@@ -1599,7 +2049,7 @@ useEffect(() => {
 
       if (isImage) reader.readAsDataURL(file);
       else if (isText || isCSV || isJSON) reader.readAsText(file.slice(0, 10 * 1024));
-      else setFileAttachment({ file, name: file.name, previewContent: null, type: fileType });
+      else setFileAttachment({ file, name: file.name, previewContent: null, type: fileType, isImage, isText, isCSV, isJSON, isPDF });
     }
     if (e.target) e.target.value = '';
   };
@@ -2008,9 +2458,14 @@ useEffect(() => {
                           const downloadMatch = /download="([^"]*)"/.exec(linkPart);
                           
                           if (hrefMatch) {
-                            const url = hrefMatch[1];
+                            let url = hrefMatch[1];
                             const linkText = textMatch ? textMatch[1] : url;
                             const isDownload = downloadMatch || linkPart.includes('download');
+                            
+                            // Build correct URL for files that don't start with http
+                            if (!url.startsWith('http') && !url.startsWith('/') && sessionId) {
+                              url = `${API_BASE_URL}/api/temp_files/${sessionId}/${url}`;
+                            }
                             
                             newSegmentedEvents.push({
                               id: `link-${uuidv4()}`,
@@ -2069,153 +2524,51 @@ useEffect(() => {
   };
 
   return (
-    <Flex direction="column" h="100%" bg={chatBg}>
+    <Flex direction="column" h="100%" bg={colorScheme.chatBg}>
       <Box ref={chatContainerRef} flex="1" overflowY="auto" p={4} position="relative">
         {messages.length === 0 && !isLoading ? (
           <Flex position="absolute" top="0" left="0" right="0" bottom="0" align="center" justify="center" direction="column" textAlign="center" p={4} pointerEvents="none">
-            <Heading size="lg" mb={2} color={welcomeHeadingColor}>GlyCopilot</Heading>
-            <Text fontSize="xl" color={welcomeTextColor}>What can I help with?</Text>
+            <Heading size="lg" mb={2} color={colorScheme.welcomeHeadingColor}>GlyCopilot</Heading>
+            <Text fontSize="xl" color={colorScheme.welcomeTextColor}>What can I help with?</Text>
             <Text fontSize="sm" color="gray.500" mt={4}>(Ask about proteins, glycans, use tools, upload files.)</Text>
           </Flex>
         ) : (
-          <VStack spacing={4} align="stretch">
-            {messages.map((msg, idx) => {
-              const messageKey = `${msg.role}-${msg.timestamp}-${idx}${msg.id ? `-${msg.id}` : ''}`;
-              if (msg.role === 'system' && !msg.isError) return null;
-
-              const isEmptyPlaceholder = msg.role === 'assistant' && msg.id &&
-                                        (!msg.events || msg.events.length === 0) && isLoading;
-              if (isEmptyPlaceholder) return null;
-
-              let msgBg = assistantMessageBg, justify = 'flex-start';
-              if (msg.role === 'user') { msgBg = userMessageBg; justify = 'flex-end'; }
-              else if (msg.role === 'tool_info') { msgBg = msg.toolStatus?.status === 'error' ? errorMessageBg : toolInfoMessageBg; }
-              else if (msg.isError && msg.role === 'system') { msgBg = errorMessageBg; }
-
-              return (
-                <Flex key={messageKey} justify={justify} w="100%">
-                  <Box maxW={{ base: '90%', md: '80%' }} bg={msgBg} px={4} py={2} borderRadius="lg" boxShadow="sm"
-                       className="chat-message-content" w={msg.role === 'assistant' ? { base: '90%', md: '80%' } : 'auto'}>
-                    
-                    {msg.role === 'user' && msg.attachment && (
-                      <Button variant="link" size="sm" onClick={() => openAttachmentModal(msg.attachment)} mb={2}
-                              p={0} height="auto" _hover={{ textDecoration: 'none' }} w="full" display="block" textAlign="left">
-                        <HStack spacing={2} p={2} bg={attachmentBg} borderRadius="md" w="full">
-                          {(msg.attachment?.name?.endsWith('.pdb') || msg.attachment?.type === 'chemical/x-pdb') ? (
-                            <Icon as={VscSymbolFile} color="blue.500" boxSize="1em" />
-                          ) : (
-                            <AttachmentIcon boxSize="1em" />
-                          )}
-                          <Text fontSize="sm" noOfLines={1} title={msg.attachment?.name}>{msg.attachment?.name}</Text>
-                        </HStack>
-                      </Button>
-                    )}
-
-                    {msg.role === 'assistant' && msg.events && msg.events.length > 0 ? (
-                      <Box>
-                        {msg.events.map((event, eventIdx) => (
-                          <EventRenderer 
-                            key={event.id || `event-${eventIdx}`} 
-                            event={event} 
-                            messageKey={messageKey}
-                            onMolViewSpecUpdate={onMolViewSpecUpdate}
-                            isLast={eventIdx === msg.events!.length - 1}
-                          />
-                        ))}
-                      </Box>
-                    ) : msg.role === 'assistant' && msg.id ? (
-                      null
-                    ) : (
-                      msg.content && msg.content.trim() && (
-                        <Box className="markdown-container">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm, remarkMath]}
-                            rehypePlugins={[rehypeKatex]}
-                            components={markdownComponents}
-                          >
-                            {msg.content}
-                          </ReactMarkdown>
-                        </Box>
-                      )
-                    )}
-
-                    {msg.role === 'tool_info' && msg.toolStatus && (
-                         <HStack spacing={2} align="center" mt={1}>
-                            {msg.toolStatus.status === 'running' && <Spinner size="xs" />}
-                            {msg.toolStatus.status === 'finished' && <CheckIcon color="green.500" />}
-                            {msg.toolStatus.status === 'error' && <Icon as={CloseIcon} color="red.500" />}
-                            <Text fontSize="sm" fontStyle="italic" color={attachmentTextColor}>{msg.content}</Text>
-                         </HStack>
-                    )}
-                    {msg.role === 'system' && msg.isError && (
-                         <Alert status="error" variant="subtle" mt={2} borderRadius="md">
-                            <AlertIcon /><AlertDescription fontSize="sm">{msg.content}</AlertDescription>
-                         </Alert>
-                    )}
-
-                    {msg.role !== 'tool_info' && !(msg.role === 'system' && msg.isError) && (
-                        <HStack justify="space-between" align="center" mt={1}>
-                          <Text fontSize="xs" color={attachmentTextColor}>
-                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </Text>
-                          
-                          <HStack spacing={1}>
-                            {msg.role === 'user' && idx < messages.length - 1 && (
-                              <Tooltip label="Remove from this point" placement="top">
-                                <IconButton
-                                  aria-label="Remove from this point"
-                                  icon={<DeleteIcon />}
-                                  size="xs"
-                                  variant="ghost"
-                                  colorScheme="blue"
-                                  onClick={() => removeMessagesFromPoint(idx)}
-                                  isDisabled={isLoading}
-                                />
-                              </Tooltip>
-                            )}
-                            
-                            {msg.role === 'assistant' && !msg.id && idx > 0 && (
-                              <Tooltip label="Retry this response" placement="top">
-                                <IconButton
-                                  aria-label="Retry response"
-                                  icon={<RepeatIcon />}
-                                  size="xs"
-                                  variant="ghost"
-                                  colorScheme="blue"
-                                  onClick={() => retryFromPoint(idx)}
-                                  isDisabled={isLoading}
-                                />
-                              </Tooltip>
-                            )}
-                          </HStack>
-                        </HStack>
-                    )}
-                  </Box>
-                </Flex>
-              );
-            })}
-            {isLoading && messages.some(msg => msg.id && msg.role === 'assistant') && (
-                 <Flex justify="center" my={4}>
-                    <HStack>
-                        <Spinner size="sm" color="blue.500" />
-                        <Text fontSize="sm" color="gray.500">Assistant is responding...</Text>
-                        <Button size="xs" variant="outline" onClick={cancelRequest} colorScheme="red" isDisabled={!abortControllerRef.current}>
-                            Cancel
-                        </Button>
-                    </HStack>
-                 </Flex>
-            )}
-          </VStack>
+          <VirtualMessageList
+            messages={messages}
+            isLoading={isLoading}
+            onOpenAttachmentModal={openAttachmentModal}
+            onMolViewSpecUpdate={onMolViewSpecUpdate}
+            onRemoveMessages={removeMessagesFromPoint}
+            onRetryFromPoint={retryFromPoint}
+            EventRenderer={EventRenderer}
+            colorScheme={colorScheme}
+            sessionLoaded={sessionLoaded}
+          />
         )}
       </Box>
 
+      {/* Loading indicator for assistant responses */}
+      {isLoading && messages.some(msg => msg.id && msg.role === 'assistant') && (
+           <Flex justify="center" my={4}>
+              <HStack>
+                  <Spinner size="sm" color="blue.500" />
+                  <Text fontSize="sm" color="gray.500">Assistant is responding...</Text>
+                  <Button size="xs" variant="outline" onClick={cancelRequest} colorScheme="red" isDisabled={!abortControllerRef.current}>
+                      Cancel
+                  </Button>
+              </HStack>
+           </Flex>
+      )}
+
       {/* Chat input and controls toggle */}
-      <Box p={4} borderTop="1px solid" borderColor={borderColor} bg={inputBg}>
+      <Box p={4} borderTop="1px solid" borderColor={colorScheme.borderColor} bg={colorScheme.inputBg}>
         {fileAttachment && (
-          <HStack mb={2} p={2} bg={inputAttachmentBg} borderRadius="md" justify="space-between">
+          <HStack mb={2} p={2} bg={colorScheme.inputAttachmentBg} borderRadius="md" justify="space-between">
             <HStack spacing={2} overflow="hidden" align="center" maxW="calc(100% - 40px)">
               {fileAttachment.isImage && typeof fileAttachment.previewContent === 'string' ? (
                 <img src={fileAttachment.previewContent} alt="Preview" style={{ maxHeight: '32px', maxWidth: '80px', borderRadius: '4px', objectFit: 'cover' }} />
+              ) : fileAttachment.isPDF ? (
+                <Icon as={VscFilePdf} color="red.500" />
               ) : ( <AttachmentIcon /> )}
               <Text fontSize="sm" isTruncated title={fileAttachment.name}>{fileAttachment.name}</Text>
             </HStack>
@@ -2225,7 +2578,7 @@ useEffect(() => {
           </HStack>
         )}
         <Flex align="center" position="relative">
-          <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} accept="image/*, text/*, .pdb, .cif, .py, .csv, .json, .md" />
+          <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} accept="image/*, text/*, .pdb, .cif, .py, .csv, .json, .md, .pdf, application/pdf" />
           <Tooltip label="Toggle controls" placement="top">
             <IconButton
               aria-label="Toggle controls"
@@ -2244,9 +2597,9 @@ useEffect(() => {
               ref={chatInputRef} 
               placeholder="Ask about proteins, analyze data, or generate structures..." 
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!isLoading) handleSendMessage(); }}}
-              bg={inputBg} 
+              bg={colorScheme.inputBg} 
               isDisabled={isLoading} 
               borderRadius="full" 
               size="md"
@@ -2283,7 +2636,7 @@ useEffect(() => {
             bg="white"
             borderRadius="md"
             borderWidth="1px"
-            borderColor={borderColor}
+            borderColor={colorScheme.borderColor}
           >
             <HStack spacing={2} justify="flex-start">
                 
@@ -2400,13 +2753,36 @@ useEffect(() => {
         </Collapse>
       </Box>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} size="xl" isCentered scrollBehavior="inside">
+      <Modal isOpen={isModalOpen} onClose={closeModal} size={modalContent?.isPDF ? "6xl" : "xl"} isCentered scrollBehavior="inside">
                <ModalOverlay />
         <ModalContent>
           <ModalHeader title={modalContent?.name} isTruncated>{modalContent?.name || 'Attachment'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            {(modalContent?.type === 'chemical/x-pdb' || modalContent?.name?.endsWith('.pdb')) && sessionId ? (
+            {/* Check for images first */}
+            {(modalContent?.isImage && (modalContent.content || modalContent.sessionUrl)) ? (
+              <Box textAlign="center">
+                <Image 
+                  src={modalContent.content || modalContent.sessionUrl} 
+                  alt={modalContent.name || 'Image attachment'} 
+                  maxW="100%" 
+                  mx="auto" 
+                  display="block"
+                  borderRadius="md"
+                  boxShadow="sm"
+                />
+              </Box>
+            ) : modalContent?.isPDF ? (
+              <Box textAlign="center" h="80vh">
+                <iframe
+                  src={modalContent.sessionUrl || (modalContent.content && modalContent.content.startsWith('data:') ? modalContent.content : `${API_BASE_URL}/api/temp_files/${sessionId}/${modalContent.name}`)}
+                  title={modalContent.name || 'PDF Document'}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 'none', borderRadius: '6px' }}
+                />
+              </Box>
+            ) : (modalContent?.type === 'chemical/x-pdb' || modalContent?.name?.endsWith('.pdb')) ? (
               <Box position="relative" h="60vh">
                 <Box position="absolute" top="0" left="0" right="0" bottom="0" overflowY="auto">
                   <SyntaxHighlighter
@@ -2418,20 +2794,51 @@ useEffect(() => {
                       fontSize: '0.8rem'
                     }}
                   >
-                    {modalContent.content || `// Loading structure file from:\n// ${API_BASE_URL}/api/temp_files/${sessionId}/${modalContent?.name}`}
+                    {modalContent.content || `// File will be loaded for preview when opened\n// Source: ${
+                      modalContent.sessionUrl ? modalContent.sessionUrl : 
+                      sessionId ? `${API_BASE_URL}/api/temp_files/${sessionId}/${modalContent?.name}` : 
+                      'File not available'
+                    }`}
                   </SyntaxHighlighter>
                 </Box>
               </Box>
-            ) : (modalContent?.isImage && typeof modalContent.content === 'string') ? (
-              <Image src={modalContent.content} alt={modalContent.name || 'Image attachment'} maxW="100%" mx="auto" display="block"/>
             ) : modalContent?.isJSON && typeof modalContent.content === 'string' ? (
-              <Code as="pre" whiteSpace="pre-wrap" wordBreak="break-all" p={3} bg={inputBg} borderRadius="md" maxH="60vh" overflowY="auto" borderWidth="1px" borderColor={borderColor}>
+              <Code as="pre" whiteSpace="pre-wrap" wordBreak="break-all" p={3} bg={colorScheme.inputBg} borderRadius="md" maxH="60vh" overflowY="auto" borderWidth="1px" borderColor={colorScheme.borderColor}>
                 {(() => { try { return JSON.stringify(JSON.parse(modalContent.content), null, 2); } catch (e) { return modalContent.content; }})()}
               </Code>
             ) : (modalContent?.isText || modalContent?.isCSV) && typeof modalContent.content === 'string' ? (
-               <Code as="pre" whiteSpace="pre-wrap" wordBreak="break-all" p={3} bg={inputBg} borderRadius="md" maxH="60vh" overflowY="auto" borderWidth="1px" borderColor={borderColor}>{modalContent.content}</Code>
-            ) : ( <Text color="gray.500">Preview not available for this file type ({modalContent?.type || 'unknown'}).</Text> )}
+               <Code as="pre" whiteSpace="pre-wrap" wordBreak="break-all" p={3} bg={colorScheme.inputBg} borderRadius="md" maxH="60vh" overflowY="auto" borderWidth="1px" borderColor={colorScheme.borderColor}>{modalContent.content}</Code>
+            ) : modalContent?.sessionUrl ? (
+              <VStack spacing={4} p={4}>
+                <Text color="gray.600">File preview not available for this type.</Text>
+                <Button 
+                  as="a" 
+                  href={modalContent.sessionUrl} 
+                  download={modalContent.name}
+                  colorScheme="blue" 
+                  leftIcon={<ExternalLinkIcon />}
+                >
+                  Download {modalContent.name}
+                </Button>
+              </VStack>
+            ) : ( 
+              <Text color="gray.500">Preview not available for this file type ({modalContent?.type || 'unknown'}).</Text> 
+            )}
           </ModalBody>
+          {modalContent?.sessionUrl && (
+            <ModalFooter>
+              <Button 
+                as="a" 
+                href={modalContent.sessionUrl} 
+                download={modalContent.name}
+                colorScheme="blue" 
+                leftIcon={<ExternalLinkIcon />}
+                size="sm"
+              >
+                Download {modalContent.name}
+              </Button>
+            </ModalFooter>
+          )}
         </ModalContent>
       </Modal>
 
@@ -2447,12 +2854,12 @@ useEffect(() => {
                 whiteSpace="pre-wrap" 
                 wordBreak="break-all" 
                 p={3} 
-                bg={codeOutputBg} 
+                bg={colorScheme.codeOutputBg} 
                 borderRadius="md" 
                 maxH="60vh" 
                 overflowY="auto" 
                 borderWidth="1px" 
-                borderColor={borderColor}
+                borderColor={colorScheme.borderColor}
                 fontSize="xs"
                 fontFamily="monospace"
                 lineHeight="1.2"
