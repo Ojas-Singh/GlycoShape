@@ -62,30 +62,17 @@ const Footer: React.FC = () => {
           
           
         </VStack>
-        {/* <VStack align="start">
-          <Text color="white"  fontWeight="bold">Information</Text>
-          <Divider />
-          <Link color="white" href="#">Cite GlycoShape</Link>
-          <Link color="white" href="#">About & Help</Link>
-          <Link color="white" href="#">Glycam manual</Link>
-          <Link color="white" href="#">Statistics</Link>
-        </VStack> */}
         <Box >
-            {/* ReactDOM.render(TwitterIcon, document.body) */}
-            {/* ReactDOM.createRoot(document.body).render(TwitterIcon) */}
+           
           <Text color="white" fontWeight="bold">Social</Text>
           <HStack spacing="24px" padding={"1rem"} paddingBottom={"4rem"}>
-            {/* <Link href="#"><FacebookIcon /></Link>
-            <Link href="#"><TwitterIcon /></Link> */}
             <SocialIcon network="mastodon" url="https://mstdn.science/@Glycoshape" />
-              {/* <SocialIcon network="twitter" url="https://twitter.com/ElisaTelisa" /> */}
-              
-              <SocialIcon network="github" url="https://github.com/Ojas-Singh/GlycoShape" />
-              <SocialIcon network="twitter" url="https://twitter.com/GlycoShape" />
-              
-        {/* <Link color="white" href="#"><LinkedInIcon /><SocialIcon url="www.vimeo.com" /></Link> */}
-            {/* <Link color="white" href="#">Contact Us</Link> */}
+            <SocialIcon network="x" url="https://twitter.com/GlycoShape" />
+            <SocialIcon network="github" url="https://github.com/Ojas-Singh/GlycoShape" />
+            <SocialIcon network="email" url="mailto:support@glycoshape.org" />
+
           </HStack>
+          
           <Text fontWeight="Medium" color={'white'}>Main Funding by:
           <HStack direction='row'>
             <Link href='https://www.researchireland.ie'>

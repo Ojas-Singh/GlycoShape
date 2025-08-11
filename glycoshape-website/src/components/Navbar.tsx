@@ -26,7 +26,8 @@ import {
   MenuDivider,
   Avatar,
   HStack,
-  Spacer
+  Spacer,
+  Collapse
 } from "@chakra-ui/react";
 import { HamburgerIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import { useAuth } from './pro/contexts/AuthContext';
@@ -40,6 +41,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [toolsOpen, setToolsOpen] = React.useState(false);
 
   
   const handleNavigation = (path: string) => {
@@ -131,35 +133,39 @@ const Navbar: React.FC = () => {
       </Box>
                 </DrawerHeader>
                 <DrawerBody>
-                  <Button _hover={{
-              backgroundColor: "#F7FFE6"
-            }} as={RouterLink}  to="/dashboard" w="100%"  onClick={() => { handleNavigation('/dashboard'); onClose(); }} mb={4}>Dashboard</Button>
+                  
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/search?query=all" w="100%"  onClick={() => { handleNavigation('/search?query=all'); onClose(); }} mb={4}>Database</Button>
-                  <Button _hover={{
-              backgroundColor: "#F7FFE6"
-            }} as={RouterLink}  to="/reglyco" w="100%" onClick={onClose}  mb={4}>Re-Glyco</Button>
-            <Button _hover={{
-              backgroundColor: "#F7FFE6"
-            }} as={RouterLink}  to="/ensemble" w="100%" onClick={onClose}  mb={4}>Re-Glyco Ensemble</Button>
+                 
             
-            {isDevelopment ? (
-              <div>
-        <Button _hover={{
-          backgroundColor: "#F7FFE6"
-        }} as={RouterLink}  to="/fit" w="100%" onClick={onClose} mb={4}>Re-Glyco Fit</Button>
-        <Button _hover={{
-          backgroundColor: "#F7FFE6"
-        }} as={RouterLink}  to="/chat" w="100%" onClick={onClose} mb={4}>Copilot</Button>
-        </div>
-        ) : (
-          <></>)}
-
+            {/* Tools List for Mobile (expand/collapse) */}
+                  <Button
+                    w="100%"
+                    mb={2}
+                    fontWeight="bold"
+                    color="#F7FFE6"
+                    bg="#28363F"
+                    _hover={{ backgroundColor: "#F7FFE6", color: "#28363F" }}
+                    onClick={() => setToolsOpen(!toolsOpen)}
+                    rightIcon={<ChevronDownIcon transform={toolsOpen ? "rotate(180deg)" : undefined} />}
+                  >
+                    Tools
+                  </Button>
+                  <Collapse in={toolsOpen} animateOpacity>
+                  <Button _hover={{ backgroundColor: "#F7FFE6" }} as={RouterLink} to="/reglyco" w="100%" onClick={onClose} mb={2}>Re-Glyco</Button>
+                  <Button _hover={{ backgroundColor: "#F7FFE6" }} as={RouterLink} to="/ensemble" w="100%" onClick={onClose} mb={2}>Re-Glyco Ensemble</Button>
+                  {isDevelopment && (
+                    <>
+                      <Button _hover={{ backgroundColor: "#F7FFE6" }} as={RouterLink} to="/fit" w="100%" onClick={onClose} mb={2}>Re-Glyco Fit</Button>
+                      <Button _hover={{ backgroundColor: "#F7FFE6" }} as={RouterLink} to="/xp" w="100%" onClick={onClose} mb={2}>Re-Glyco XP</Button>
+                      <Button _hover={{ backgroundColor: "#F7FFE6" }} as={RouterLink} to="/chat" w="100%" onClick={onClose} mb={2}>GlyCopilot</Button>
+                    </>
+                  )}
+                  <Button _hover={{ backgroundColor: "#F7FFE6" }} as={RouterLink} to="/swap" w="100%" onClick={onClose} mb={2}>Swap</Button>
+                  </Collapse>
             
-            <Button _hover={{
-              backgroundColor: "#F7FFE6"
-            }} as={RouterLink}  to="/swap" w="100%" onClick={onClose} mb={4}>Swap</Button>
+            
                   <Button _hover={{
               backgroundColor: "#F7FFE6"
             }} as={RouterLink}  to="/downloads" w="100%" onClick={onClose} mb={4}>Downloads</Button>
@@ -181,37 +187,47 @@ const Navbar: React.FC = () => {
                   
                   {/* Authentication Buttons for Mobile */}
                   <Divider my={4} />
-                  {user ? (
+                  {/* Hide Login and Pro if not development */}
+                  {isDevelopment ? (
                     <>
                       <Button _hover={{
                         backgroundColor: "#F7FFE6"
-                      }} as={RouterLink} to="/ums/" w="100%" onClick={onClose} mb={4}>
-                        Dashboard
+                      }} as={RouterLink} to="/pro" w="100%" onClick={onClose} mb={4}>
+                        Pro
                       </Button>
-                      <Button _hover={{
-                        backgroundColor: "#F7FFE6"
-                      }} as={RouterLink} to="/ums/profile" w="100%" onClick={onClose} mb={4}>
-                        Profile
-                      </Button>
-                      <Button 
-                        colorScheme="red" 
-                        variant="outline" 
-                        w="100%" 
-                        onClick={() => { handleLogout(); onClose(); }}
-                        mb={4}
-                      >
-                        Logout
-                      </Button>
+                      {user ? (
+                        <>
+                          <Button _hover={{
+                            backgroundColor: "#F7FFE6"
+                          }} as={RouterLink} to="/ums/" w="100%" onClick={onClose} mb={4}>
+                            Dashboard
+                          </Button>
+                          <Button _hover={{
+                            backgroundColor: "#F7FFE6"
+                          }} as={RouterLink} to="/ums/profile" w="100%" onClick={onClose} mb={4}>
+                            Profile
+                          </Button>
+                          <Button 
+                            colorScheme="red" 
+                            variant="outline" 
+                            w="100%" 
+                            onClick={() => { handleLogout(); onClose(); }}
+                            mb={4}
+                          >
+                            Logout
+                          </Button>
+                        </>
+                      ) : (
+                        <Button _hover={{
+                          backgroundColor: "#F7FFE6"
+                        }} as={RouterLink} to="/ums/login" w="100%" onClick={onClose} mb={4}>
+                          Login
+                        </Button>
+                      )}
                     </>
-                  ) : (
-                    <>
-                      <Button _hover={{
-                        backgroundColor: "#F7FFE6"
-                      }} as={RouterLink} to="/ums/login" w="100%" onClick={onClose} mb={4}>
-                        Login
-                      </Button>
-                    </>
-                  )}
+                  ) : null}
+
+                  
                 </DrawerBody>
               </DrawerContent>
             </DrawerOverlay>
@@ -276,50 +292,57 @@ const Navbar: React.FC = () => {
         </MenuList>
       </Menu>
       
-      {/* Authentication Section */}
-      <Box alignContent={"center"} height='40px' mx={2}>
-        <Divider orientation='vertical' />
-      </Box>
-
-      <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/pro" marginRight="0px" px={2} fontFamily="body">Pro</Link> 
       
-      {user ? (
-        <Menu>
-          <MenuButton as={Button} rightIcon={<ChevronDownIcon />} bg="transparent" color="#F7FFE6" _hover={{ bg: "rgba(247, 255, 230, 0.1)" }} _active={{ bg: "rgba(247, 255, 230, 0.2)" }} fontFamily="body">
-            <HStack spacing={2}>
-              <Avatar size="sm" name={getUserDisplayName()} />
-              <Text fontFamily="body">{user.first_name || user.email}</Text>
-            </HStack>
-          </MenuButton>
-          <MenuList bg="#28363F" borderColor="#28363F">
-            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/dashboard" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
-              Dashboard
-            </MenuItem>
-            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/profile" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
-              Profile
-            </MenuItem>
-            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/subscriptions" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
-              Subscriptions
-            </MenuItem>
-            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/licenses" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
-              Licenses
-            </MenuItem>
-            <MenuItem fontWeight="bold" as={RouterLink} to="/ums/api-keys" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
-              API Keys
-            </MenuItem>
-            <MenuDivider />
-            <MenuItem fontWeight="bold" onClick={handleLogout} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
-              Logout
-            </MenuItem>
-          </MenuList>
-        </Menu>
-      ) : (
-        <HStack spacing={4}>
 
-          <Button as={RouterLink} to="/ums/login" fontWeight="bold" variant="ghost" color="#F7FFE6" _hover={{ bg: "rgba(247, 255, 230, 0.1)" }} fontFamily="body">
-            Login
-          </Button>
-        </HStack>
+      {/* Show Pro and Login buttons only in development version */}
+      {isDevelopment && (
+        <>
+
+          {/* Authentication Section */}
+          <Box alignContent={"center"} height='40px' mx={2}>
+            <Divider orientation='vertical' />
+          </Box>
+          
+          <Link as={RouterLink} fontWeight="bold" color={"#F7FFE6"} to="/pro" marginRight="0px" px={2} fontFamily="body">Pro</Link> 
+          
+          {user ? (
+            <Menu>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />} bg="transparent" color="#F7FFE6" _hover={{ bg: "rgba(247, 255, 230, 0.1)" }} _active={{ bg: "rgba(247, 255, 230, 0.2)" }} fontFamily="body">
+                <HStack spacing={2}>
+                  <Avatar size="sm" name={getUserDisplayName()} />
+                  <Text fontFamily="body">{user.first_name || user.email}</Text>
+                </HStack>
+              </MenuButton>
+              <MenuList bg="#28363F" borderColor="#28363F">
+                <MenuItem fontWeight="bold" as={RouterLink} to="/ums/dashboard" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+                  Dashboard
+                </MenuItem>
+                <MenuItem fontWeight="bold" as={RouterLink} to="/ums/profile" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+                  Profile
+                </MenuItem>
+                <MenuItem fontWeight="bold" as={RouterLink} to="/ums/subscriptions" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+                  Subscriptions
+                </MenuItem>
+                <MenuItem fontWeight="bold" as={RouterLink} to="/ums/licenses" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+                  Licenses
+                </MenuItem>
+                <MenuItem fontWeight="bold" as={RouterLink} to="/ums/api-keys" _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+                  API Keys
+                </MenuItem>
+                <MenuDivider />
+                <MenuItem fontWeight="bold" onClick={handleLogout} _hover={{ bg: "#28363F" }} color={"#F7FFE6"} bgColor={"#28363F"} fontFamily="body">
+                  Logout
+                </MenuItem>
+              </MenuList>
+            </Menu>
+          ) : (
+            <HStack spacing={4}>
+              <Button as={RouterLink} to="/ums/login" fontWeight="bold" variant="ghost" color="#F7FFE6" _hover={{ bg: "rgba(247, 255, 230, 0.1)" }} fontFamily="body">
+                Login
+              </Button>
+            </HStack>
+          )}
+        </>
       )}
         </Flex>
       )}
